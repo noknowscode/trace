@@ -61,7 +61,18 @@ public sealed class SceneModel
         Centre = (min + max) * 0.5f;
         Radius = MathF.Max(((max - min) * 0.5f).Length, 0.001f);
         TriangleCount = parts.Sum(part => part.TriangleCount);
+
+        // The camera frames these rather than the bounding sphere or box. A pump is far
+        // longer than it is tall, so a sphere large enough to hold it leaves a viewport
+        // mostly empty; a box is tighter but its diagonal corners still project well
+        // outside the silhouette, which costs almost as much. Every eighth vertex tracks
+        // the real outline closely enough to frame against and keeps the per-frame fit
+        // cheap.
+        FramingPoints = [.. parts.SelectMany(part => part.Vertices).Where((_, i) => i % 8 == 0)];
     }
+
+    /// <summary>A decimated vertex set the camera fits the viewport around.</summary>
+    public IReadOnlyList<Vec3> FramingPoints { get; }
 
     public IReadOnlyList<MeshPart> Parts { get; }
 

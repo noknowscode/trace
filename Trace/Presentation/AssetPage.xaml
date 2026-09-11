@@ -103,14 +103,14 @@
 
                     <Grid RowSpacing="12">
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="*" />
+                            <RowDefinition x:Name="SceneRow" Height="*" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
                         <!-- The machine, with its points pinned to it. The scene takes all the
                              height it is given: the camera frames the model to whatever
                              aspect the workspace has. -->
-                        <Border Style="{StaticResource CardSurface}" Padding="12" MinHeight="260">
+                        <Border x:Name="SceneCard" Style="{StaticResource CardSurface}" Padding="12" MinHeight="260">
                             <Grid>
                                 <controls:AssetSceneView x:Name="Scene"
                                                          Style="{StaticResource AssetSceneViewStyle}"

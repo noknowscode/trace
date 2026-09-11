@@ -44,8 +44,36 @@ public sealed class SceneCamera
         var distance = model.Radius / MathF.Tan(HalfFieldOfView) * 1.12f * Zoom;
         var eye = model.Centre + (forward * distance);
 
-        var viewport = MathF.Min(width, height * 1.55f);
-        var focal = viewport * 0.5f / MathF.Tan(HalfFieldOfView);
+        // Solve the focal length that just fits the machine's projected outline into this
+        // viewport, so a tall phone panel and a wide desktop one are both filled. The
+        // margin leaves room for the markers, which sit on top of the silhouette.
+        const float Margin = 0.9f;
+        var halfWidth = width * 0.5f * Margin;
+        var halfHeight = height * 0.5f * Margin;
+
+        var focal = float.MaxValue;
+        foreach (var point in model.FramingPoints)
+        {
+            var relative = point - eye;
+            var depth = MathF.Max(-Vec3.Dot(relative, forward), 0.01f);
+            var x = MathF.Abs(Vec3.Dot(relative, right));
+            var y = MathF.Abs(Vec3.Dot(relative, up));
+
+            if (x > 1e-4f)
+            {
+                focal = MathF.Min(focal, halfWidth * depth / x);
+            }
+
+            if (y > 1e-4f)
+            {
+                focal = MathF.Min(focal, halfHeight * depth / y);
+            }
+        }
+
+        if (float.IsInfinity(focal) || focal <= 0f)
+        {
+            focal = MathF.Min(width, height) * 0.5f / MathF.Tan(HalfFieldOfView);
+        }
 
         return new ViewTransform(eye, right, up, forward, focal, width * 0.5f, height * 0.5f);
     }
