@@ -108,6 +108,19 @@ for step in "${STEPS[@]:-}"; do
             xdotool mouseup 1
             sleep 1.5
             ;;
+        scroll)
+            # scroll:X,Y,N — N wheel notches at that point, negative scrolls up.
+            IFS=',' read -r sx sy notches <<<"$value"
+            xdotool mousemove "$sx" "$sy"
+            sleep 0.3
+            button=5
+            if (( notches < 0 )); then button=4; notches=$(( -notches )); fi
+            for _ in $(seq 1 "$notches"); do
+                xdotool click "$button"
+                sleep 0.15
+            done
+            sleep 1
+            ;;
         key)
             xdotool key "$value"
             sleep 1.5
