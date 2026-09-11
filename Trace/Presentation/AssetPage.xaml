@@ -112,7 +112,9 @@
                              aspect the workspace has. -->
                         <Border Style="{StaticResource CardSurface}" Padding="12" MinHeight="260">
                             <Grid>
-                                <controls:AssetSceneView x:Name="Scene" Kind="{Binding SchematicKind}" />
+                                <controls:AssetSceneView x:Name="Scene"
+                                                         Style="{StaticResource AssetSceneViewStyle}"
+                                                         Kind="{Binding SchematicKind}" />
                                 <ItemsRepeater x:Name="MarkerLayer" ItemsSource="{Binding Markers}">
                                     <ItemsRepeater.Layout>
                                         <controls:SpatialMarkerLayout x:Name="MarkerLayout" />
@@ -150,7 +152,13 @@
                              not a usable target for a screen reader or a keyboard. -->
                         <StackPanel x:Name="PointListPanel" Grid.Row="1" Spacing="8">
                             <TextBlock Text="Inspection points" Style="{StaticResource FieldLabelText}" />
-                            <controls:WrapPanel HorizontalSpacing="8" VerticalSpacing="8">
+                            <!-- A strip rather than a wrap: on a phone four points do not
+                                 fit across, and a scrolling strip keeps the machine above it
+                                 at full size instead of losing rows to a second line. -->
+                            <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                                          VerticalScrollBarVisibility="Disabled"
+                                          HorizontalScrollMode="Auto"
+                                          VerticalScrollMode="Disabled">
                                 <ItemsRepeater ItemsSource="{Binding Markers}">
                                     <ItemsRepeater.Layout>
                                         <StackLayout Orientation="Horizontal" Spacing="8" />
@@ -165,8 +173,7 @@
                                                     AutomationProperties.Name="{Binding Point.Label}">
                                                 <StackPanel Spacing="4">
                                                     <TextBlock Text="{Binding Point.Label}"
-                                                               Style="{StaticResource LabelLarge}"
-                                                               Foreground="{ThemeResource OnSurfaceBrush}" />
+                                                               Style="{StaticResource CardTitleText}" />
                                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                                         <TextBlock Style="{StaticResource SupportingText}">
                                                             <Run Text="{Binding Point.LatestReadingText}" />
@@ -181,7 +188,7 @@
                                         </DataTemplate>
                                     </ItemsRepeater.ItemTemplate>
                                 </ItemsRepeater>
-                            </controls:WrapPanel>
+                            </ScrollViewer>
                         </StackPanel>
                     </Grid>
 
@@ -215,8 +222,7 @@
                                                     Severity="{Binding Data.Condition, Converter={StaticResource ToSeverity}}"
                                                     Text="{Binding Data.Condition}" />
                                                 <Border Style="{StaticResource TileSurface}" Padding="10,5">
-                                                    <TextBlock Style="{StaticResource LabelMedium}"
-                                                               Foreground="{ThemeResource OnSurfaceVariantBrush}">
+                                                    <TextBlock Style="{StaticResource ChipValueText}">
                                                         <Run Text="{Binding Data.InspectedPointCount}" />
                                                         <Run Text="of" />
                                                         <Run Text="{Binding Data.PointCount}" />
@@ -256,8 +262,7 @@
                                                         <TextBlock Text="{Binding PointLabel}"
                                                                    Style="{StaticResource EyebrowText}" />
                                                         <TextBlock Text="{Binding Summary}"
-                                                                   Style="{StaticResource BodyMedium}"
-                                                                   Foreground="{ThemeResource OnSurfaceBrush}"
+                                                                   Style="{StaticResource BodyText}"
                                                                    TextWrapping="Wrap" />
                                                         <controls:WrapPanel HorizontalSpacing="8" VerticalSpacing="6">
                                                             <controls:StatusChip
@@ -314,8 +319,7 @@
                                                         <TextBlock Text="{Binding PointLabel}"
                                                                    Style="{StaticResource EyebrowText}" />
                                                         <TextBlock Text="{Binding ReadingText}"
-                                                                   Style="{StaticResource TitleMedium}"
-                                                                   Foreground="{ThemeResource OnSurfaceBrush}" />
+                                                                   Style="{StaticResource CardTitleText}" />
                                                         <TextBlock Text="{Binding Notes}"
                                                                    Style="{StaticResource SupportingText}"
                                                                    Visibility="{Binding Notes, Converter={StaticResource StringToVisibility}}" />
@@ -327,8 +331,7 @@
                                                                 Severity="{Binding SyncState, Converter={StaticResource ToSeverity}}"
                                                                 Text="{Binding SyncState}" />
                                                             <Border Style="{StaticResource TileSurface}" Padding="10,5">
-                                                                <TextBlock Style="{StaticResource LabelMedium}"
-                                                                           Foreground="{ThemeResource OnSurfaceVariantBrush}"
+                                                                <TextBlock Style="{StaticResource ChipValueText}"
                                                                            Text="{Binding Technician}" />
                                                             </Border>
                                                         </controls:WrapPanel>
@@ -383,24 +386,20 @@
 
                                                 <TextBlock Text="Manufacturer" Style="{StaticResource FieldLabelText}" />
                                                 <TextBlock Grid.Column="1" Text="{Binding Data.Manufacturer}"
-                                                           Style="{StaticResource BodyMedium}"
-                                                           Foreground="{ThemeResource OnSurfaceBrush}" />
+                                                           Style="{StaticResource BodyText}" />
 
                                                 <TextBlock Grid.Row="1" Text="Model" Style="{StaticResource FieldLabelText}" />
                                                 <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Data.Model}"
-                                                           Style="{StaticResource BodyMedium}"
-                                                           Foreground="{ThemeResource OnSurfaceBrush}" />
+                                                           Style="{StaticResource BodyText}" />
 
                                                 <TextBlock Grid.Row="2" Text="Serial" Style="{StaticResource FieldLabelText}" />
                                                 <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Data.SerialNumber}"
-                                                           Style="{StaticResource BodyMedium}"
-                                                           Foreground="{ThemeResource OnSurfaceBrush}" />
+                                                           Style="{StaticResource BodyText}" />
 
                                                 <TextBlock Grid.Row="3" Text="Installed" Style="{StaticResource FieldLabelText}" />
                                                 <TextBlock Grid.Row="3" Grid.Column="1"
                                                            Text="{Binding Data.InstalledOn, Converter={StaticResource RelativeTime}}"
-                                                           Style="{StaticResource BodyMedium}"
-                                                           Foreground="{ThemeResource OnSurfaceBrush}" />
+                                                           Style="{StaticResource BodyText}" />
                                             </Grid>
                                         </StackPanel>
                                     </Border>
@@ -433,8 +432,7 @@
                         <StackPanel Spacing="14">
                             <StackPanel Spacing="2">
                                 <TextBlock Text="CORRECTIVE ACTION" Style="{StaticResource EyebrowText}" />
-                                <TextBlock Style="{StaticResource TitleLarge}"
-                                           Foreground="{ThemeResource OnSurfaceBrush}"
+                                <TextBlock Style="{StaticResource PanelTitleText}"
                                            TextWrapping="Wrap">
                                     <Run Text="Raise work from" />
                                     <Run Text="{Binding SelectedPoint.Label}" />
@@ -474,8 +472,7 @@
                             </Grid>
 
                             <TextBlock Text="{Binding ActionError}"
-                                       Style="{StaticResource SupportingText}"
-                                       Foreground="{ThemeResource ErrorBrush}"
+                                       Style="{StaticResource ErrorText}"
                                        Visibility="{Binding ActionError, Converter={StaticResource StringToVisibility}}" />
 
                             <Grid ColumnSpacing="8">

@@ -12,13 +12,13 @@ public partial record TodayModel
     private readonly IAssignmentRepository _assignments;
     private readonly INetworkStatusService _network;
     private readonly ISyncQueue _sync;
-    private readonly IAppThemeService _theme;
+    private readonly IThemeService _theme;
 
     public TodayModel(
         IAssignmentRepository assignments,
         INetworkStatusService network,
         ISyncQueue sync,
-        IAppThemeService theme,
+        IThemeService theme,
         IOptions<AppConfig> config)
     {
         _assignments = assignments;
@@ -53,8 +53,10 @@ public partial record TodayModel
 
     public IFeed<string> ConnectionAction => IsOnline.Select(online => online ? "Go offline" : "Go online");
 
+    public IState<AppTheme> Theme => State.Value(this, () => _theme.Theme);
+
     public IFeed<string> ThemeAction =>
-        Feed.AsyncEnumerable(_theme.Watch).Select(dark => dark ? "Light theme" : "Dark theme");
+        Theme.Select(theme => theme == AppTheme.Light ? "Dark theme" : "Light theme");
 
     /// <summary>
     /// Declares the device offline before walking into a dead zone, or back online after.
@@ -63,5 +65,10 @@ public partial record TodayModel
     public void ToggleConnection() => _network.SetOffline(_network.IsOnline);
 
     /// <summary>Dark for the field, light for the office. Both are first-class.</summary>
-    public void ToggleTheme() => _theme.Toggle();
+    public async ValueTask ToggleTheme(CancellationToken ct)
+    {
+        var next = _theme.Theme == AppTheme.Light ? AppTheme.Dark : AppTheme.Light;
+        await _theme.SetThemeAsync(next);
+        await Theme.SetAsync(next, ct);
+    }
 }

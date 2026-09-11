@@ -18,16 +18,7 @@
 
             <controls:PageHeader Eyebrow="ASSIGNED WORK"
                                  Title="Today"
-                                 Supporting="{Binding Today}">
-                <controls:PageHeader.Actions>
-                    <Button Style="{StaticResource TextButtonStyle}"
-                            MinHeight="{StaticResource TouchTargetSize}"
-                            Command="{Binding ToggleTheme}"
-                            AutomationProperties.Name="Switch theme">
-                        <TextBlock Text="{Binding ThemeAction}" />
-                    </Button>
-                </controls:PageHeader.Actions>
-            </controls:PageHeader>
+                                 Supporting="{Binding Today}" />
 
             <!--
                 Connection and outstanding work sit together above the round: the technician
@@ -57,13 +48,23 @@
                                    Visibility="{Binding IsOffline, Converter={StaticResource BoolToVisibility}}" />
                     </StackPanel>
 
-                    <Button Grid.Column="1"
-                            Style="{StaticResource OutlinedButtonStyle}"
-                            MinHeight="{StaticResource TouchTargetSize}"
-                            Command="{Binding ToggleConnection}"
-                            AutomationProperties.Name="Toggle offline mode">
-                        <TextBlock Text="{Binding ConnectionAction}" />
-                    </Button>
+                    <!-- Device controls live together: whether this handset is working
+                         offline, and which theme suits where it is being used. -->
+                    <controls:WrapPanel Grid.Column="1" HorizontalSpacing="8" VerticalSpacing="8"
+                                        VerticalAlignment="Center">
+                        <Button Style="{StaticResource OutlinedButtonStyle}"
+                                MinHeight="{StaticResource TouchTargetSize}"
+                                Command="{Binding ToggleConnection}"
+                                AutomationProperties.Name="Toggle offline mode">
+                            <TextBlock Text="{Binding ConnectionAction}" />
+                        </Button>
+                        <Button Style="{StaticResource TextButtonStyle}"
+                                MinHeight="{StaticResource TouchTargetSize}"
+                                Command="{Binding ToggleTheme}"
+                                AutomationProperties.Name="Switch theme">
+                            <TextBlock Text="{Binding ThemeAction}" />
+                        </Button>
+                    </controls:WrapPanel>
                 </Grid>
             </Border>
 

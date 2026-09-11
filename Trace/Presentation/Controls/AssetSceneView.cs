@@ -30,6 +30,18 @@ public sealed partial class AssetSceneView : SKXamlCanvas, IAnchorProjector
         typeof(AssetSceneView),
         new PropertyMetadata(AssetKind.CentrifugalPump, OnKindChanged));
 
+    public static readonly DependencyProperty SceneBackgroundProperty = DependencyProperty.Register(
+        nameof(SceneBackground), typeof(Brush), typeof(AssetSceneView),
+        new PropertyMetadata(null, OnPaletteChanged));
+
+    public static readonly DependencyProperty GroundShadowProperty = DependencyProperty.Register(
+        nameof(GroundShadow), typeof(Brush), typeof(AssetSceneView),
+        new PropertyMetadata(null, OnPaletteChanged));
+
+    public static readonly DependencyProperty KeyLightProperty = DependencyProperty.Register(
+        nameof(KeyLight), typeof(Brush), typeof(AssetSceneView),
+        new PropertyMetadata(null, OnPaletteChanged));
+
     private readonly SceneRenderer _renderer = new();
     private readonly SceneCamera _camera = new();
 
@@ -59,6 +71,27 @@ public sealed partial class AssetSceneView : SKXamlCanvas, IAnchorProjector
     {
         get => (AssetKind)GetValue(KindProperty);
         set => SetValue(KindProperty, value);
+    }
+
+    /// <summary>The surface the machine stands on.</summary>
+    public Brush? SceneBackground
+    {
+        get => (Brush?)GetValue(SceneBackgroundProperty);
+        set => SetValue(SceneBackgroundProperty, value);
+    }
+
+    /// <summary>Tint of the contact shadow under the machine.</summary>
+    public Brush? GroundShadow
+    {
+        get => (Brush?)GetValue(GroundShadowProperty);
+        set => SetValue(GroundShadowProperty, value);
+    }
+
+    /// <summary>Colour of the dominant light, so the machine is lit by the room it sits in.</summary>
+    public Brush? KeyLight
+    {
+        get => (Brush?)GetValue(KeyLightProperty);
+        set => SetValue(KeyLightProperty, value);
     }
 
     public bool TryGetAnchor(string id, out AnchorProjection projection) =>
@@ -94,29 +127,31 @@ public sealed partial class AssetSceneView : SKXamlCanvas, IAnchorProjector
         ProjectionsChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    private static void OnPaletteChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
+        ((AssetSceneView)d).Invalidate();
+
     /// <summary>
     /// Lighting colours come from the app theme so the machine sits in the same room as the
     /// rest of the UI in both light and dark.
     /// </summary>
+    /// <remarks>
+    /// The three brushes are set from a Style rather than read out of
+    /// <see cref="Application"/>.Resources: the application dictionary is fixed to the
+    /// application's own theme, so it would keep handing back dark colours after the
+    /// technician switched the root to light.
+    /// </remarks>
     private ScenePalette ReadPalette() => new(
-        Background: Resolve("SurfaceBrush", new SKColor(0x10, 0x1A, 0x18)),
-        Ground: Resolve("ScrimBrush", new SKColor(0, 0, 0)).WithAlpha(90),
-        KeyLight: Resolve("OnSurfaceBrush", new SKColor(0xE8, 0xF3, 0xEE)),
+        Background: Resolve(SceneBackground, new SKColor(0x10, 0x1A, 0x18)),
+        Ground: Resolve(GroundShadow, new SKColor(0, 0, 0)).WithAlpha(90),
+        KeyLight: Resolve(KeyLight, new SKColor(0xE8, 0xF3, 0xEE)),
         // A cool neutral bounce rather than the brand colour: tinting the fill with Primary
         // turned every machine mint green.
         FillLight: new SKColor(0x7E, 0x8C, 0x99));
 
-    private SKColor Resolve(string key, SKColor fallback)
-    {
-        if (Application.Current.Resources.TryGetValue(key, out var value)
-            && value is SolidColorBrush brush)
-        {
-            var colour = brush.Color;
-            return new SKColor(colour.R, colour.G, colour.B, colour.A);
-        }
-
-        return fallback;
-    }
+    private static SKColor Resolve(Brush? brush, SKColor fallback) =>
+        brush is SolidColorBrush solid
+            ? new SKColor(solid.Color.R, solid.Color.G, solid.Color.B, solid.Color.A)
+            : fallback;
 
     private void OnPointerPressed(object sender, PointerRoutedEventArgs e)
     {

@@ -20,8 +20,7 @@
                         MinHeight="220">
                     <Grid>
                         <Viewbox Width="96" Height="96" Opacity="0.32">
-                            <PathIcon Data="{StaticResource IconScan}"
-                                      Foreground="{ThemeResource OnSurfaceVariantBrush}" />
+                            <PathIcon Data="{StaticResource IconScan}" />
                         </Viewbox>
                         <TextBlock Style="{StaticResource SupportingText}"
                                    VerticalAlignment="Bottom"

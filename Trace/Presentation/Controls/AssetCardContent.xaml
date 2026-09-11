@@ -24,8 +24,7 @@
             <StackPanel Spacing="2">
                 <TextBlock Text="{Binding Designation}" Style="{StaticResource EyebrowText}" />
                 <TextBlock Text="{Binding AssetName}"
-                           Style="{StaticResource TitleMedium}"
-                           Foreground="{ThemeResource OnSurfaceBrush}"
+                           Style="{StaticResource CardTitleText}"
                            TextWrapping="Wrap" />
                 <TextBlock Text="{Binding Location}" Style="{StaticResource SupportingText}" />
             </StackPanel>
@@ -43,13 +42,11 @@
 
         <controls:WrapPanel Grid.Row="2" HorizontalSpacing="8" VerticalSpacing="8">
             <Border Style="{StaticResource TileSurface}" Padding="10,5">
-                <TextBlock Text="{Binding Progress}" Style="{StaticResource LabelMedium}"
-                           Foreground="{ThemeResource OnSurfaceVariantBrush}" />
+                <TextBlock Text="{Binding Progress}" Style="{StaticResource ChipValueText}" />
             </Border>
             <Border Style="{StaticResource TileSurface}" Padding="10,5"
                     Visibility="{Binding IsScheduled, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="{Binding DueLabel}" Style="{StaticResource LabelMedium}"
-                           Foreground="{ThemeResource OnSurfaceVariantBrush}" />
+                <TextBlock Text="{Binding DueLabel}" Style="{StaticResource ChipValueText}" />
             </Border>
             <controls:StatusChip Severity="Critical"
                                  Text="{Binding FindingsText}"

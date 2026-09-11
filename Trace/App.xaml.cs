@@ -98,13 +98,14 @@ public partial class App : Application
                     // Platform capabilities. Each is a deterministic stand-in for hardware
                     // TRACE does not own; swapping in a device implementation is a one-line
                     // change here.
-                    services.AddSingleton<AppThemeService>();
-                    services.AddSingleton<IAppThemeService>(sp => sp.GetRequiredService<AppThemeService>());
                     services.AddSingleton<INetworkStatusService, SimulatedNetworkStatusService>();
                     services.AddSingleton<ICameraService, SimulatedCameraService>();
                     services.AddSingleton<IAssetScanService, SimulatedAssetScanService>();
                     services.AddSingleton<ILocalEvidenceStore, LocalEvidenceStore>();
                 })
+                // Dark is the working default (declared on the Application); this lets a
+                // technician override it for office review and remembers the choice.
+                .UseThemeSwitching()
                 .UseNavigation(ReactiveViewModelMappings.ViewModelMappings, RegisterRoutes)
             );
         MainWindow = builder.Window;
@@ -125,12 +126,9 @@ public partial class App : Application
             initialRoute: "Main"
         );
 
-        // The theme is applied to the navigation root, so it can only be attached once that
-        // root exists.
-        if (MainWindow.Content is FrameworkElement root)
-        {
-            Host.Services.GetRequiredService<AppThemeService>().Attach(root);
-        }
+        // Restores the theme the technician last chose. The service resolves the root itself,
+        // so this has to run after the navigation root exists.
+        await Host.Services.GetRequiredService<IThemeService>().InitializeAsync();
     }
 
     private static void RegisterRoutes(IViewRegistry views, IRouteRegistry routes)

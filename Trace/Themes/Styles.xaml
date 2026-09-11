@@ -1,5 +1,6 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:controls="using:Trace.Presentation.Controls">
 
     <!--
         Shared surfaces and text roles. The surface hierarchy from the design graph reads as
@@ -54,6 +55,54 @@
     <Style x:Key="FieldLabelText" TargetType="TextBlock" BasedOn="{StaticResource LabelMedium}">
         <Setter Property="Foreground" Value="{ThemeResource OnSurfaceVariantBrush}" />
         <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <!--
+        Text roles carry their own colour. A ThemeResource assigned straight onto an
+        element's Foreground is a local value and does not re-resolve when the theme
+        changes, while the same reference inside a Style setter does — so every foreground
+        in this app comes from a style, and a light/dark switch stays correct.
+    -->
+    <Style x:Key="BodyText" TargetType="TextBlock" BasedOn="{StaticResource BodyMedium}">
+        <Setter Property="Foreground" Value="{ThemeResource OnSurfaceBrush}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style x:Key="CardTitleText" TargetType="TextBlock" BasedOn="{StaticResource TitleMedium}">
+        <Setter Property="Foreground" Value="{ThemeResource OnSurfaceBrush}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style x:Key="PanelTitleText" TargetType="TextBlock" BasedOn="{StaticResource TitleLarge}">
+        <Setter Property="Foreground" Value="{ThemeResource OnSurfaceBrush}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style x:Key="PageTitleText" TargetType="TextBlock" BasedOn="{StaticResource HeadlineSmall}">
+        <Setter Property="Foreground" Value="{ThemeResource OnBackgroundBrush}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style x:Key="ChipValueText" TargetType="TextBlock" BasedOn="{StaticResource LabelMedium}">
+        <Setter Property="Foreground" Value="{ThemeResource OnSurfaceVariantBrush}" />
+    </Style>
+
+    <Style x:Key="ErrorText" TargetType="TextBlock" BasedOn="{StaticResource BodyMedium}">
+        <Setter Property="Foreground" Value="{ThemeResource ErrorBrush}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style x:Key="OnPrimaryContainerText" TargetType="TextBlock" BasedOn="{StaticResource BodyMedium}">
+        <Setter Property="Foreground" Value="{ThemeResource OnPrimaryContainerBrush}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <Style x:Key="MetricLargeText" TargetType="TextBlock" BasedOn="{StaticResource HeadlineMedium}">
+        <Setter Property="Foreground" Value="{ThemeResource OnSurfaceBrush}" />
+    </Style>
+
+    <Style x:Key="MetricSmallUnitText" TargetType="TextBlock" BasedOn="{StaticResource TitleSmall}">
+        <Setter Property="Foreground" Value="{ThemeResource OnSurfaceVariantBrush}" />
     </Style>
 
     <!--
@@ -207,6 +256,17 @@
 
     <Style x:Key="MetricUnitText" TargetType="TextBlock" BasedOn="{StaticResource TitleMedium}">
         <Setter Property="Foreground" Value="{ThemeResource OnSurfaceVariantBrush}" />
+    </Style>
+
+    <!--
+        The equipment viewport is lit by the room it is drawn into. These have to come from a
+        Style: the renderer reads the brushes off the control, and a ThemeResource resolves
+        per theme only when it arrives through a setter.
+    -->
+    <Style x:Key="AssetSceneViewStyle" TargetType="controls:AssetSceneView">
+        <Setter Property="SceneBackground" Value="{ThemeResource SurfaceBrush}" />
+        <Setter Property="GroundShadow" Value="{ThemeResource ScrimBrush}" />
+        <Setter Property="KeyLight" Value="{ThemeResource OnSurfaceBrush}" />
     </Style>
 
 </ResourceDictionary>

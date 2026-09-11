@@ -36,8 +36,11 @@ rm -f "$OUT"
 # TRACE_RESET=1 clears the app's local storage so the run starts from a fresh seed. Without
 # it a capture shows whatever previous runs left behind, which is the right default for
 # checking that state persists but the wrong one for checking the seed.
+# Settings/Local.dat holds ApplicationData settings, which is where the theme preference
+# lives, so it has to go too or a capture inherits the last run's theme.
 if [[ "${TRACE_RESET:-0}" == "1" ]]; then
     rm -rf "$HOME/.local/share/Trace/com.unoplatform.trace/LocalState/trace"
+    rm -f "$HOME/.local/share/Trace/com.unoplatform.trace/Settings/Local.dat"
 fi
 
 cleanup() {

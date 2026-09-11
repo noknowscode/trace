@@ -4,11 +4,15 @@
              xmlns:controls="using:Trace.Presentation.Controls">
 
     <!--
-        Everything one inspection point needs, in the order the work happens: what am I
-        looking at, what did it read last time, what does it read now, what do I call it,
-        and what proves it. Hosted as a bottom sheet on a phone and as a pinned inspector on
-        wider screens — same element either way, so an in-progress reading survives a
-        rotation or a window resize.
+        Everything one inspection point needs. Hosted as a bottom sheet on a phone and as a
+        pinned inspector on wider screens — the same element either way, so an in-progress
+        reading survives a resize.
+
+        The split between what scrolls and what stays is the design of this panel. A
+        technician needs the reading they are entering, the call they are making and the
+        button that commits it on screen together, with a glove on and one-handed, so those
+        are pinned. The guidance, the previous reading, the notes and the evidence are
+        reference and capture material, and they scroll.
     -->
     <Grid RowSpacing="14">
         <Grid.RowDefinitions>
@@ -26,12 +30,8 @@
             <StackPanel Spacing="2">
                 <TextBlock Text="INSPECTION POINT" Style="{StaticResource EyebrowText}" />
                 <TextBlock Text="{Binding SelectedPoint.Label}"
-                           Style="{StaticResource TitleLarge}"
-                           Foreground="{ThemeResource OnSurfaceBrush}"
+                           Style="{StaticResource PanelTitleText}"
                            TextWrapping="Wrap" />
-                <TextBlock Text="{Binding SelectedPoint.Guidance}"
-                           Style="{StaticResource SupportingText}"
-                           Margin="0,2,0,0" />
             </StackPanel>
             <Button Grid.Column="1"
                     Style="{StaticResource TextButtonStyle}"
@@ -50,67 +50,34 @@
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,4,0">
             <StackPanel Spacing="14">
 
+                <TextBlock Text="{Binding SelectedPoint.Guidance}"
+                           Style="{StaticResource SupportingText}" />
+
                 <!-- Last reading and the band it is judged against -->
                 <Border Style="{StaticResource TileSurface}">
-                    <StackPanel Spacing="4">
-                        <TextBlock Text="{Binding SelectedPoint.ReadingType}"
-                                   Style="{StaticResource FieldLabelText}" />
-                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Bottom">
-                            <TextBlock Text="{Binding SelectedPoint.LatestReadingText}"
-                                       Style="{StaticResource MetricValueText}" />
-                            <TextBlock Text="{Binding SelectedPoint.Unit}"
-                                       Style="{StaticResource MetricUnitText}"
-                                       VerticalAlignment="Bottom"
-                                       Margin="0,0,0,6" />
-                        </StackPanel>
-                        <TextBlock Style="{StaticResource SupportingText}">
-                            <Run Text="Expected" />
-                            <Run Text="{Binding SelectedPoint.ExpectedRange}" />
-                        </TextBlock>
-                    </StackPanel>
-                </Border>
-
-                <!-- New reading -->
-                <StackPanel Spacing="6">
-                    <TextBlock Text="New reading" Style="{StaticResource FieldLabelText}" />
-                    <TextBox Text="{Binding ReadingText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                             InputScope="Number"
-                             MinHeight="{StaticResource TouchTargetSize}"
-                             FontSize="20"
-                             AutomationProperties.Name="New reading" />
-                </StackPanel>
-
-                <!-- Disposition -->
-                <StackPanel Spacing="6">
-                    <TextBlock Text="Condition" Style="{StaticResource FieldLabelText}" />
-                    <Grid ColumnSpacing="8">
+                    <Grid ColumnSpacing="10">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <controls:DispositionButton Style="{StaticResource DispositionButtonStyle}"
-                                                    Kind="Pass"
-                                                    Label="Pass"
-                                                    IsChosen="{Binding IsPassChosen}"
-                                                    Command="{Binding SetPass}"
-                                                    AutomationProperties.Name="Record pass" />
-                        <controls:DispositionButton Grid.Column="1"
-                                                    Style="{StaticResource DispositionButtonStyle}"
-                                                    Kind="Watch"
-                                                    Label="Watch"
-                                                    IsChosen="{Binding IsWatchChosen}"
-                                                    Command="{Binding SetWatch}"
-                                                    AutomationProperties.Name="Record watch" />
-                        <controls:DispositionButton Grid.Column="2"
-                                                    Style="{StaticResource DispositionButtonStyle}"
-                                                    Kind="Fail"
-                                                    Label="Fail"
-                                                    IsChosen="{Binding IsFailChosen}"
-                                                    Command="{Binding SetFail}"
-                                                    AutomationProperties.Name="Record fail" />
+                        <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding SelectedPoint.LatestReadingText}"
+                                       Style="{StaticResource MetricLargeText}" />
+                            <TextBlock Text="{Binding SelectedPoint.Unit}"
+                                       Style="{StaticResource MetricSmallUnitText}"
+                                       VerticalAlignment="Bottom"
+                                       Margin="0,0,0,4" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding SelectedPoint.ReadingType}"
+                                       Style="{StaticResource FieldLabelText}" />
+                            <TextBlock Style="{StaticResource SupportingText}">
+                                <Run Text="Expected" />
+                                <Run Text="{Binding SelectedPoint.ExpectedRange}" />
+                            </TextBlock>
+                        </StackPanel>
                     </Grid>
-                </StackPanel>
+                </Border>
 
                 <!-- Notes -->
                 <StackPanel Spacing="6">
@@ -173,8 +140,7 @@
                                         </Border>
                                         <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding Caption}"
-                                                       Style="{StaticResource BodyMedium}"
-                                                       Foreground="{ThemeResource OnSurfaceBrush}"
+                                                       Style="{StaticResource BodyText}"
                                                        TextWrapping="Wrap" />
                                             <TextBlock Text="{Binding Type}" Style="{StaticResource SupportingText}" />
                                         </StackPanel>
@@ -193,8 +159,47 @@
             </StackPanel>
         </ScrollViewer>
 
-        <!-- Verdict and commit -->
+        <!-- Enter, decide, commit: always on screen. -->
         <StackPanel Grid.Row="2" Spacing="10">
+
+            <StackPanel Spacing="6">
+                <TextBlock Text="New reading" Style="{StaticResource FieldLabelText}" />
+                <TextBox Text="{Binding ReadingText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                         InputScope="Number"
+                         MinHeight="{StaticResource TouchTargetSize}"
+                         FontSize="20"
+                         AutomationProperties.Name="New reading" />
+            </StackPanel>
+
+            <Grid ColumnSpacing="8">
+
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <controls:DispositionButton Style="{StaticResource DispositionButtonStyle}"
+                                                Kind="Pass"
+                                                Label="Pass"
+                                                IsChosen="{Binding IsPassChosen}"
+                                                Command="{Binding SetPass}"
+                                                AutomationProperties.Name="Record pass" />
+                    <controls:DispositionButton Grid.Column="1"
+                                                Style="{StaticResource DispositionButtonStyle}"
+                                                Kind="Watch"
+                                                Label="Watch"
+                                                IsChosen="{Binding IsWatchChosen}"
+                                                Command="{Binding SetWatch}"
+                                                AutomationProperties.Name="Record watch" />
+                    <controls:DispositionButton Grid.Column="2"
+                                                Style="{StaticResource DispositionButtonStyle}"
+                                                Kind="Fail"
+                                                Label="Fail"
+                                                IsChosen="{Binding IsFailChosen}"
+                                                Command="{Binding SetFail}"
+                                                AutomationProperties.Name="Record fail" />
+                </Grid>
+
 
             <!--
                 The confirmation of what was just recorded sits with the point it belongs
@@ -213,8 +218,7 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="{Binding Confirmation}"
-                               Style="{StaticResource BodyMedium}"
-                               Foreground="{ThemeResource OnPrimaryContainerBrush}"
+                               Style="{StaticResource OnPrimaryContainerText}"
                                TextWrapping="Wrap"
                                VerticalAlignment="Center" />
                     <Button Grid.Column="1"

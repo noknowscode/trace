@@ -77,12 +77,10 @@
                                                     <TextBlock Text="{Binding EntityType}"
                                                                Style="{StaticResource EyebrowText}" />
                                                     <TextBlock Text="{Binding Description}"
-                                                               Style="{StaticResource BodyMedium}"
-                                                               Foreground="{ThemeResource OnSurfaceBrush}"
+                                                               Style="{StaticResource BodyText}"
                                                                TextWrapping="Wrap" />
                                                     <TextBlock Text="{Binding Error}"
-                                                               Style="{StaticResource SupportingText}"
-                                                               Foreground="{ThemeResource ErrorBrush}"
+                                                               Style="{StaticResource ErrorText}"
                                                                Visibility="{Binding Error, Converter={StaticResource StringToVisibility}}" />
                                                 </StackPanel>
                                                 <controls:StatusChip Grid.Column="1"

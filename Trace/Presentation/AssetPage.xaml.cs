@@ -3,7 +3,7 @@ namespace Trace.Presentation;
 public sealed partial class AssetPage : Page
 {
     /// <summary>How much of the workspace a bottom sheet may cover on a handheld.</summary>
-    private const double SheetHeightFraction = 0.62;
+    private const double SheetHeightFraction = 0.86;
 
     private const double WorkstationWidth = 1000;
 

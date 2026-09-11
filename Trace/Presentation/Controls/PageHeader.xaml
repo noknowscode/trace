@@ -14,8 +14,7 @@
                        Style="{StaticResource EyebrowText}"
                        Visibility="{Binding HasEyebrow, ElementName=Root}" />
             <TextBlock Text="{Binding Title, ElementName=Root}"
-                       Style="{StaticResource HeadlineSmall}"
-                       Foreground="{ThemeResource OnBackgroundBrush}"
+                       Style="{StaticResource PageTitleText}"
                        TextWrapping="Wrap" />
             <TextBlock Text="{Binding Supporting, ElementName=Root}"
                        Style="{StaticResource SupportingText}"
