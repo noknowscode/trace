@@ -96,12 +96,21 @@
                     <Grid>
                         <TextBlock Text="Evidence" Style="{StaticResource FieldLabelText}"
                                    VerticalAlignment="Center" />
-                        <Button HorizontalAlignment="Right"
-                                Style="{StaticResource TextButtonStyle}"
-                                MinHeight="{StaticResource TouchTargetSize}"
-                                Command="{Binding AttachPhoto}"
-                                Content="Add photo"
-                                AutomationProperties.Name="Add photo evidence" />
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="4">
+                            <!-- No hardware here to refuse the app, so the denial a real
+                                 device would produce is reachable on demand. -->
+                            <Button Style="{StaticResource TextButtonStyle}"
+                                    MinHeight="{StaticResource TouchTargetSize}"
+                                    Command="{Binding DenyCameraForDemo}"
+                                    Content="Simulate denial"
+                                    Visibility="{Binding IsCameraDenied, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}"
+                                    AutomationProperties.Name="Simulate the camera being denied" />
+                            <Button Style="{StaticResource TextButtonStyle}"
+                                    MinHeight="{StaticResource TouchTargetSize}"
+                                    Command="{Binding AttachPhoto}"
+                                    Content="Add photo"
+                                    AutomationProperties.Name="Add photo evidence" />
+                        </StackPanel>
                     </Grid>
 
                     <!-- Camera denied: the only way back on a real device is settings. -->
