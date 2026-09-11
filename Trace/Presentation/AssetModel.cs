@@ -315,6 +315,14 @@ public partial record AssetModel
 
     public IState<string> ActionError => State<string>.Empty(this);
 
+    /// <summary>
+    /// Mirrors the workflow's own rule so the button is dead until the action can succeed,
+    /// the same way Complete point behaves. The workflow still rejects a blank summary —
+    /// this is the affordance, not the enforcement.
+    /// </summary>
+    public IFeed<bool> CanCreateAction =>
+        ActionSummary.Select(summary => !string.IsNullOrWhiteSpace(summary));
+
     public IFeed<IImmutableList<string>> Assignees =>
         Feed.Async(async ct => await _actions.GetAssigneesAsync(ct));
 

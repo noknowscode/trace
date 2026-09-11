@@ -490,6 +490,7 @@
                                         HorizontalAlignment="Stretch"
                                         MinHeight="{StaticResource TouchTargetSize}"
                                         Command="{Binding CreateAction}"
+                                        IsEnabled="{Binding CanCreateAction}"
                                         Content="Create action" />
                             </Grid>
                         </StackPanel>
