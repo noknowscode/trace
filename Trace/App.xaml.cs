@@ -1,5 +1,10 @@
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
+using Trace.Infrastructure.Persistence;
+using Trace.Infrastructure.Platform;
+using Trace.Infrastructure.Repositories;
 using Uno.Resizetizer;
+using Windows.Storage;
 
 namespace Trace;
 
@@ -74,8 +79,29 @@ public partial class App : Application
 })
                 .ConfigureServices((context, services) =>
                 {
-                    // TODO: Register your services
-                    //services.AddSingleton<IMyService, MyService>();
+                    services.AddSingleton(TimeProvider.System);
+
+                    // Persistence. The store root is resolved here, at composition time, so
+                    // nothing below this line has to know about platform storage paths.
+                    services.AddSingleton<ILocalFileStore>(_ => new LocalFileStore(
+                        Path.Combine(ApplicationData.Current.LocalFolder.Path, "trace")));
+                    services.AddSingleton<ITraceStore, TraceStore>();
+
+                    // Repositories over the shared snapshot stream.
+                    services.AddSingleton<IAssetRepository, AssetRepository>();
+                    services.AddSingleton<IAssignmentRepository, AssignmentRepository>();
+                    services.AddSingleton<IInspectionRepository, InspectionRepository>();
+                    services.AddSingleton<ICorrectiveActionRepository, CorrectiveActionRepository>();
+                    services.AddSingleton<ISyncQueue, SyncQueue>();
+                    services.AddSingleton<IInspectionWorkflow, InspectionWorkflow>();
+
+                    // Platform capabilities. Each is a deterministic stand-in for hardware
+                    // TRACE does not own; swapping in a device implementation is a one-line
+                    // change here.
+                    services.AddSingleton<INetworkStatusService, SimulatedNetworkStatusService>();
+                    services.AddSingleton<ICameraService, SimulatedCameraService>();
+                    services.AddSingleton<IAssetScanService, SimulatedAssetScanService>();
+                    services.AddSingleton<ILocalEvidenceStore, LocalEvidenceStore>();
                 })
                 .UseNavigation(ReactiveViewModelMappings.ViewModelMappings, RegisterRoutes)
             );

@@ -1,0 +1,224 @@
+using Microsoft.Extensions.Options;
+using Trace.Domain.Enums;
+using Trace.Domain.Models;
+using Trace.Domain.Rules;
+using Trace.Infrastructure.Persistence;
+using Trace.Services;
+
+namespace Trace.Infrastructure.Repositories;
+
+/// <summary>
+/// Applies the completion rules and commits the result.
+/// </summary>
+/// <remarks>
+/// Every write happens inside a single store mutation, so an inspection can never exist
+/// without the point move and the outbox entry that belong with it — including when the
+/// device is offline, where the local commit is the whole of the transaction.
+/// </remarks>
+public sealed class InspectionWorkflow : IInspectionWorkflow
+{
+    private readonly ITraceStore _store;
+    private readonly TimeProvider _time;
+    private readonly string _technician;
+    private readonly ILogger<InspectionWorkflow> _log;
+
+    public InspectionWorkflow(
+        ITraceStore store,
+        TimeProvider time,
+        IOptions<AppConfig> config,
+        ILogger<InspectionWorkflow> log)
+    {
+        _store = store;
+        _time = time;
+        _log = log;
+        _technician = string.IsNullOrWhiteSpace(config.Value.Technician)
+            ? "Technician"
+            : config.Value.Technician;
+    }
+
+    public async ValueTask<InspectionDraft> StartOrResumeDraftAsync(
+        InspectionPoint point,
+        CancellationToken ct)
+    {
+        var snapshot = await _store.GetAsync(ct);
+        if (snapshot.FindDraft(point.Id) is { } existing)
+        {
+            return existing;
+        }
+
+        var draft = InspectionDraft.For(point);
+        await _store.MutateAsync(s => s with { Drafts = s.Drafts.Add(draft) }, ct);
+        return draft;
+    }
+
+    public async ValueTask SaveDraftAsync(InspectionDraft draft, CancellationToken ct) =>
+        await _store.MutateAsync(
+            s =>
+            {
+                var existing = s.Drafts.FirstOrDefault(d => d.PointId == draft.PointId);
+
+                if (existing is null)
+                {
+                    return s with { Drafts = s.Drafts.Add(draft) };
+                }
+
+                // Equal drafts are left alone so an idle editor does not churn the store.
+                return existing == draft
+                    ? s
+                    : s with { Drafts = s.Drafts.Replace(existing, draft) };
+            },
+            ct);
+
+    public async ValueTask DiscardDraftAsync(string pointId, CancellationToken ct) =>
+        await _store.MutateAsync(
+            s => s.Drafts.Any(d => d.PointId == pointId)
+                ? s with { Drafts = s.Drafts.RemoveAll(d => d.PointId == pointId) }
+                : s,
+            ct);
+
+    public async ValueTask<CompletionOutcome> CompleteAsync(InspectionDraft draft, CancellationToken ct)
+    {
+        var snapshot = await _store.GetAsync(ct);
+
+        var asset = snapshot.FindAsset(draft.AssetId);
+        var point = asset?.FindPoint(draft.PointId);
+
+        if (asset is null || point is null)
+        {
+            return CompletionOutcome.Rejected(new InspectionValidation(
+                CanComplete: false,
+                Reading: 0,
+                RangeStatus: RangeStatus.Unknown,
+                Blocker: InspectionBlocker.ReadingMissing,
+                Message: "This point is no longer available on the device."));
+        }
+
+        // A repeated submission of the same draft resolves to the event it already produced.
+        // Nothing is written, and the caller sees the same outcome as the first tap.
+        if (snapshot.Events.FirstOrDefault(e => e.ClientToken == draft.ClientToken) is { } already)
+        {
+            return new CompletionOutcome(true, already, InspectionRules.Validate(point, draft), true, true);
+        }
+
+        var validation = InspectionRules.Validate(point, draft);
+        if (!validation.CanComplete)
+        {
+            return CompletionOutcome.Rejected(validation);
+        }
+
+        var now = _time.GetLocalNow();
+        var completed = new InspectionEvent(
+            Id: $"ev-{draft.ClientToken}",
+            ClientToken: draft.ClientToken,
+            AssetId: asset.Id,
+            PointId: point.Id,
+            PointLabel: point.Label,
+            Timestamp: now,
+            Technician: _technician,
+            Reading: validation.Reading,
+            Unit: point.Unit,
+            RangeStatus: validation.RangeStatus,
+            Disposition: draft.Disposition,
+            Notes: draft.Notes.Trim(),
+            Evidence: draft.Evidence,
+            SyncState: SyncState.Pending);
+
+        var movedPoint = point with
+        {
+            LatestReading = validation.Reading,
+            Disposition = draft.Disposition,
+            LastInspectedAt = now,
+        };
+
+        await _store.MutateAsync(
+            s =>
+            {
+                // Re-check inside the lock: another completion may have landed between the
+                // read above and this mutation.
+                if (s.Events.Any(e => e.ClientToken == draft.ClientToken))
+                {
+                    return s;
+                }
+
+                var current = s.FindAsset(asset.Id);
+                if (current is null)
+                {
+                    return s;
+                }
+
+                return s with
+                {
+                    Assets = s.Assets
+                        .Select(a => a.Id == asset.Id ? a.WithPoint(movedPoint) : a)
+                        .ToImmutableList(),
+                    Events = s.Events.Add(completed),
+                    Drafts = s.Drafts.RemoveAll(d => d.PointId == point.Id),
+                    Queue = SyncQueue.Enqueue(
+                        s.Queue,
+                        nameof(InspectionEvent),
+                        completed.Id,
+                        "create",
+                        $"{point.Label} · {completed.ReadingText} · {draft.Disposition}",
+                        hasAttachments: draft.Evidence.Any(e => e.Type == EvidenceType.Photo),
+                        now),
+                };
+            },
+            ct);
+
+        _log.LogInformation(
+            "Inspection completed for {PointId} as {Disposition}.", point.Id, draft.Disposition);
+
+        return new CompletionOutcome(true, completed, validation, WasQueued: true, WasDuplicate: false);
+    }
+
+    public async ValueTask<CorrectiveActionOutcome> RaiseCorrectiveActionAsync(
+        CorrectiveActionRequest request,
+        CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(request.Summary))
+        {
+            return CorrectiveActionOutcome.Rejected("A summary is required before the action can be created.");
+        }
+
+        var snapshot = await _store.GetAsync(ct);
+        var asset = snapshot.FindAsset(request.AssetId);
+        var point = asset?.FindPoint(request.PointId);
+        var source = snapshot.Events.FirstOrDefault(e => e.Id == request.SourceInspectionEventId);
+
+        if (asset is null || point is null || source is null)
+        {
+            return CorrectiveActionOutcome.Rejected(
+                "The originating inspection is no longer available on the device.");
+        }
+
+        var now = _time.GetLocalNow();
+        var action = InspectionRules.CreateCorrectiveAction(
+            asset,
+            point,
+            source,
+            request.Summary,
+            request.Priority,
+            request.Assignee,
+            now,
+            $"ca-{Guid.NewGuid():N}");
+
+        await _store.MutateAsync(
+            s => s with
+            {
+                Actions = s.Actions.Add(action),
+                Queue = SyncQueue.Enqueue(
+                    s.Queue,
+                    nameof(CorrectiveAction),
+                    action.Id,
+                    "create",
+                    $"{action.Priority} · {action.Summary}",
+                    hasAttachments: false,
+                    now),
+            },
+            ct);
+
+        _log.LogInformation("Corrective action {ActionId} raised from {EventId}.", action.Id, source.Id);
+
+        return new CorrectiveActionOutcome(true, action, null);
+    }
+}

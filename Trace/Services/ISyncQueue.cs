@@ -1,0 +1,27 @@
+using Trace.Domain.Models;
+
+namespace Trace.Services;
+
+/// <summary>
+/// The durable outbox. Everything TRACE writes locally is enqueued here, and the queue is
+/// the only thing that can declare a record synced.
+/// </summary>
+public interface ISyncQueue
+{
+    IAsyncEnumerable<IImmutableList<SyncOperation>> Watch(CancellationToken ct);
+
+    IAsyncEnumerable<int> WatchPendingCount(CancellationToken ct);
+
+    /// <summary>Attempts every pending and failed operation. Returns the number that succeeded.</summary>
+    ValueTask<SyncResult> SyncAsync(CancellationToken ct);
+
+    /// <summary>Moves one failed operation back to pending so the next pass retries it.</summary>
+    ValueTask RetryAsync(string operationId, CancellationToken ct);
+
+    ValueTask RetryAllFailedAsync(CancellationToken ct);
+}
+
+public sealed record SyncResult(int Succeeded, int Failed, bool WasOffline)
+{
+    public bool AnyAttempted => Succeeded + Failed > 0;
+}
