@@ -1,0 +1,141 @@
+﻿<Page x:Class="Trace.Presentation.SupervisorFindingsPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:controls="using:Trace.Presentation.Controls"
+      xmlns:mvux="using:Uno.Extensions.Reactive.UI"
+      xmlns:uen="using:Uno.Extensions.Navigation.UI"
+      xmlns:utu="using:Uno.Toolkit.UI"
+      NavigationCacheMode="Required"
+      Background="{ThemeResource BackgroundBrush}">
+
+    <utu:SafeArea Insets="VisibleBounds">
+        <Grid RowSpacing="16" Padding="{StaticResource PagePadding}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <controls:PageHeader Eyebrow="REVIEW"
+                                 Title="Findings"
+                                 Supporting="{Binding Headline}" />
+
+            <ScrollViewer Grid.Row="1">
+                <StackPanel Spacing="20">
+
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="Corrective work" Style="{StaticResource SectionHeaderText}" />
+
+                        <mvux:FeedView Source="{Binding Actions}">
+                            <mvux:FeedView.ValueTemplate>
+                                <DataTemplate>
+                                    <ItemsRepeater ItemsSource="{Binding Data}">
+                                        <ItemsRepeater.Layout>
+                                            <StackLayout Spacing="10" />
+                                        </ItemsRepeater.Layout>
+                                        <ItemsRepeater.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Style="{StaticResource CardSurface}">
+                                                    <Grid ColumnSpacing="12" RowSpacing="8">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto" />
+                                                            <RowDefinition Height="Auto" />
+                                                        </Grid.RowDefinitions>
+
+                                                        <StackPanel Spacing="3">
+                                                            <TextBlock Text="{Binding Origin}"
+                                                                       Style="{StaticResource EyebrowText}" />
+                                                            <TextBlock Text="{Binding Summary}"
+                                                                       Style="{StaticResource TitleMedium}"
+                                                                       Foreground="{ThemeResource OnSurfaceBrush}"
+                                                                       TextWrapping="Wrap" />
+                                                        </StackPanel>
+
+                                                        <controls:StatusChip Grid.Column="1"
+                                                                             VerticalAlignment="Top"
+                                                                             Severity="{Binding Priority, Converter={StaticResource ToSeverity}}"
+                                                                             Text="{Binding Priority}" />
+
+                                                        <StackPanel Grid.Row="1" Grid.ColumnSpan="2"
+                                                                    Orientation="Horizontal" Spacing="8">
+                                                            <Border Style="{StaticResource TileSurface}" Padding="10,5">
+                                                                <TextBlock Style="{StaticResource LabelMedium}"
+                                                                           Foreground="{ThemeResource OnSurfaceVariantBrush}"
+                                                                           Text="{Binding Assignee}" />
+                                                            </Border>
+                                                            <Border Style="{StaticResource TileSurface}" Padding="10,5">
+                                                                <TextBlock Style="{StaticResource LabelMedium}"
+                                                                           Foreground="{ThemeResource OnSurfaceVariantBrush}"
+                                                                           Text="{Binding Status}" />
+                                                            </Border>
+                                                            <Border Style="{StaticResource TileSurface}" Padding="10,5">
+                                                                <TextBlock Style="{StaticResource LabelMedium}"
+                                                                           Foreground="{ThemeResource OnSurfaceVariantBrush}"
+                                                                           Text="{Binding CreatedAt, Converter={StaticResource RelativeTime}}" />
+                                                            </Border>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsRepeater.ItemTemplate>
+                                    </ItemsRepeater>
+                                </DataTemplate>
+                            </mvux:FeedView.ValueTemplate>
+
+                            <mvux:FeedView.NoneTemplate>
+                                <DataTemplate>
+                                    <Border Style="{StaticResource CardSurface}">
+                                        <StackPanel Spacing="8">
+                                            <TextBlock Text="No corrective work raised"
+                                                       Style="{StaticResource SectionHeaderText}" />
+                                            <TextBlock Style="{StaticResource SupportingText}"
+                                                       Text="Actions created from a failed inspection point appear here for dispatch." />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </mvux:FeedView.NoneTemplate>
+                        </mvux:FeedView>
+                    </StackPanel>
+
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="Assets needing attention" Style="{StaticResource SectionHeaderText}" />
+
+                        <mvux:FeedView Source="{Binding AtRisk}">
+                            <mvux:FeedView.ValueTemplate>
+                                <DataTemplate>
+                                    <ItemsRepeater ItemsSource="{Binding Data}">
+                                        <ItemsRepeater.Layout>
+                                            <StackLayout Spacing="10" />
+                                        </ItemsRepeater.Layout>
+                                        <ItemsRepeater.ItemTemplate>
+                                            <DataTemplate>
+                                                <Button Style="{StaticResource CardButtonStyle}"
+                                                        AutomationProperties.Name="{Binding Designation}"
+                                                        uen:Navigation.Request="../Asset"
+                                                        uen:Navigation.Data="{Binding}">
+                                                    <controls:AssetCardContent />
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsRepeater.ItemTemplate>
+                                    </ItemsRepeater>
+                                </DataTemplate>
+                            </mvux:FeedView.ValueTemplate>
+
+                            <mvux:FeedView.NoneTemplate>
+                                <DataTemplate>
+                                    <Border Style="{StaticResource TileSurface}">
+                                        <TextBlock Style="{StaticResource SupportingText}"
+                                                   Text="Every asset on this device is passing." />
+                                    </Border>
+                                </DataTemplate>
+                            </mvux:FeedView.NoneTemplate>
+                        </mvux:FeedView>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </utu:SafeArea>
+</Page>

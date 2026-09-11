@@ -98,6 +98,8 @@ public partial class App : Application
                     // Platform capabilities. Each is a deterministic stand-in for hardware
                     // TRACE does not own; swapping in a device implementation is a one-line
                     // change here.
+                    services.AddSingleton<AppThemeService>();
+                    services.AddSingleton<IAppThemeService>(sp => sp.GetRequiredService<AppThemeService>());
                     services.AddSingleton<INetworkStatusService, SimulatedNetworkStatusService>();
                     services.AddSingleton<ICameraService, SimulatedCameraService>();
                     services.AddSingleton<IAssetScanService, SimulatedAssetScanService>();
@@ -107,25 +109,59 @@ public partial class App : Application
             );
         MainWindow = builder.Window;
 
-        #if DEBUG
-        MainWindow.UseStudio();
+#if DEBUG
+        // UseStudio blocks the window from ever being created when no DevServer is
+        // reachable, which makes headless verification runs hang with no visible error.
+        // TRACE_NO_HOTDESIGN=1 opts a run out of it.
+        if (Environment.GetEnvironmentVariable("TRACE_NO_HOTDESIGN") != "1")
+        {
+            MainWindow.UseStudio();
+        }
 #endif
-                MainWindow.SetWindowIcon();
+        MainWindow.SetWindowIcon();
 
         Host = await MainWindow.InitializeNavigationAsync(
             () => Task.FromResult(builder.Build()),
             initialRoute: "Main"
         );
+
+        // The theme is applied to the navigation root, so it can only be attached once that
+        // root exists.
+        if (MainWindow.Content is FrameworkElement root)
+        {
+            Host.Services.GetRequiredService<AppThemeService>().Attach(root);
+        }
     }
 
     private static void RegisterRoutes(IViewRegistry views, IRouteRegistry routes)
     {
         views.Register(
-            new ViewMap<MainPage, MainModel>()
+            new ViewMap<MainPage, MainModel>(),
+            new ViewMap<TodayPage, TodayModel>(),
+            new ViewMap<AssetsPage, AssetsModel>(),
+            new ViewMap<ScanPage, ScanModel>(),
+            new ViewMap<SyncPage, SyncModel>(),
+            new ViewMap<SupervisorFindingsPage, SupervisorFindingsModel>(),
+
+            // The asset workspace is entered with the row that was tapped, so it opens on
+            // the machine rather than on a lookup.
+            new DataViewMap<AssetPage, AssetModel, AssetSummary>()
         );
 
         routes.Register(
-            new RouteMap("Main", View: views.FindByViewModel<MainModel>(), IsDefault:true)
+            new RouteMap(
+                "Main",
+                View: views.FindByViewModel<MainModel>(),
+                IsDefault: true,
+                Nested:
+                [
+                    new RouteMap("Today", View: views.FindByViewModel<TodayModel>(), IsDefault: true),
+                    new RouteMap("Assets", View: views.FindByViewModel<AssetsModel>()),
+                    new RouteMap("Scan", View: views.FindByViewModel<ScanModel>()),
+                    new RouteMap("Sync", View: views.FindByViewModel<SyncModel>()),
+                    new RouteMap("Findings", View: views.FindByViewModel<SupervisorFindingsModel>()),
+                    new RouteMap("Asset", View: views.FindByViewModel<AssetModel>()),
+                ])
         );
     }
 }

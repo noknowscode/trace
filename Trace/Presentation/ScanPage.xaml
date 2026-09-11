@@ -1,0 +1,69 @@
+﻿<Page x:Class="Trace.Presentation.ScanPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:controls="using:Trace.Presentation.Controls"
+      xmlns:utu="using:Uno.Toolkit.UI"
+      NavigationCacheMode="Required"
+      Background="{ThemeResource BackgroundBrush}">
+
+    <utu:SafeArea Insets="VisibleBounds,SoftInput">
+        <ScrollViewer>
+            <StackPanel Spacing="16" Padding="{StaticResource PagePadding}" MaxWidth="620" HorizontalAlignment="Left">
+
+                <controls:PageHeader Eyebrow="IDENTIFY"
+                                     Title="Scan"
+                                     Supporting="Present the tag on the machine, or type the code from the nameplate." />
+
+                <!-- Viewfinder. Stands in for the camera preview on this build. -->
+                <Border Style="{StaticResource CardSurface}"
+                        Background="{ThemeResource SurfaceVariantBrush}"
+                        MinHeight="220">
+                    <Grid>
+                        <Viewbox Width="96" Height="96" Opacity="0.32">
+                            <PathIcon Data="{StaticResource IconScan}"
+                                      Foreground="{ThemeResource OnSurfaceVariantBrush}" />
+                        </Viewbox>
+                        <TextBlock Style="{StaticResource SupportingText}"
+                                   VerticalAlignment="Bottom"
+                                   HorizontalAlignment="Center"
+                                   TextAlignment="Center"
+                                   Text="Camera preview is simulated in this build. Scan presents the next tagged asset." />
+                    </Grid>
+                </Border>
+
+                <Button Style="{StaticResource FilledButtonStyle}"
+                        HorizontalAlignment="Stretch"
+                        MinHeight="{StaticResource TouchTargetSize}"
+                        Command="{Binding ScanTag}"
+                        Content="Scan a tag" />
+
+                <Border Style="{StaticResource CardSurface}">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="Enter a code" Style="{StaticResource SectionHeaderText}" />
+                        <TextBlock Style="{StaticResource SupportingText}"
+                                   Text="Accepts an asset tag such as P-204, or a full tag payload." />
+                        <TextBox Text="{Binding Code, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 PlaceholderText="P-204"
+                                 MinHeight="{StaticResource TouchTargetSize}"
+                                 AutomationProperties.Name="Asset code" />
+                        <Button Style="{StaticResource OutlinedButtonStyle}"
+                                HorizontalAlignment="Stretch"
+                                MinHeight="{StaticResource TouchTargetSize}"
+                                Command="{Binding Lookup}"
+                                Content="Open asset" />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource TileSurface}"
+                        Visibility="{Binding NotResolved, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel Spacing="6">
+                        <controls:StatusChip Severity="Critical" Text="Asset unavailable" />
+                        <TextBlock Text="{Binding ResultMessage}" Style="{StaticResource SupportingText}" />
+                        <TextBlock Style="{StaticResource SupportingText}"
+                                   Text="Check the code against the nameplate, or browse Assets for what this device is holding." />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </utu:SafeArea>
+</Page>

@@ -1,0 +1,71 @@
+using Trace.Domain.Enums;
+
+namespace Trace.Presentation.Controls;
+
+/// <summary>
+/// How loudly a piece of status should read. One scale covers dispositions, asset
+/// conditions, reading ranges and sync states, so the same colour always means the same
+/// thing wherever it appears.
+/// </summary>
+public enum StatusSeverity
+{
+    Neutral = 0,
+    Positive = 1,
+    Caution = 2,
+    Critical = 3,
+    Info = 4,
+}
+
+public static class StatusSeverityMap
+{
+    public static StatusSeverity ToSeverity(this Disposition disposition) => disposition switch
+    {
+        Disposition.Pass => StatusSeverity.Positive,
+        Disposition.Watch => StatusSeverity.Caution,
+        Disposition.Fail => StatusSeverity.Critical,
+        _ => StatusSeverity.Neutral,
+    };
+
+    public static StatusSeverity ToSeverity(this AssetCondition condition) => condition switch
+    {
+        AssetCondition.Healthy => StatusSeverity.Positive,
+        AssetCondition.Watch => StatusSeverity.Caution,
+        AssetCondition.Failed => StatusSeverity.Critical,
+        _ => StatusSeverity.Neutral,
+    };
+
+    public static StatusSeverity ToSeverity(this RangeStatus range) => range switch
+    {
+        RangeStatus.Within => StatusSeverity.Positive,
+        RangeStatus.Below or RangeStatus.Above => StatusSeverity.Caution,
+        _ => StatusSeverity.Neutral,
+    };
+
+    public static StatusSeverity ToSeverity(this SyncState state) => state switch
+    {
+        SyncState.Synced => StatusSeverity.Positive,
+        SyncState.Pending => StatusSeverity.Info,
+        SyncState.Failed => StatusSeverity.Critical,
+        _ => StatusSeverity.Neutral,
+    };
+
+    public static StatusSeverity ToSeverity(this CorrectivePriority priority) => priority switch
+    {
+        CorrectivePriority.Critical or CorrectivePriority.High => StatusSeverity.Critical,
+        CorrectivePriority.Medium => StatusSeverity.Caution,
+        _ => StatusSeverity.Neutral,
+    };
+
+    /// <summary>
+    /// The shape paired with each severity. Status is never carried by colour alone — a
+    /// technician with a colour-vision deficiency, or in direct sun, reads the mark.
+    /// </summary>
+    public static string ToGlyphKey(this StatusSeverity severity) => severity switch
+    {
+        StatusSeverity.Positive => "IconCheck",
+        StatusSeverity.Caution => "IconWatch",
+        StatusSeverity.Critical => "IconFail",
+        StatusSeverity.Info => "IconSync",
+        _ => "IconNote",
+    };
+}

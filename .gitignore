@@ -490,3 +490,5 @@ $RECYCLE.BIN/
 solution-config.props
 # Publish Profiles
 !**/Properties/PublishProfiles/*.pubxml
+# Local verification captures and run logs
+artifacts/
