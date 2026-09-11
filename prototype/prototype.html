@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>TRACE — Field Maintenance</title>
+<style>
+*{box-sizing:border-box} html,body{margin:0;height:100%;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,select,textarea{font:inherit}
+
+:root{
+ --bg:#08100f;--panel:#0f1917;--panel2:#14211e;--ink:#eef8f4;--muted:#8fa69f;
+ --line:#263a35;--accent:#78f0b6;--warn:#ffca6c;--danger:#ff6f66;--blue:#7fc9ff;
+}
+body.light{--bg:#eef3f0;--panel:#fff;--panel2:#f6f9f7;--ink:#12201c;--muted:#62736d;--line:#d9e3df}
+body{background:var(--bg);color:var(--ink)}
+.app{min-height:100vh;display:grid;grid-template-columns:84px 320px minmax(0,1fr)}
+.rail{border-right:1px solid var(--line);padding:18px 12px;display:flex;flex-direction:column;gap:10px}
+.logo{font-weight:900;letter-spacing:.08em;margin:4px 6px 16px}.navbtn{border:0;background:transparent;color:var(--muted);padding:12px 6px;border-radius:10px;cursor:pointer}
+.navbtn.active,.navbtn:hover{background:var(--panel2);color:var(--ink)}
+.list{border-right:1px solid var(--line);padding:22px;overflow:auto}.eyebrow{text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--accent)}
+h1,h2,h3,p{margin-top:0}.assetcard{padding:14px;border:1px solid var(--line);border-radius:14px;margin:10px 0;background:var(--panel);cursor:pointer}
+.assetcard.active{outline:2px solid color-mix(in srgb,var(--accent),transparent 40%)}
+.assetcard small,.muted{color:var(--muted)}
+.workspace{padding:22px;display:grid;grid-template-rows:auto 1fr;min-width:0}
+.topbar{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+.pills{display:flex;gap:8px;flex-wrap:wrap}.pill{border:1px solid var(--line);border-radius:999px;padding:8px 11px;color:var(--muted)}
+.canvas{margin-top:16px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(135deg,#15201f,#0d1413);position:relative;min-height:520px;overflow:hidden}
+body.light .canvas{background:linear-gradient(135deg,#f7faf8,#e7efeb)}
+.machine{position:absolute;left:8%;right:8%;top:18%;bottom:18%;display:flex;align-items:center;justify-content:center}
+.machine svg{width:min(720px,90%);filter:drop-shadow(0 24px 30px rgba(0,0,0,.28))}
+.marker{position:absolute;width:42px;height:42px;border-radius:50%;border:4px solid var(--bg);display:grid;place-items:center;font-weight:800;cursor:pointer;background:var(--blue);color:#061018;box-shadow:0 6px 24px rgba(0,0,0,.35)}
+.marker.watch{background:var(--warn)}.marker.fail{background:var(--danger);color:white}
+.sheet{position:absolute;right:16px;top:16px;width:min(390px,calc(100% - 32px));max-height:calc(100% - 32px);overflow:auto;background:color-mix(in srgb,var(--panel) 96%,transparent);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.metric{display:flex;align-items:end;gap:8px;margin:12px 0}.metric strong{font-size:36px}.range{color:var(--muted);font-size:13px}
+input,textarea,select{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:11px 12px;margin:6px 0 12px}
+.row{display:flex;gap:8px}.row>*{flex:1}.seg button,.primary,.secondary{border:1px solid var(--line);background:var(--panel2);color:var(--ink);padding:11px 12px;border-radius:10px;cursor:pointer}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.seg button.sel{outline:2px solid var(--accent)}
+.primary{background:var(--accent);color:#062015;border-color:transparent;font-weight:800}.dangerbtn{background:var(--danger);color:white}
+.secondary{background:transparent}.full{width:100%}.hidden{display:none!important}.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:var(--bg);padding:12px 15px;border-radius:12px;font-weight:700;z-index:5}
+.timeline{display:grid;gap:10px}.event{padding:12px;border-left:3px solid var(--line);background:var(--panel2);border-radius:0 10px 10px 0}
+.syncbox{padding:12px;background:var(--panel2);border-radius:12px;margin-top:10px}
+.toggle{display:flex;align-items:center;gap:8px}.toggle input{width:auto;margin:0}
+@media(max-width:900px){.app{grid-template-columns:74px minmax(0,1fr)}.list{display:none}.sheet{position:absolute}.workspace{padding:14px}}
+@media(max-width:560px){.app{display:block;padding-bottom:70px}.rail{position:fixed;z-index:6;bottom:0;left:0;right:0;height:66px;background:var(--panel);border-top:1px solid var(--line);border-right:0;flex-direction:row;justify-content:space-around;padding:8px}.logo{display:none}.rail .navbtn{font-size:11px}.workspace{padding:12px}.canvas{min-height:640px}.sheet{left:10px;right:10px;bottom:10px;top:auto;width:auto;max-height:55%}.machine{top:8%;bottom:42%}.topbar h1{font-size:22px}}
+
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="rail">
+    <div class="logo">TRACE</div>
+    <button class="navbtn active" data-view="today">Today</button>
+    <button class="navbtn" data-view="assets">Assets</button>
+    <button class="navbtn" data-view="scan">Scan</button>
+    <button class="navbtn" data-view="sync">Sync <span id="syncCount"></span></button>
+    <button class="navbtn" id="themeBtn">Theme</button>
+  </aside>
+  <aside class="list">
+    <div class="eyebrow">Assigned work</div>
+    <h2>Today</h2>
+    <div class="assetcard active"><strong>P-204 · Centrifugal Pump</strong><br><small>Area B · Water Treatment</small></div>
+    <div class="assetcard"><strong>AHU-12 · Air Handler</strong><br><small>North Plant · Roof</small></div>
+    <div class="assetcard"><strong>C-07 · Compressor</strong><br><small>Packaging · Line 3</small></div>
+    <div class="syncbox"><div class="toggle"><input id="offline" type="checkbox"><label for="offline">Work offline</label></div><div class="muted" id="netState">Online · all changes sync immediately</div></div>
+  </aside>
+  <main class="workspace">
+    <div class="topbar">
+      <div><div class="eyebrow">P-204 · Area B</div><h1>Centrifugal Pump</h1><div class="pills"><span class="pill">Inspection in progress</span><span class="pill">4 points</span><span class="pill" id="syncPill">Synced</span></div></div>
+      <button class="secondary" id="historyBtn">History</button>
+    </div>
+    <section class="canvas" id="canvas">
+      <div class="machine">
+        <svg viewBox="0 0 800 300" role="img" aria-label="Simplified centrifugal pump diagram">
+          <defs><linearGradient id="g" x1="0" x2="1"><stop stop-color="#667b76"/><stop offset="1" stop-color="#253431"/></linearGradient></defs>
+          <rect x="95" y="100" width="210" height="110" rx="26" fill="url(#g)" stroke="#93aaa4" stroke-width="4"/>
+          <circle cx="320" cy="155" r="90" fill="url(#g)" stroke="#93aaa4" stroke-width="4"/>
+          <circle cx="320" cy="155" r="50" fill="#17231f" stroke="#93aaa4" stroke-width="3"/>
+          <rect x="408" y="120" width="190" height="70" rx="24" fill="url(#g)" stroke="#93aaa4" stroke-width="4"/>
+          <rect x="590" y="92" width="120" height="126" rx="18" fill="url(#g)" stroke="#93aaa4" stroke-width="4"/>
+          <rect x="80" y="218" width="650" height="28" rx="7" fill="#253431"/>
+        </svg>
+      </div>
+      <button class="marker" style="left:22%;top:37%" data-point="motor">1</button>
+      <button class="marker fail" style="left:40%;top:36%" data-point="seal">2</button>
+      <button class="marker watch" style="left:61%;top:40%" data-point="coupling">3</button>
+      <button class="marker" style="left:76%;top:34%" data-point="bearing">4</button>
+
+      <div class="sheet" id="pointSheet">
+        <div class="eyebrow">Inspection point</div>
+        <h2 id="pointName">Seal housing</h2>
+        <p class="muted" id="pointHint">Abnormal vibration detected during last inspection.</p>
+        <div class="metric"><strong id="latestReading">7.2</strong><span id="unit">mm/s</span></div>
+        <div class="range" id="normalRange">Normal: 0–2.8 mm/s</div>
+        <label>New reading</label>
+        <input id="reading" inputmode="decimal" value="7.2"/>
+        <div class="seg">
+          <button data-status="pass">✓ Pass</button>
+          <button data-status="watch">△ Watch</button>
+          <button data-status="fail" class="sel">✕ Fail</button>
+        </div>
+        <label style="display:block;margin-top:12px">Notes</label>
+        <textarea id="notes" rows="3">Increased vibration and heat. Inspect seal at next shutdown.</textarea>
+        <p id="validation" class="muted"></p>
+        <div class="row"><button class="secondary" id="attachBtn">Attach evidence</button><button class="primary" id="completeBtn">Complete point</button></div>
+        <button class="secondary full hidden" id="correctiveBtn" style="margin-top:8px">Create corrective action</button>
+      </div>
+
+      <div class="sheet hidden" id="historySheet">
+        <div class="eyebrow">Asset history</div><h2>Condition timeline</h2>
+        <div class="timeline" id="historyList"></div>
+        <button class="secondary full" id="closeHistory">Close</button>
+      </div>
+
+      <div class="sheet hidden" id="correctiveSheet">
+        <div class="eyebrow">Corrective action</div><h2>Create from Seal housing</h2>
+        <label>Summary</label><input id="actionSummary" value="Inspect and replace pump seal"/>
+        <div class="row"><div><label>Priority</label><select id="priority"><option>High</option><option>Medium</option><option>Low</option></select></div><div><label>Assignee</label><select id="assignee"><option>Mechanical Team</option><option>Alex R.</option><option>Priya S.</option></select></div></div>
+        <div class="row"><button class="secondary" id="cancelAction">Cancel</button><button class="primary dangerbtn" id="saveAction">Create action</button></div>
+      </div>
+
+      <div class="sheet hidden" id="syncSheet">
+        <div class="eyebrow">Offline queue</div><h2>Synchronization</h2><div id="queue"></div>
+        <button class="primary full" id="syncNow">Sync now</button>
+        <button class="secondary full" id="closeSync" style="margin-top:8px">Close</button>
+      </div>
+    </section>
+  </main>
+</div>
+<div class="toast hidden" id="toast"></div>
+
+<script>
+
+const points={
+ motor:{name:'Motor body',hint:'Check noise, surface temperature and mount condition.',latest:71,unit:'°C',min:10,max:85,status:'pass'},
+ seal:{name:'Seal housing',hint:'Abnormal vibration detected during last inspection.',latest:7.2,unit:'mm/s',min:0,max:2.8,status:'fail'},
+ coupling:{name:'Coupling',hint:'Inspect alignment witness marks and guard condition.',latest:1.9,unit:'mm',min:0,max:1.5,status:'watch'},
+ bearing:{name:'Drive-end bearing',hint:'Record bearing temperature after 15 minutes running.',latest:64,unit:'°C',min:10,max:78,status:'pass'}
+};
+let selected='seal', disposition='fail';
+let history=JSON.parse(localStorage.getItem('trace_history')||'[]');
+let actions=JSON.parse(localStorage.getItem('trace_actions')||'[]');
+let queue=JSON.parse(localStorage.getItem('trace_queue')||'[]');
+
+const $=id=>document.getElementById(id);
+function toast(m){$('toast').textContent=m;$('toast').classList.remove('hidden');setTimeout(()=>$('toast').classList.add('hidden'),1800)}
+function persist(){localStorage.setItem('trace_history',JSON.stringify(history));localStorage.setItem('trace_actions',JSON.stringify(actions));localStorage.setItem('trace_queue',JSON.stringify(queue));renderSync()}
+function showPoint(id){
+ selected=id; const p=points[id];
+ $('pointName').textContent=p.name;$('pointHint').textContent=p.hint;$('latestReading').textContent=p.latest;$('unit').textContent=p.unit;
+ $('normalRange').textContent=`Normal: ${p.min}–${p.max} ${p.unit}`;$('reading').value=p.latest; disposition=p.status;
+ document.querySelectorAll('.seg button').forEach(b=>b.classList.toggle('sel',b.dataset.status===disposition));
+ $('correctiveBtn').classList.toggle('hidden',disposition!=='fail');
+ document.querySelectorAll('.sheet').forEach(s=>s.classList.add('hidden'));$('pointSheet').classList.remove('hidden');
+ validateReading();
+}
+function validateReading(){
+ const p=points[selected],v=Number($('reading').value);
+ if(Number.isNaN(v)){$('validation').textContent='Enter a numeric reading.';return false}
+ const out=v<p.min||v>p.max;
+ $('validation').textContent=out?`Outside expected range. Confirm disposition before completion.`:`Within expected range.`;
+ return true;
+}
+document.querySelectorAll('.marker').forEach(m=>m.onclick=()=>showPoint(m.dataset.point));
+document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{disposition=b.dataset.status;document.querySelectorAll('.seg button').forEach(x=>x.classList.toggle('sel',x===b));$('correctiveBtn').classList.toggle('hidden',disposition!=='fail')});
+$('reading').oninput=validateReading;
+$('completeBtn').onclick=()=>{
+ if(!validateReading()) return;
+ if(disposition==='fail'&&!$('notes').value.trim()){ $('validation').textContent='A failed point requires a note or evidence.'; return;}
+ const p=points[selected],v=Number($('reading').value);p.latest=v;p.status=disposition;
+ history.unshift({point:p.name,reading:v,unit:p.unit,status:disposition,note:$('notes').value,time:new Date().toLocaleString()});
+ if($('offline').checked) queue.unshift({type:'InspectionEvent',label:`${p.name} · ${v} ${p.unit}`,status:'Pending'});
+ persist();toast($('offline').checked?'Inspection saved locally · queued for sync':'Inspection completed');
+ $('latestReading').textContent=v;
+ if(disposition==='fail') $('correctiveBtn').classList.remove('hidden');
+};
+$('attachBtn').onclick=()=>toast('Evidence attached (prototype simulation)');
+$('correctiveBtn').onclick=()=>{document.querySelectorAll('.sheet').forEach(s=>s.classList.add('hidden'));$('correctiveSheet').classList.remove('hidden')};
+$('cancelAction').onclick=()=>showPoint(selected);
+$('saveAction').onclick=()=>{
+ if(!$('actionSummary').value.trim()){toast('Summary is required');return}
+ actions.unshift({summary:$('actionSummary').value,priority:$('priority').value,assignee:$('assignee').value,point:points[selected].name});
+ if($('offline').checked) queue.unshift({type:'CorrectiveAction',label:$('actionSummary').value,status:'Pending'});
+ persist();toast('Corrective action created');showPoint(selected);
+};
+$('historyBtn').onclick=()=>{
+ document.querySelectorAll('.sheet').forEach(s=>s.classList.add('hidden'));$('historySheet').classList.remove('hidden');
+ $('historyList').innerHTML=(history.length?history:[{point:'Seal housing',reading:7.2,unit:'mm/s',status:'fail',note:'Increased vibration noted.',time:'Sep 10 · 10:14'}]).map(e=>`<div class="event"><strong>${e.point} · ${e.reading} ${e.unit}</strong><br><span class="muted">${e.status.toUpperCase()} · ${e.time}</span><br>${e.note||''}</div>`).join('');
+};
+$('closeHistory').onclick=()=>showPoint(selected);
+function renderSync(){
+ $('syncCount').textContent=queue.length?`(${queue.length})`:'';$('syncPill').textContent=queue.length?`${queue.length} pending`:'Synced';
+ $('queue').innerHTML=queue.length?queue.map((q,i)=>`<div class="event"><strong>${q.type}</strong><br>${q.label}<br><span class="muted">${q.status}</span></div>`).join(''):'<p class="muted">Nothing waiting to sync.</p>';
+}
+document.querySelector('[data-view="sync"]').onclick=()=>{document.querySelectorAll('.sheet').forEach(s=>s.classList.add('hidden'));$('syncSheet').classList.remove('hidden');renderSync()}
+$('closeSync').onclick=()=>showPoint(selected);
+$('syncNow').onclick=()=>{if($('offline').checked){toast('Go online to sync');return}queue=[];persist();toast('All changes synchronized')};
+$('offline').onchange=()=>{$('netState').textContent=$('offline').checked?'Offline · changes save locally':'Online · all changes sync immediately';renderSync()}
+$('themeBtn').onclick=()=>document.body.classList.toggle('light');
+showPoint('seal');renderSync();
+
+</script>
+</body>
+</html>
