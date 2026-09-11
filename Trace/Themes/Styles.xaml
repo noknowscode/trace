@@ -141,6 +141,47 @@
         </Setter>
     </Style>
 
+    <!--
+        Machine surfaces for the spatial view. The body reads as a solid object by tinting
+        the on-surface role rather than by using a fixed grey, so the machine stays legible
+        in both themes. Recesses and highlights are plain black and white at low alpha
+        because shadow and shine are dark and bright in every theme.
+    -->
+    <Style x:Key="MachineBodyRect" TargetType="Rectangle">
+        <Setter Property="Fill" Value="{ThemeResource OnSurfaceVariantBrush}" />
+        <Setter Property="Opacity" Value="0.3" />
+    </Style>
+
+    <Style x:Key="MachineEdgeRect" TargetType="Rectangle">
+        <Setter Property="Fill" Value="{ThemeResource OnSurfaceVariantBrush}" />
+        <Setter Property="Opacity" Value="0.42" />
+    </Style>
+
+    <Style x:Key="MachineBodyEllipse" TargetType="Ellipse">
+        <Setter Property="Fill" Value="{ThemeResource OnSurfaceVariantBrush}" />
+        <Setter Property="Opacity" Value="0.3" />
+    </Style>
+
+    <Style x:Key="MachineEdgeEllipse" TargetType="Ellipse">
+        <Setter Property="Fill" Value="{ThemeResource OnSurfaceVariantBrush}" />
+        <Setter Property="Opacity" Value="0.42" />
+    </Style>
+
+    <Style x:Key="MachineRecessRect" TargetType="Rectangle">
+        <Setter Property="Fill" Value="Black" />
+        <Setter Property="Opacity" Value="0.26" />
+    </Style>
+
+    <Style x:Key="MachineRecessEllipse" TargetType="Ellipse">
+        <Setter Property="Fill" Value="Black" />
+        <Setter Property="Opacity" Value="0.26" />
+    </Style>
+
+    <Style x:Key="MachineHighlightRect" TargetType="Rectangle">
+        <Setter Property="Fill" Value="White" />
+        <Setter Property="Opacity" Value="0.08" />
+    </Style>
+
     <!-- Count on a navigation icon. Radius is half the height so Skia draws a circle. -->
     <Style x:Key="CountBadge" TargetType="Border">
         <Setter Property="Background" Value="{ThemeResource ErrorBrush}" />

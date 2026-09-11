@@ -1,0 +1,329 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:controls="using:Trace.Presentation.Controls">
+
+    <!--
+        The inspection point marker. 44 across for a gloved thumb, with a ring in the page
+        background colour so it separates from the machine underneath it.
+
+        Disposition is carried three ways at once: the fill colour, the mark in the badge,
+        and the point's own number — colour alone would fail in sun, in a dark plant room,
+        and for a technician with a colour-vision deficiency.
+    -->
+    <Style x:Key="InspectionPointMarkerStyle" TargetType="controls:InspectionPointMarker">
+        <!-- The control box is wider than the 44 disc so the selection halo and the status
+             badge have room; sizing it to the disc clips both into a wedge. -->
+        <Setter Property="Width" Value="60" />
+        <Setter Property="Height" Value="60" />
+        <Setter Property="Background" Value="{ThemeResource SurfaceVariantBrush}" />
+        <Setter Property="Foreground" Value="{ThemeResource OnSurfaceBrush}" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="UseSystemFocusVisuals" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="controls:InspectionPointMarker">
+                    <Grid x:Name="LayoutRoot"
+                          Width="60"
+                          Height="60"
+                          RenderTransformOrigin="0.5,0.5">
+                        <Grid.RenderTransform>
+                            <ScaleTransform x:Name="MarkerScale" />
+                        </Grid.RenderTransform>
+
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="DispositionStates">
+                                <VisualState x:Name="None">
+                                    <VisualState.Setters>
+                                        <Setter Target="Disc.Fill" Value="{ThemeResource SurfaceVariantBrush}" />
+                                        <Setter Target="Number.Foreground" Value="{ThemeResource OnSurfaceVariantBrush}" />
+                                        <Setter Target="Badge.Background" Value="{ThemeResource SurfaceVariantBrush}" />
+                                        <Setter Target="Marks.Foreground" Value="{ThemeResource OnSurfaceVariantBrush}" />
+                                        <Setter Target="NoneMark.Visibility" Value="Visible" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Pass">
+                                    <VisualState.Setters>
+                                        <Setter Target="Disc.Fill" Value="{ThemeResource PrimaryBrush}" />
+                                        <Setter Target="Number.Foreground" Value="{ThemeResource OnPrimaryBrush}" />
+                                        <Setter Target="Badge.Background" Value="{ThemeResource PrimaryBrush}" />
+                                        <Setter Target="Marks.Foreground" Value="{ThemeResource OnPrimaryBrush}" />
+                                        <Setter Target="PassMark.Visibility" Value="Visible" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Watch">
+                                    <VisualState.Setters>
+                                        <Setter Target="Disc.Fill" Value="{ThemeResource TertiaryBrush}" />
+                                        <Setter Target="Number.Foreground" Value="{ThemeResource OnTertiaryBrush}" />
+                                        <Setter Target="Badge.Background" Value="{ThemeResource TertiaryBrush}" />
+                                        <Setter Target="Marks.Foreground" Value="{ThemeResource OnTertiaryBrush}" />
+                                        <Setter Target="WatchMark.Visibility" Value="Visible" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Fail">
+                                    <VisualState.Setters>
+                                        <Setter Target="Disc.Fill" Value="{ThemeResource ErrorBrush}" />
+                                        <Setter Target="Number.Foreground" Value="{ThemeResource OnErrorBrush}" />
+                                        <Setter Target="Badge.Background" Value="{ThemeResource ErrorBrush}" />
+                                        <Setter Target="Marks.Foreground" Value="{ThemeResource OnErrorBrush}" />
+                                        <Setter Target="FailMark.Visibility" Value="Visible" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+
+                            <VisualStateGroup x:Name="SelectionStates">
+                                <VisualState x:Name="Unselected" />
+                                <VisualState x:Name="Selected">
+                                    <VisualState.Setters>
+                                        <Setter Target="SelectionRing.Opacity" Value="1" />
+                                        <Setter Target="MarkerScale.ScaleX" Value="1.08" />
+                                        <Setter Target="MarkerScale.ScaleY" Value="1.08" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="StateOverlay.Opacity" Value="0.1" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="StateOverlay.Opacity" Value="0.16" />
+                                        <Setter Target="MarkerScale.ScaleX" Value="0.94" />
+                                        <Setter Target="MarkerScale.ScaleY" Value="0.94" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Target="LayoutRoot.Opacity" Value="0.38" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+
+                            <VisualStateGroup x:Name="FocusStates">
+                                <VisualState x:Name="Unfocused" />
+                                <VisualState x:Name="PointerFocused" />
+                                <VisualState x:Name="Focused">
+                                    <VisualState.Setters>
+                                        <Setter Target="FocusRing.Opacity" Value="1" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+
+                        <!-- Selection halo, drawn outside the disc. -->
+                        <Ellipse x:Name="SelectionRing"
+                                 Width="58"
+                                 Height="58"
+                                 Stroke="{ThemeResource OnSurfaceBrush}"
+                                 StrokeThickness="2"
+                                 Opacity="0"
+                                 IsHitTestVisible="False" />
+
+                        <Ellipse x:Name="FocusRing"
+                                 Width="54"
+                                 Height="54"
+                                 Stroke="{ThemeResource SecondaryBrush}"
+                                 StrokeThickness="3"
+                                 Opacity="0"
+                                 IsHitTestVisible="False" />
+
+                        <!-- Separator ring in the page ground, so the disc reads off the machine. -->
+                        <Ellipse Width="48" Height="48" Fill="{ThemeResource BackgroundBrush}" />
+
+                        <Ellipse x:Name="Disc" Width="44" Height="44" />
+
+                        <Ellipse x:Name="StateOverlay"
+                                 Width="44"
+                                 Height="44"
+                                 Fill="{ThemeResource OnSurfaceBrush}"
+                                 Opacity="0"
+                                 IsHitTestVisible="False" />
+
+                        <TextBlock x:Name="Number"
+                                   Text="{TemplateBinding Sequence}"
+                                   Style="{StaticResource TitleMedium}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   IsHitTestVisible="False" />
+
+                        <!-- Disposition mark, so status never rests on colour alone. -->
+                        <Border x:Name="Badge"
+                                Width="20"
+                                Height="20"
+                                CornerRadius="10"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Bottom"
+                                Margin="0,0,4,4"
+                                BorderBrush="{ThemeResource BackgroundBrush}"
+                                BorderThickness="2"
+                                IsHitTestVisible="False">
+                            <Viewbox Width="10" Height="10">
+                                <Grid x:Name="Marks" Width="24" Height="24">
+                                    <PathIcon x:Name="NoneMark" Data="{StaticResource IconNote}" Visibility="Collapsed" />
+                                    <PathIcon x:Name="PassMark" Data="{StaticResource IconCheck}" Visibility="Collapsed" />
+                                    <PathIcon x:Name="WatchMark" Data="{StaticResource IconWatch}" Visibility="Collapsed" />
+                                    <PathIcon x:Name="FailMark" Data="{StaticResource IconFail}" Visibility="Collapsed" />
+                                </Grid>
+                            </Viewbox>
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        A disposition choice. All three are always visible and equally weighted: recording
+        the condition is the decision the app exists for, and hiding two of them behind a
+        picker would cost a press for no gain. Kind and chosen state resolve to one state
+        name because visual state groups cannot see each other.
+    -->
+    <Style x:Key="DispositionButtonStyle" TargetType="controls:DispositionButton">
+        <Setter Property="MinHeight" Value="{StaticResource TouchTargetSize}" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="Padding" Value="8,6" />
+        <Setter Property="UseSystemFocusVisuals" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="controls:DispositionButton">
+                    <Grid x:Name="LayoutRoot" RenderTransformOrigin="0.5,0.5">
+                        <Grid.RenderTransform>
+                            <ScaleTransform x:Name="PressScale" />
+                        </Grid.RenderTransform>
+
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="ChoiceStates">
+                                <VisualState x:Name="PassIdle">
+                                    <VisualState.Setters>
+                                        <Setter Target="Fill.Background" Value="Transparent" />
+                                        <Setter Target="Fill.BorderBrush" Value="{ThemeResource OutlineBrush}" />
+                                        <Setter Target="Caption.Foreground" Value="{ThemeResource OnSurfaceVariantBrush}" />
+                                        <Setter Target="Mark.Foreground" Value="{ThemeResource OnSurfaceVariantBrush}" />
+                                        <Setter Target="PassMark.Visibility" Value="Visible" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="PassChosen">
+                                    <VisualState.Setters>
+                                        <Setter Target="Fill.Background" Value="{ThemeResource PrimaryBrush}" />
+                                        <Setter Target="Fill.BorderBrush" Value="{ThemeResource PrimaryBrush}" />
+                                        <Setter Target="Caption.Foreground" Value="{ThemeResource OnPrimaryBrush}" />
+                                        <Setter Target="Mark.Foreground" Value="{ThemeResource OnPrimaryBrush}" />
+                                        <Setter Target="PassMark.Visibility" Value="Visible" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="WatchIdle">
+                                    <VisualState.Setters>
+                                        <Setter Target="Fill.Background" Value="Transparent" />
+                                        <Setter Target="Fill.BorderBrush" Value="{ThemeResource OutlineBrush}" />
+                                        <Setter Target="Caption.Foreground" Value="{ThemeResource OnSurfaceVariantBrush}" />
+                                        <Setter Target="Mark.Foreground" Value="{ThemeResource OnSurfaceVariantBrush}" />
+                                        <Setter Target="WatchMark.Visibility" Value="Visible" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="WatchChosen">
+                                    <VisualState.Setters>
+                                        <Setter Target="Fill.Background" Value="{ThemeResource TertiaryBrush}" />
+                                        <Setter Target="Fill.BorderBrush" Value="{ThemeResource TertiaryBrush}" />
+                                        <Setter Target="Caption.Foreground" Value="{ThemeResource OnTertiaryBrush}" />
+                                        <Setter Target="Mark.Foreground" Value="{ThemeResource OnTertiaryBrush}" />
+                                        <Setter Target="WatchMark.Visibility" Value="Visible" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="FailIdle">
+                                    <VisualState.Setters>
+                                        <Setter Target="Fill.Background" Value="Transparent" />
+                                        <Setter Target="Fill.BorderBrush" Value="{ThemeResource OutlineBrush}" />
+                                        <Setter Target="Caption.Foreground" Value="{ThemeResource OnSurfaceVariantBrush}" />
+                                        <Setter Target="Mark.Foreground" Value="{ThemeResource OnSurfaceVariantBrush}" />
+                                        <Setter Target="FailMark.Visibility" Value="Visible" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="FailChosen">
+                                    <VisualState.Setters>
+                                        <Setter Target="Fill.Background" Value="{ThemeResource ErrorBrush}" />
+                                        <Setter Target="Fill.BorderBrush" Value="{ThemeResource ErrorBrush}" />
+                                        <Setter Target="Caption.Foreground" Value="{ThemeResource OnErrorBrush}" />
+                                        <Setter Target="Mark.Foreground" Value="{ThemeResource OnErrorBrush}" />
+                                        <Setter Target="FailMark.Visibility" Value="Visible" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="StateOverlay.Opacity" Value="0.08" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="StateOverlay.Opacity" Value="0.12" />
+                                        <Setter Target="PressScale.ScaleX" Value="0.98" />
+                                        <Setter Target="PressScale.ScaleY" Value="0.98" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Target="LayoutRoot.Opacity" Value="0.38" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+
+                            <VisualStateGroup x:Name="FocusStates">
+                                <VisualState x:Name="Unfocused" />
+                                <VisualState x:Name="PointerFocused" />
+                                <VisualState x:Name="Focused">
+                                    <VisualState.Setters>
+                                        <Setter Target="FocusRing.Opacity" Value="1" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+
+                        <Border x:Name="Fill"
+                                BorderThickness="1"
+                                CornerRadius="{StaticResource ControlRadius}">
+                            <StackPanel Orientation="Horizontal"
+                                        Spacing="6"
+                                        Padding="{TemplateBinding Padding}"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center">
+                                <Viewbox Width="15" Height="15" VerticalAlignment="Center">
+                                    <Grid x:Name="Mark" Width="24" Height="24">
+                                        <PathIcon x:Name="PassMark" Data="{StaticResource IconCheck}" Visibility="Collapsed" />
+                                        <PathIcon x:Name="WatchMark" Data="{StaticResource IconWatch}" Visibility="Collapsed" />
+                                        <PathIcon x:Name="FailMark" Data="{StaticResource IconFail}" Visibility="Collapsed" />
+                                    </Grid>
+                                </Viewbox>
+                                <TextBlock x:Name="Caption"
+                                           Text="{TemplateBinding Label}"
+                                           Style="{StaticResource LabelLarge}"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border x:Name="StateOverlay"
+                                Background="{ThemeResource OnSurfaceBrush}"
+                                CornerRadius="{StaticResource ControlRadius}"
+                                Opacity="0"
+                                IsHitTestVisible="False" />
+
+                        <Border x:Name="FocusRing"
+                                BorderBrush="{ThemeResource SecondaryBrush}"
+                                BorderThickness="2"
+                                CornerRadius="{StaticResource ControlRadius}"
+                                Margin="-2"
+                                Opacity="0"
+                                IsHitTestVisible="False" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

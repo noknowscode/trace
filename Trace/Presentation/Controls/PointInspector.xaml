@@ -1,0 +1,261 @@
+﻿<UserControl x:Class="Trace.Presentation.Controls.PointInspector"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:Trace.Presentation.Controls">
+
+    <!--
+        Everything one inspection point needs, in the order the work happens: what am I
+        looking at, what did it read last time, what does it read now, what do I call it,
+        and what proves it. Hosted as a bottom sheet on a phone and as a pinned inspector on
+        wider screens — same element either way, so an in-progress reading survives a
+        rotation or a window resize.
+    -->
+    <Grid RowSpacing="14">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Identity -->
+        <Grid ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Spacing="2">
+                <TextBlock Text="INSPECTION POINT" Style="{StaticResource EyebrowText}" />
+                <TextBlock Text="{Binding SelectedPoint.Label}"
+                           Style="{StaticResource TitleLarge}"
+                           Foreground="{ThemeResource OnSurfaceBrush}"
+                           TextWrapping="Wrap" />
+                <TextBlock Text="{Binding SelectedPoint.Guidance}"
+                           Style="{StaticResource SupportingText}"
+                           Margin="0,2,0,0" />
+            </StackPanel>
+            <Button Grid.Column="1"
+                    Style="{StaticResource TextButtonStyle}"
+                    Width="44"
+                    Height="44"
+                    Padding="0"
+                    VerticalAlignment="Top"
+                    Command="{Binding CloseInspector}"
+                    AutomationProperties.Name="Close inspection point">
+                <Viewbox Width="14" Height="14">
+                    <PathIcon Data="{StaticResource IconFail}" />
+                </Viewbox>
+            </Button>
+        </Grid>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,4,0">
+            <StackPanel Spacing="14">
+
+                <!-- Last reading and the band it is judged against -->
+                <Border Style="{StaticResource TileSurface}">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="{Binding SelectedPoint.ReadingType}"
+                                   Style="{StaticResource FieldLabelText}" />
+                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Bottom">
+                            <TextBlock Text="{Binding SelectedPoint.LatestReadingText}"
+                                       Style="{StaticResource MetricValueText}" />
+                            <TextBlock Text="{Binding SelectedPoint.Unit}"
+                                       Style="{StaticResource MetricUnitText}"
+                                       VerticalAlignment="Bottom"
+                                       Margin="0,0,0,6" />
+                        </StackPanel>
+                        <TextBlock Style="{StaticResource SupportingText}">
+                            <Run Text="Expected" />
+                            <Run Text="{Binding SelectedPoint.ExpectedRange}" />
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+
+                <!-- New reading -->
+                <StackPanel Spacing="6">
+                    <TextBlock Text="New reading" Style="{StaticResource FieldLabelText}" />
+                    <TextBox Text="{Binding ReadingText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             InputScope="Number"
+                             MinHeight="{StaticResource TouchTargetSize}"
+                             FontSize="20"
+                             AutomationProperties.Name="New reading" />
+                </StackPanel>
+
+                <!-- Disposition -->
+                <StackPanel Spacing="6">
+                    <TextBlock Text="Condition" Style="{StaticResource FieldLabelText}" />
+                    <Grid ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <controls:DispositionButton Style="{StaticResource DispositionButtonStyle}"
+                                                    Kind="Pass"
+                                                    Label="Pass"
+                                                    IsChosen="{Binding IsPassChosen}"
+                                                    Command="{Binding SetPass}"
+                                                    AutomationProperties.Name="Record pass" />
+                        <controls:DispositionButton Grid.Column="1"
+                                                    Style="{StaticResource DispositionButtonStyle}"
+                                                    Kind="Watch"
+                                                    Label="Watch"
+                                                    IsChosen="{Binding IsWatchChosen}"
+                                                    Command="{Binding SetWatch}"
+                                                    AutomationProperties.Name="Record watch" />
+                        <controls:DispositionButton Grid.Column="2"
+                                                    Style="{StaticResource DispositionButtonStyle}"
+                                                    Kind="Fail"
+                                                    Label="Fail"
+                                                    IsChosen="{Binding IsFailChosen}"
+                                                    Command="{Binding SetFail}"
+                                                    AutomationProperties.Name="Record fail" />
+                    </Grid>
+                </StackPanel>
+
+                <!-- Notes -->
+                <StackPanel Spacing="6">
+                    <TextBlock Text="Notes" Style="{StaticResource FieldLabelText}" />
+                    <TextBox Text="{Binding NoteText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             AcceptsReturn="True"
+                             TextWrapping="Wrap"
+                             MinHeight="88"
+                             MaxHeight="160"
+                             PlaceholderText="What did you see, hear or smell?"
+                             AutomationProperties.Name="Inspection notes" />
+                </StackPanel>
+
+                <!-- Evidence -->
+                <StackPanel Spacing="8">
+                    <Grid>
+                        <TextBlock Text="Evidence" Style="{StaticResource FieldLabelText}"
+                                   VerticalAlignment="Center" />
+                        <Button HorizontalAlignment="Right"
+                                Style="{StaticResource TextButtonStyle}"
+                                MinHeight="{StaticResource TouchTargetSize}"
+                                Command="{Binding AttachPhoto}"
+                                Content="Add photo"
+                                AutomationProperties.Name="Add photo evidence" />
+                    </Grid>
+
+                    <!-- Camera denied: the only way back on a real device is settings. -->
+                    <Border Style="{StaticResource TileSurface}"
+                            Visibility="{Binding IsCameraDenied, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel Spacing="8">
+                            <controls:StatusChip Severity="Critical" Text="Camera access denied" />
+                            <TextBlock Style="{StaticResource SupportingText}"
+                                       Text="TRACE cannot open the camera. Photos are optional — a written note also satisfies a failed point — but to attach one, allow camera access for TRACE in system settings." />
+                            <Button Style="{StaticResource OutlinedButtonStyle}"
+                                    HorizontalAlignment="Left"
+                                    MinHeight="{StaticResource TouchTargetSize}"
+                                    Command="{Binding GrantCameraFromSettings}"
+                                    Content="Open settings"
+                                    AutomationProperties.Name="Open camera settings" />
+                        </StackPanel>
+                    </Border>
+
+                    <ItemsRepeater ItemsSource="{Binding Draft.Evidence}">
+                        <ItemsRepeater.Layout>
+                            <StackLayout Spacing="8" />
+                        </ItemsRepeater.Layout>
+                        <ItemsRepeater.ItemTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource TileSurface}" Padding="8">
+                                    <Grid ColumnSpacing="10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Width="64"
+                                                Height="64"
+                                                CornerRadius="8"
+                                                Background="{ThemeResource SurfaceBrush}">
+                                            <Image Source="{Binding LocalUri}" Stretch="UniformToFill" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Caption}"
+                                                       Style="{StaticResource BodyMedium}"
+                                                       Foreground="{ThemeResource OnSurfaceBrush}"
+                                                       TextWrapping="Wrap" />
+                                            <TextBlock Text="{Binding Type}" Style="{StaticResource SupportingText}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsRepeater.ItemTemplate>
+                    </ItemsRepeater>
+
+                    <Border Style="{StaticResource TileSurface}"
+                            Visibility="{Binding HasEvidence, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}">
+                        <TextBlock Style="{StaticResource SupportingText}"
+                                   Text="No evidence attached. A photo is required only when you are failing a point and have not written a note." />
+                    </Border>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Verdict and commit -->
+        <StackPanel Grid.Row="2" Spacing="10">
+
+            <!--
+                The confirmation of what was just recorded sits with the point it belongs
+                to, rather than floating over the workspace where it would cover the very
+                buttons the technician needs next.
+            -->
+            <Border Background="{ThemeResource PrimaryContainerBrush}"
+                    BorderBrush="{ThemeResource PrimaryBrush}"
+                    BorderThickness="1"
+                    CornerRadius="{StaticResource ControlRadius}"
+                    Padding="12,10"
+                    Visibility="{Binding HasConfirmation, Converter={StaticResource BoolToVisibility}}">
+                <Grid ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="{Binding Confirmation}"
+                               Style="{StaticResource BodyMedium}"
+                               Foreground="{ThemeResource OnPrimaryContainerBrush}"
+                               TextWrapping="Wrap"
+                               VerticalAlignment="Center" />
+                    <Button Grid.Column="1"
+                            Style="{StaticResource TextButtonStyle}"
+                            MinHeight="{StaticResource TouchTargetSize}"
+                            Command="{Binding DismissConfirmation}"
+                            Content="Dismiss"
+                            AutomationProperties.Name="Dismiss confirmation" />
+                </Grid>
+            </Border>
+
+            <Border Style="{StaticResource TileSurface}"
+                    Visibility="{Binding ValidationMessage, Converter={StaticResource StringToVisibility}}">
+                <StackPanel Spacing="8">
+                    <controls:WrapPanel HorizontalSpacing="8" VerticalSpacing="6">
+                        <controls:StatusChip Severity="Critical" Text="Fix this"
+                                             Visibility="{Binding HasBlocker, Converter={StaticResource BoolToVisibility}}" />
+                        <controls:StatusChip Severity="Caution" Text="Out of range"
+                                             Visibility="{Binding IsOutOfRange, Converter={StaticResource BoolToVisibility}}" />
+                    </controls:WrapPanel>
+                    <TextBlock Text="{Binding ValidationMessage}"
+                               Style="{StaticResource SupportingText}"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
+            <Button Style="{StaticResource FilledButtonStyle}"
+                    HorizontalAlignment="Stretch"
+                    MinHeight="{StaticResource TouchTargetSize}"
+                    IsEnabled="{Binding CanComplete}"
+                    Command="{Binding CompletePoint}"
+                    Content="Complete point"
+                    AutomationProperties.Name="Complete this inspection point" />
+
+            <Button Style="{StaticResource OutlinedButtonStyle}"
+                    HorizontalAlignment="Stretch"
+                    MinHeight="{StaticResource TouchTargetSize}"
+                    Command="{Binding OpenActionSheet}"
+                    Content="Create corrective action"
+                    Visibility="{Binding CanRaiseAction, Converter={StaticResource BoolToVisibility}}"
+                    AutomationProperties.Name="Create a corrective action from this failure" />
+        </StackPanel>
+    </Grid>
+</UserControl>

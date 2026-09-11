@@ -1,27 +1,44 @@
 #!/usr/bin/env bash
-# Launches the TRACE desktop head on a virtual display, sizes its window, and captures it.
+# Runs the TRACE desktop head on a virtual display, optionally drives it, and captures it.
 #
-#   tools/run-desktop.sh <output.png> [width] [height] [settle-seconds]
+#   tools/run-desktop.sh <output.png> [width] [height] [settle] [step ...]
+#
+# Steps are applied in order before the capture:
+#   click:X,Y   press at window coordinates
+#   key:NAME    send a key (xdotool syntax, e.g. Tab, Return)
+#   type:TEXT   type text
+#   wait:N      pause N seconds
 #
 # Two things are deliberate here:
 #   * Hot Design is switched off. UseStudio never creates a window when no DevServer is
 #     reachable, so a capture run would hang with no visible error.
-#   * The window is resized through X rather than through AppWindow.Resize. The programmatic
-#     resize races the Skia surface at startup and intermittently renders the layout clipped
-#     against the old surface; going through the window manager path always relayouts.
+#   * The window is resized through X, twice. The programmatic AppWindow.Resize races the
+#     Skia surface at startup and intermittently draws the layout against the old surface;
+#     going through the window manager, with a second nudge once the app has settled,
+#     always leaves frame and content in agreement.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT="${1:-$ROOT/artifacts/trace.png}"
 WIDTH="${2:-1280}"
 HEIGHT="${3:-860}"
-SETTLE="${4:-9}"
+SETTLE="${4:-8}"
+shift 4 2>/dev/null || shift $#
+STEPS=("$@")
+
 DISPLAY_NUM="${DISPLAY_NUM:-99}"
 SCREEN_W=$((WIDTH + 80))
 SCREEN_H=$((HEIGHT + 80))
 
 mkdir -p "$(dirname "$OUT")" "$ROOT/artifacts"
 rm -f "$OUT"
+
+# TRACE_RESET=1 clears the app's local storage so the run starts from a fresh seed. Without
+# it a capture shows whatever previous runs left behind, which is the right default for
+# checking that state persists but the wrong one for checking the seed.
+if [[ "${TRACE_RESET:-0}" == "1" ]]; then
+    rm -rf "$HOME/.local/share/Trace/com.unoplatform.trace/LocalState/trace"
+fi
 
 cleanup() {
     [[ -n "${APP_PID:-}" ]] && kill "$APP_PID" 2>/dev/null || true
@@ -41,8 +58,7 @@ LOG="$ROOT/artifacts/trace-run.log"
 dotnet "$ROOT/Trace/bin/Debug/net10.0-desktop/Trace.dll" >"$LOG" 2>&1 &
 APP_PID=$!
 
-# Wait for the window to exist before touching it. Uno's Skia host does not publish
-# _NET_WM_PID, so the window is found by its title rather than by process id.
+# Uno's Skia host does not publish _NET_WM_PID, so find the window by its title.
 WIN=""
 for _ in $(seq 1 60); do
     WIN="$(xdotool search --name '^Trace$' 2>/dev/null | head -1 || true)"
@@ -57,17 +73,58 @@ if [[ -z "$WIN" ]]; then
 fi
 
 xdotool windowmove "$WIN" 0 0
-
-# The Skia surface can trail the first resize, leaving the layout drawn against the old
-# surface. A second nudge after the app has settled always lands, so the capture is of a
-# window whose frame and content agree.
 xdotool windowsize "$WIN" "$WIDTH" "$HEIGHT"
 sleep 4
 xdotool windowsize "$WIN" "$WIDTH" $((HEIGHT - 1))
 sleep 1
 xdotool windowsize "$WIN" "$WIDTH" "$HEIGHT"
-
 sleep "$SETTLE"
+
+for step in "${STEPS[@]:-}"; do
+    [[ -z "$step" ]] && continue
+    action="${step%%:*}"
+    value="${step#*:}"
+
+    case "$action" in
+        click)
+            # Move the real pointer and click. Window-targeted synthetic events are not
+            # seen by the Uno Skia input stack; events through the pointer are.
+            xdotool mousemove "${value%%,*}" "${value##*,}"
+            sleep 0.4
+            xdotool click 1
+            sleep 2
+            ;;
+        drag)
+            IFS=',' read -r x1 y1 x2 y2 <<<"$value"
+            xdotool mousemove "$x1" "$y1"
+            sleep 0.3
+            xdotool mousedown 1
+            # Move in steps: a press-and-jump reads as a click with no movement.
+            for f in 1 2 3 4 5 6 7 8; do
+                xdotool mousemove $(( x1 + ((x2 - x1) * f / 8) )) $(( y1 + ((y2 - y1) * f / 8) ))
+                sleep 0.08
+            done
+            sleep 0.3
+            xdotool mouseup 1
+            sleep 1.5
+            ;;
+        key)
+            xdotool key "$value"
+            sleep 1.5
+            ;;
+        type)
+            xdotool type --delay 60 "$value"
+            sleep 1.5
+            ;;
+        wait)
+            sleep "$value"
+            ;;
+        *)
+            echo "Unknown step '$step'" >&2
+            exit 1
+            ;;
+    esac
+done
 
 if ! kill -0 "$APP_PID" 2>/dev/null; then
     echo "The app exited before it could be captured. Tail of $LOG:" >&2
