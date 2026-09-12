@@ -40,15 +40,17 @@ public sealed class InspectionWorkflow : IInspectionWorkflow
         InspectionPoint point,
         CancellationToken ct)
     {
-        var snapshot = await _store.GetAsync(ct);
-        if (snapshot.FindDraft(point.Id) is { } existing)
-        {
-            return existing;
-        }
-
         var draft = InspectionDraft.For(point);
-        await _store.MutateAsync(s => s with { Drafts = s.Drafts.Add(draft) }, ct);
-        return draft;
+
+        // The lookup has to happen inside the mutation. Checking first and adding after
+        // leaves a window where two openings of the same point each add a draft, and the
+        // editor then saves into one row and resumes from another — each with its own
+        // client token, so the idempotency guard on completion no longer matches either.
+        var committed = await _store.MutateAsync(
+            s => s.FindDraft(point.Id) is null ? s with { Drafts = s.Drafts.Add(draft) } : s,
+            ct);
+
+        return committed.FindDraft(point.Id) ?? draft;
     }
 
     public async ValueTask SaveDraftAsync(InspectionDraft draft, CancellationToken ct) =>
@@ -130,7 +132,7 @@ public sealed class InspectionWorkflow : IInspectionWorkflow
             LastInspectedAt = now,
         };
 
-        await _store.MutateAsync(
+        var committed = await _store.MutateAsync(
             s =>
             {
                 // Re-check inside the lock: another completion may have landed between the
@@ -165,10 +167,27 @@ public sealed class InspectionWorkflow : IInspectionWorkflow
             },
             ct);
 
+        // The mutation is a no-op when another completion won the race or the asset has gone.
+        // Reporting success for a snapshot that never took the event tells the caller its
+        // work was queued when nothing was written.
+        var stored = committed.Events.FirstOrDefault(e => e.ClientToken == draft.ClientToken);
+        if (stored is null)
+        {
+            _log.LogWarning(
+                "Completion for {PointId} was not committed; the asset is no longer on this device.",
+                point.Id);
+
+            return new CompletionOutcome(
+                false, null, validation, WasQueued: false, WasDuplicate: false,
+                Error: "This asset is no longer on the device. The reading was not saved.");
+        }
+
+        var duplicate = !ReferenceEquals(stored, completed);
+
         _log.LogInformation(
             "Inspection completed for {PointId} as {Disposition}.", point.Id, draft.Disposition);
 
-        return new CompletionOutcome(true, completed, validation, WasQueued: true, WasDuplicate: false);
+        return new CompletionOutcome(true, stored, validation, WasQueued: !duplicate, WasDuplicate: duplicate);
     }
 
     public async ValueTask<CorrectiveActionOutcome> RaiseCorrectiveActionAsync(

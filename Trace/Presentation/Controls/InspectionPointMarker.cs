@@ -25,7 +25,15 @@ public sealed partial class InspectionPointMarker : Button
         nameof(IsSelected), typeof(bool), typeof(InspectionPointMarker),
         new PropertyMetadata(false, OnVisualStateChanged));
 
-    public InspectionPointMarker() => Loaded += (_, _) => Apply(false);
+    public InspectionPointMarker()
+    {
+        Loaded += (_, _) => Apply(false);
+
+        // Visual state setters are applied once and are not re-evaluated when the theme
+        // changes, so the state has to be re-entered or the control keeps the other theme's
+        // brushes.
+        ActualThemeChanged += (_, _) => Apply(false);
+    }
 
     public int Sequence
     {

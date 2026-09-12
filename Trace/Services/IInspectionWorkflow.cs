@@ -29,7 +29,8 @@ public sealed record CompletionOutcome(
     InspectionEvent? Event,
     InspectionValidation Validation,
     bool WasQueued,
-    bool WasDuplicate)
+    bool WasDuplicate,
+    string? Error = null)
 {
     public static CompletionOutcome Rejected(InspectionValidation validation) =>
         new(false, null, validation, false, false);

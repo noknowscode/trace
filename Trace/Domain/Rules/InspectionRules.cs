@@ -23,8 +23,20 @@ public static class InspectionRules
         }
 
         var trimmed = text.Trim();
-        return double.TryParse(trimmed, NumberStyles.Float, CultureInfo.CurrentCulture, out value)
+        var parsed = double.TryParse(trimmed, NumberStyles.Float, CultureInfo.CurrentCulture, out value)
             || double.TryParse(trimmed, NumberStyles.Float, CultureInfo.InvariantCulture, out value);
+
+        // TryParse accepts "NaN" and "Infinity" under NumberStyles.Float. Neither is a
+        // measurement, both compare false against every range so they report as in-range,
+        // and System.Text.Json refuses to write them — which would fail the completion and
+        // leave the poisoned value in the in-memory snapshot for the rest of the session.
+        if (!parsed || double.IsNaN(value) || double.IsInfinity(value))
+        {
+            value = 0;
+            return false;
+        }
+
+        return true;
     }
 
     /// <summary>

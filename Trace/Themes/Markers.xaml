@@ -37,7 +37,7 @@
                                         <Setter Target="Disc.Fill" Value="{ThemeResource SurfaceVariantBrush}" />
                                         <Setter Target="Number.Foreground" Value="{ThemeResource OnSurfaceVariantBrush}" />
                                         <Setter Target="Badge.Background" Value="{ThemeResource SurfaceVariantBrush}" />
-                                        <Setter Target="Marks.Foreground" Value="{ThemeResource OnSurfaceVariantBrush}" />
+                                        <Setter Target="NoneMark.Foreground" Value="{ThemeResource OnSurfaceVariantBrush}" />
                                         <Setter Target="NoneMark.Visibility" Value="Visible" />
                                     </VisualState.Setters>
                                 </VisualState>
@@ -46,7 +46,7 @@
                                         <Setter Target="Disc.Fill" Value="{ThemeResource PrimaryBrush}" />
                                         <Setter Target="Number.Foreground" Value="{ThemeResource OnPrimaryBrush}" />
                                         <Setter Target="Badge.Background" Value="{ThemeResource PrimaryBrush}" />
-                                        <Setter Target="Marks.Foreground" Value="{ThemeResource OnPrimaryBrush}" />
+                                        <Setter Target="PassMark.Foreground" Value="{ThemeResource OnPrimaryBrush}" />
                                         <Setter Target="PassMark.Visibility" Value="Visible" />
                                     </VisualState.Setters>
                                 </VisualState>
@@ -55,7 +55,7 @@
                                         <Setter Target="Disc.Fill" Value="{ThemeResource TertiaryBrush}" />
                                         <Setter Target="Number.Foreground" Value="{ThemeResource OnTertiaryBrush}" />
                                         <Setter Target="Badge.Background" Value="{ThemeResource TertiaryBrush}" />
-                                        <Setter Target="Marks.Foreground" Value="{ThemeResource OnTertiaryBrush}" />
+                                        <Setter Target="WatchMark.Foreground" Value="{ThemeResource OnTertiaryBrush}" />
                                         <Setter Target="WatchMark.Visibility" Value="Visible" />
                                     </VisualState.Setters>
                                 </VisualState>
@@ -64,7 +64,7 @@
                                         <Setter Target="Disc.Fill" Value="{ThemeResource ErrorBrush}" />
                                         <Setter Target="Number.Foreground" Value="{ThemeResource OnErrorBrush}" />
                                         <Setter Target="Badge.Background" Value="{ThemeResource ErrorBrush}" />
-                                        <Setter Target="Marks.Foreground" Value="{ThemeResource OnErrorBrush}" />
+                                        <Setter Target="FailMark.Foreground" Value="{ThemeResource OnErrorBrush}" />
                                         <Setter Target="FailMark.Visibility" Value="Visible" />
                                     </VisualState.Setters>
                                 </VisualState>
@@ -202,7 +202,7 @@
                                         <Setter Target="Fill.Background" Value="Transparent" />
                                         <Setter Target="Fill.BorderBrush" Value="{ThemeResource OutlineBrush}" />
                                         <Setter Target="Caption.Foreground" Value="{ThemeResource OnSurfaceVariantBrush}" />
-                                        <Setter Target="Mark.Foreground" Value="{ThemeResource OnSurfaceVariantBrush}" />
+                                        <Setter Target="PassMark.Foreground" Value="{ThemeResource OnSurfaceVariantBrush}" />
                                         <Setter Target="PassMark.Visibility" Value="Visible" />
                                     </VisualState.Setters>
                                 </VisualState>
@@ -211,7 +211,7 @@
                                         <Setter Target="Fill.Background" Value="{ThemeResource PrimaryBrush}" />
                                         <Setter Target="Fill.BorderBrush" Value="{ThemeResource PrimaryBrush}" />
                                         <Setter Target="Caption.Foreground" Value="{ThemeResource OnPrimaryBrush}" />
-                                        <Setter Target="Mark.Foreground" Value="{ThemeResource OnPrimaryBrush}" />
+                                        <Setter Target="PassMark.Foreground" Value="{ThemeResource OnPrimaryBrush}" />
                                         <Setter Target="PassMark.Visibility" Value="Visible" />
                                     </VisualState.Setters>
                                 </VisualState>
@@ -220,7 +220,7 @@
                                         <Setter Target="Fill.Background" Value="Transparent" />
                                         <Setter Target="Fill.BorderBrush" Value="{ThemeResource OutlineBrush}" />
                                         <Setter Target="Caption.Foreground" Value="{ThemeResource OnSurfaceVariantBrush}" />
-                                        <Setter Target="Mark.Foreground" Value="{ThemeResource OnSurfaceVariantBrush}" />
+                                        <Setter Target="WatchMark.Foreground" Value="{ThemeResource OnSurfaceVariantBrush}" />
                                         <Setter Target="WatchMark.Visibility" Value="Visible" />
                                     </VisualState.Setters>
                                 </VisualState>
@@ -229,7 +229,7 @@
                                         <Setter Target="Fill.Background" Value="{ThemeResource TertiaryBrush}" />
                                         <Setter Target="Fill.BorderBrush" Value="{ThemeResource TertiaryBrush}" />
                                         <Setter Target="Caption.Foreground" Value="{ThemeResource OnTertiaryBrush}" />
-                                        <Setter Target="Mark.Foreground" Value="{ThemeResource OnTertiaryBrush}" />
+                                        <Setter Target="WatchMark.Foreground" Value="{ThemeResource OnTertiaryBrush}" />
                                         <Setter Target="WatchMark.Visibility" Value="Visible" />
                                     </VisualState.Setters>
                                 </VisualState>
@@ -238,7 +238,7 @@
                                         <Setter Target="Fill.Background" Value="Transparent" />
                                         <Setter Target="Fill.BorderBrush" Value="{ThemeResource OutlineBrush}" />
                                         <Setter Target="Caption.Foreground" Value="{ThemeResource OnSurfaceVariantBrush}" />
-                                        <Setter Target="Mark.Foreground" Value="{ThemeResource OnSurfaceVariantBrush}" />
+                                        <Setter Target="FailMark.Foreground" Value="{ThemeResource OnSurfaceVariantBrush}" />
                                         <Setter Target="FailMark.Visibility" Value="Visible" />
                                     </VisualState.Setters>
                                 </VisualState>
@@ -247,7 +247,7 @@
                                         <Setter Target="Fill.Background" Value="{ThemeResource ErrorBrush}" />
                                         <Setter Target="Fill.BorderBrush" Value="{ThemeResource ErrorBrush}" />
                                         <Setter Target="Caption.Foreground" Value="{ThemeResource OnErrorBrush}" />
-                                        <Setter Target="Mark.Foreground" Value="{ThemeResource OnErrorBrush}" />
+                                        <Setter Target="FailMark.Foreground" Value="{ThemeResource OnErrorBrush}" />
                                         <Setter Target="FailMark.Visibility" Value="Visible" />
                                     </VisualState.Setters>
                                 </VisualState>

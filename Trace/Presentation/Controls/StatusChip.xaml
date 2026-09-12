@@ -23,7 +23,7 @@
                     <VisualState.Setters>
                         <Setter Target="Shell.Background" Value="{ThemeResource SurfaceVariantBrush}" />
                         <Setter Target="Label.Foreground" Value="{ThemeResource OnSurfaceVariantBrush}" />
-                        <Setter Target="Marks.Foreground" Value="{ThemeResource OnSurfaceVariantBrush}" />
+                        <Setter Target="NeutralMark.Foreground" Value="{ThemeResource OnSurfaceVariantBrush}" />
                         <Setter Target="NeutralMark.Visibility" Value="Visible" />
                     </VisualState.Setters>
                 </VisualState>
@@ -31,7 +31,7 @@
                     <VisualState.Setters>
                         <Setter Target="Shell.Background" Value="{ThemeResource PrimaryContainerBrush}" />
                         <Setter Target="Label.Foreground" Value="{ThemeResource OnPrimaryContainerBrush}" />
-                        <Setter Target="Marks.Foreground" Value="{ThemeResource OnPrimaryContainerBrush}" />
+                        <Setter Target="PositiveMark.Foreground" Value="{ThemeResource OnPrimaryContainerBrush}" />
                         <Setter Target="PositiveMark.Visibility" Value="Visible" />
                     </VisualState.Setters>
                 </VisualState>
@@ -39,7 +39,7 @@
                     <VisualState.Setters>
                         <Setter Target="Shell.Background" Value="{ThemeResource TertiaryContainerBrush}" />
                         <Setter Target="Label.Foreground" Value="{ThemeResource OnTertiaryContainerBrush}" />
-                        <Setter Target="Marks.Foreground" Value="{ThemeResource OnTertiaryContainerBrush}" />
+                        <Setter Target="CautionMark.Foreground" Value="{ThemeResource OnTertiaryContainerBrush}" />
                         <Setter Target="CautionMark.Visibility" Value="Visible" />
                     </VisualState.Setters>
                 </VisualState>
@@ -47,7 +47,7 @@
                     <VisualState.Setters>
                         <Setter Target="Shell.Background" Value="{ThemeResource ErrorContainerBrush}" />
                         <Setter Target="Label.Foreground" Value="{ThemeResource OnErrorContainerBrush}" />
-                        <Setter Target="Marks.Foreground" Value="{ThemeResource OnErrorContainerBrush}" />
+                        <Setter Target="CriticalMark.Foreground" Value="{ThemeResource OnErrorContainerBrush}" />
                         <Setter Target="CriticalMark.Visibility" Value="Visible" />
                     </VisualState.Setters>
                 </VisualState>
@@ -55,7 +55,7 @@
                     <VisualState.Setters>
                         <Setter Target="Shell.Background" Value="{ThemeResource SecondaryContainerBrush}" />
                         <Setter Target="Label.Foreground" Value="{ThemeResource OnSecondaryContainerBrush}" />
-                        <Setter Target="Marks.Foreground" Value="{ThemeResource OnSecondaryContainerBrush}" />
+                        <Setter Target="InfoMark.Foreground" Value="{ThemeResource OnSecondaryContainerBrush}" />
                         <Setter Target="InfoMark.Visibility" Value="Visible" />
                     </VisualState.Setters>
                 </VisualState>

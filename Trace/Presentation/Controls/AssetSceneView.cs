@@ -52,8 +52,10 @@ public sealed partial class AssetSceneView : SKXamlCanvas, IAnchorProjector
     {
         PaintSurface += OnPaintSurface;
 
+        // Dragging is handled through the pointer events below, so the canvas must not also
+        // interpret a drag as a manipulation. IsTapEnabled is deliberately not set: it is
+        // unimplemented in Uno and only raises Uno0001.
         ManipulationMode = ManipulationModes.None;
-        IsTapEnabled = false;
 
         PointerPressed += OnPointerPressed;
         PointerMoved += OnPointerMoved;

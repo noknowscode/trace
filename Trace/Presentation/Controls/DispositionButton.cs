@@ -25,7 +25,15 @@ public sealed partial class DispositionButton : Button
         nameof(Label), typeof(string), typeof(DispositionButton),
         new PropertyMetadata(string.Empty));
 
-    public DispositionButton() => Loaded += (_, _) => Apply(false);
+    public DispositionButton()
+    {
+        Loaded += (_, _) => Apply(false);
+
+        // Visual state setters are applied once and are not re-evaluated when the theme
+        // changes, so the state has to be re-entered or the control keeps the other theme's
+        // brushes.
+        ActualThemeChanged += (_, _) => Apply(false);
+    }
 
     public Disposition Kind
     {

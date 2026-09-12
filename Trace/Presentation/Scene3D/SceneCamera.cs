@@ -14,7 +14,7 @@ public sealed class SceneCamera
 
     public float Pitch { get; set; } = 0.36f;
 
-    /// <summary>Multiplier on the auto-framed distance. Larger pulls back.</summary>
+    /// <summary>Divisor on the fitted framing. Larger pulls back.</summary>
     public float Zoom { get; set; } = 1f;
 
     public void Orbit(float deltaYaw, float deltaPitch)
@@ -38,10 +38,13 @@ public sealed class SceneCamera
         var right = Vec3.Cross(Vec3.Up, forward).Normalized;
         var up = Vec3.Cross(forward, right).Normalized;
 
-        // Frame the bounding sphere: a 34 degree half-angle keeps perspective honest
-        // without the wide-lens distortion that makes equipment look like a toy.
+        // A 0.34 rad (19.5 degree) half-angle keeps perspective honest without the wide-lens
+        // distortion that makes equipment look like a toy. Distance sets how strong that
+        // perspective is and is deliberately independent of Zoom: the fit below cancels any
+        // distance change, so scaling distance by Zoom moved the camera and changed nothing
+        // on screen.
         const float HalfFieldOfView = 0.34f;
-        var distance = model.Radius / MathF.Tan(HalfFieldOfView) * 1.12f * Zoom;
+        var distance = model.Radius / MathF.Tan(HalfFieldOfView) * 1.12f;
         var eye = model.Centre + (forward * distance);
 
         // Solve the focal length that just fits the machine's projected outline into this
@@ -75,7 +78,8 @@ public sealed class SceneCamera
             focal = MathF.Min(width, height) * 0.5f / MathF.Tan(HalfFieldOfView);
         }
 
-        return new ViewTransform(eye, right, up, forward, focal, width * 0.5f, height * 0.5f);
+        // Zoom scales the fitted framing, which is what actually changes apparent size.
+        return new ViewTransform(eye, right, up, forward, focal / Zoom, width * 0.5f, height * 0.5f);
     }
 }
 

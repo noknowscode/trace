@@ -101,8 +101,11 @@ public sealed class TraceStore : ITraceStore
                 return previous;
             }
 
-            _current = next;
+            // Disk first. Publishing the snapshot before the write means a failed write
+            // leaves memory ahead of disk permanently: the section is already committed, so
+            // the next mutation compares against it, finds it unchanged, and never retries.
             await PersistChangedSectionsAsync(previous, next, ct);
+            _current = next;
         }
         finally
         {
@@ -125,32 +128,64 @@ public sealed class TraceStore : ITraceStore
 
     private async Task<TraceSnapshot> LoadAsync(CancellationToken ct)
     {
+        // Every section is read before anything is decided. Reading the catalogue first and
+        // returning early on a bad read is how the technician's outbox used to disappear:
+        // an unreadable assets.json looked exactly like a first run.
         var assets = await ReadAsync(AssetsKey, TraceJsonContext.Default.ImmutableListAsset, ct);
+        var assignments = await ReadAsync(AssignmentsKey, TraceJsonContext.Default.ImmutableListAssignment, ct);
+        var events = await ReadAsync(EventsKey, TraceJsonContext.Default.ImmutableListInspectionEvent, ct);
+        var actions = await ReadAsync(ActionsKey, TraceJsonContext.Default.ImmutableListCorrectiveAction, ct);
+        var queue = await ReadAsync(QueueKey, TraceJsonContext.Default.ImmutableListSyncOperation, ct);
+        var drafts = await ReadAsync(DraftsKey, TraceJsonContext.Default.ImmutableListInspectionDraft, ct);
 
-        if (assets is null || assets.Count == 0)
+        if (assets.Value is { Count: > 0 })
         {
-            // First run on this device: lay down the seed round so the app is never empty
-            // for the wrong reason, then persist it as ordinary state.
-            var seed = SeedData.Create(_time.GetLocalNow());
-            await PersistChangedSectionsAsync(TraceSnapshot.Empty, seed, ct);
-            return seed;
+            return new TraceSnapshot(
+                assets.Value,
+                assignments.Value ?? ImmutableList<Assignment>.Empty,
+                events.Value ?? ImmutableList<InspectionEvent>.Empty,
+                actions.Value ?? ImmutableList<CorrectiveAction>.Empty,
+                queue.Value ?? ImmutableList<SyncOperation>.Empty,
+                drafts.Value ?? ImmutableList<InspectionDraft>.Empty);
         }
 
-        return new TraceSnapshot(
-            assets,
-            await ReadAsync(AssignmentsKey, TraceJsonContext.Default.ImmutableListAssignment, ct)
-                ?? ImmutableList<Assignment>.Empty,
-            await ReadAsync(EventsKey, TraceJsonContext.Default.ImmutableListInspectionEvent, ct)
-                ?? ImmutableList<InspectionEvent>.Empty,
-            await ReadAsync(ActionsKey, TraceJsonContext.Default.ImmutableListCorrectiveAction, ct)
-                ?? ImmutableList<CorrectiveAction>.Empty,
-            await ReadAsync(QueueKey, TraceJsonContext.Default.ImmutableListSyncOperation, ct)
-                ?? ImmutableList<SyncOperation>.Empty,
-            await ReadAsync(DraftsKey, TraceJsonContext.Default.ImmutableListInspectionDraft, ct)
-                ?? ImmutableList<InspectionDraft>.Empty);
+        // No usable catalogue. The app needs one to be navigable at all, so lay down the
+        // seed round — but only the catalogue. Anything the technician already recorded is
+        // carried across, the queue above all: those operations still have to reach the
+        // server, and a damaged catalogue is no reason to drop them.
+        var seed = SeedData.Create(_time.GetLocalNow());
+        var recovered = assets.Unreadable || events.Value is { Count: > 0 } || queue.Value is { Count: > 0 };
+
+        if (recovered)
+        {
+            _log.LogError(
+                "The asset catalogue could not be read. Reseeding it and keeping {Events} recorded events, "
+                + "{Queue} queued operations and {Drafts} drafts.",
+                events.Value?.Count ?? 0,
+                queue.Value?.Count ?? 0,
+                drafts.Value?.Count ?? 0);
+
+            seed = seed with
+            {
+                Events = events.Value ?? seed.Events,
+                Actions = actions.Value ?? seed.Actions,
+                Queue = queue.Value ?? seed.Queue,
+                Drafts = drafts.Value ?? seed.Drafts,
+            };
+        }
+
+        await PersistChangedSectionsAsync(TraceSnapshot.Empty, seed, ct);
+        return seed;
     }
 
-    private async Task<ImmutableList<T>?> ReadAsync<T>(
+    /// <summary>
+    /// A section read. <c>Unreadable</c> separates "this file is damaged" from "this file is
+    /// not there yet", which are the same value but very different situations: the first is a
+    /// recovery, the second is a first run.
+    /// </summary>
+    private readonly record struct Section<T>(ImmutableList<T>? Value, bool Unreadable);
+
+    private async Task<Section<T>> ReadAsync<T>(
         string key,
         System.Text.Json.Serialization.Metadata.JsonTypeInfo<ImmutableList<T>> typeInfo,
         CancellationToken ct)
@@ -158,19 +193,19 @@ public sealed class TraceStore : ITraceStore
         var json = await _files.ReadTextAsync(key, ct);
         if (string.IsNullOrWhiteSpace(json))
         {
-            return null;
+            return new Section<T>(null, Unreadable: false);
         }
 
         try
         {
-            return JsonSerializer.Deserialize(json, typeInfo);
+            return new Section<T>(JsonSerializer.Deserialize(json, typeInfo), Unreadable: false);
         }
         catch (JsonException ex)
         {
-            // A corrupt document must not brick the app in the field. Drop it and carry on;
-            // the sync queue will still hold anything that had not reached the server.
+            // A corrupt document must not brick the app in the field. Drop this section and
+            // carry on — the caller keeps every section it could read.
             _log.LogError(ex, "Could not read {Key}; continuing without it.", key);
-            return null;
+            return new Section<T>(null, Unreadable: true);
         }
     }
 
