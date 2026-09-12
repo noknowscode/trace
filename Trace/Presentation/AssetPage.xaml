@@ -50,18 +50,23 @@
                 </VisualStateGroup>
             </VisualStateManager.VisualStateGroups>
 
-            <!-- Asset identity and where it sits -->
+            <!--
+                Back and the tabs share one row so the asset identity can move onto the
+                equipment view, where it labels the machine instead of sitting in a band
+                above it. Connection state stays here because it is true of every tab.
+            -->
             <Grid ColumnSpacing="8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
                 <Button Style="{StaticResource TextButtonStyle}"
                         Width="44"
                         Height="44"
                         Padding="0"
-                        VerticalAlignment="Top"
+                        VerticalAlignment="Center"
                         Command="{Binding Back}"
                         AutomationProperties.Name="Back to today">
                     <Viewbox Width="18" Height="18">
@@ -69,27 +74,34 @@
                     </Viewbox>
                 </Button>
 
-                <controls:PageHeader Grid.Column="1"
-                                     Eyebrow="{Binding Designation}"
-                                     Title="{Binding AssetName}"
-                                     Supporting="{Binding Location}">
-                    <controls:PageHeader.Actions>
-                        <controls:StatusChip Severity="Caution"
-                                             Text="Working offline"
-                                             Visibility="{Binding IsOffline, Converter={StaticResource BoolToVisibility}}" />
-                    </controls:PageHeader.Actions>
-                </controls:PageHeader>
+                <utu:TabBar Grid.Column="1"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            Style="{StaticResource MaterialTopTabBarStyle}"
+                            SelectedIndex="{Binding TabIndex, Mode=TwoWay}">
+                    <utu:TabBarItem Content="Overview" AutomationProperties.Name="Overview" Style="{StaticResource MaterialTopTabBarItemStyle}" />
+                    <utu:TabBarItem Content="Inspect" AutomationProperties.Name="Inspect" Style="{StaticResource MaterialTopTabBarItemStyle}" />
+                    <utu:TabBarItem Content="History" AutomationProperties.Name="History" Style="{StaticResource MaterialTopTabBarItemStyle}" />
+                    <utu:TabBarItem Content="Documents" AutomationProperties.Name="Documents" Style="{StaticResource MaterialTopTabBarItemStyle}" />
+                </utu:TabBar>
+
+                <controls:StatusChip Grid.Column="2"
+                                     VerticalAlignment="Center"
+                                     Severity="Caution"
+                                     Text="Working offline"
+                                     Visibility="{Binding IsOffline, Converter={StaticResource BoolToVisibility}}" />
             </Grid>
 
-            <utu:TabBar Grid.Row="1"
-                        HorizontalAlignment="Left"
-                        Style="{StaticResource MaterialTopTabBarStyle}"
-                        SelectedIndex="{Binding TabIndex, Mode=TwoWay}">
-                <utu:TabBarItem Content="Overview" AutomationProperties.Name="Overview" Style="{StaticResource MaterialTopTabBarItemStyle}" />
-                <utu:TabBarItem Content="Inspect" AutomationProperties.Name="Inspect" Style="{StaticResource MaterialTopTabBarItemStyle}" />
-                <utu:TabBarItem Content="History" AutomationProperties.Name="History" Style="{StaticResource MaterialTopTabBarItemStyle}" />
-                <utu:TabBarItem Content="Documents" AutomationProperties.Name="Documents" Style="{StaticResource MaterialTopTabBarItemStyle}" />
-            </utu:TabBar>
+            <!--
+                The tabs without an equipment view still have to say which machine they are
+                about — recording against the wrong asset is the failure this app exists to
+                prevent — so identity appears here whenever the canvas is not carrying it.
+            -->
+            <controls:PageHeader Grid.Row="1"
+                                 Eyebrow="{Binding Designation}"
+                                 Title="{Binding AssetName}"
+                                 Supporting="{Binding Location}"
+                                 Visibility="{Binding IsInspect, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
 
             <Grid x:Name="WorkspaceHost" Grid.Row="2" SizeChanged="OnWorkspaceResized">
 
@@ -134,6 +146,26 @@
                                         </DataTemplate>
                                     </ItemsRepeater.ItemTemplate>
                                 </ItemsRepeater>
+                                <!--
+                                    The machine's nameplate, on the machine. The plate is the
+                                    same brush the scene paints its background with, so it is
+                                    invisible over empty canvas and only resolves into a plate
+                                    where the model would otherwise sit behind the text. It
+                                    takes no pointer input: a drag that starts on it still
+                                    turns the machine.
+                                -->
+                                <Border HorizontalAlignment="Left"
+                                        VerticalAlignment="Top"
+                                        Margin="0,0,100,0"
+                                        Padding="10,6"
+                                        CornerRadius="10"
+                                        Background="{ThemeResource SurfaceBrush}"
+                                        IsHitTestVisible="False">
+                                    <controls:PageHeader Eyebrow="{Binding Designation}"
+                                                         Title="{Binding AssetName}"
+                                                         Supporting="{Binding Location}" />
+                                </Border>
+
                                 <Button Style="{StaticResource TextButtonStyle}"
                                         HorizontalAlignment="Right"
                                         VerticalAlignment="Top"
@@ -141,10 +173,15 @@
                                         Click="OnResetView"
                                         Content="Reset view"
                                         AutomationProperties.Name="Reset the equipment view" />
-                                <TextBlock Style="{StaticResource SupportingText}"
-                                           HorizontalAlignment="Left"
-                                           VerticalAlignment="Bottom"
-                                           Text="Drag to turn the machine" />
+                                <Border HorizontalAlignment="Left"
+                                        VerticalAlignment="Bottom"
+                                        Padding="8,4"
+                                        CornerRadius="8"
+                                        Background="{ThemeResource SurfaceBrush}"
+                                        IsHitTestVisible="False">
+                                    <TextBlock Style="{StaticResource SupportingText}"
+                                               Text="Drag to turn the machine" />
+                                </Border>
                             </Grid>
                         </Border>
 
