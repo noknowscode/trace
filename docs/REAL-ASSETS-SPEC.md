@@ -52,9 +52,11 @@ anchor contract, and the renderer changes that let it scale.
   depth buffer. That sets the asset budget: roughly 8–15k triangles, parts kept convex
   and non-interpenetrating. Real assets must be prepared to that budget; the pipeline
   does not decimate.
-- The `SKXamlCanvas` → `SKCanvasElement` switch (hardware-accelerated on Android with
-  `SkiaRenderer`, skips a buffer copy) is a separate slice with its own guard/fallback
-  for the WinAppSDK head. It is not in this spec's implementation plan.
+- The view draws through `SKCanvasElement` where `IsSupportedOnCurrentPlatform()` is
+  true (desktop; Android with `SkiaRenderer`) and through `SKXamlCanvas` on the WinAppSDK
+  head. `SKCanvasElement` hands over the window canvas in logical units with the display
+  scale already applied, so the renderer takes a pixel-density argument and sizes its
+  supersampled surface for real pixels; `SKXamlCanvas` reports device pixels directly.
 
 **Testing**
 - Round trip: export the parametric pump through the glTF writer, import it, and assert
@@ -128,6 +130,11 @@ Implemented and verified on the desktop head (2026-09-12):
   the base colour texture.
 - Round trip, anchor, material, offscreen render, dispose-and-reuse and frame-cost tests
   cover the loader and the renderer.
+- The view draws through `SKCanvasElement` on the desktop head (the log reports
+  `drawing through WindowCanvasSurface`). Against the `SKXamlCanvas` frame of the same
+  scene, 1.9% of pixels differ, all along triangle edges and none beyond a 12% tolerance
+  except 17 — anti-aliasing at facet boundaries from the direct blit, with silhouette,
+  scale and every marker position identical. Orbit by drag works through the host.
 
 ## Unresolved Questions
 
@@ -137,4 +144,5 @@ Implemented and verified on the desktop head (2026-09-12):
   constant enough for the flat-shaded look?
 - The Android head has not been built here. SharpGLTF's reflection-based JSON path needs
   a trimming run before it ships.
-- The `SKCanvasElement` switch: sequence it before or after the first real asset lands?
+- The WinAppSDK fallback (`SKXamlCanvas`) compiles but has not been run here; it is the
+  path that was in use before the switch, unchanged apart from the plumbing.

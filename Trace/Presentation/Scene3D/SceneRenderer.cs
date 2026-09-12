@@ -44,13 +44,20 @@ public sealed class SceneRenderer : IDisposable
     public Dictionary<string, AnchorProjection> Anchors { get; } = [];
 
     /// <param name="context">The destination's GPU context, or null for a raster canvas.</param>
+    /// <param name="bounds">The drawing area in the canvas's own units.</param>
+    /// <param name="pixelScale">
+    /// Device pixels per canvas unit. A canvas that already carries the display scale draws
+    /// in logical units, and the supersampled surface has to be sized for the pixels those
+    /// units will actually cover or the result is blurred back up on the way out.
+    /// </param>
     public void Render(
         SKCanvas canvas,
         GRRecordingContext? context,
         SKRect bounds,
         SceneModel model,
         SceneCamera camera,
-        ScenePalette palette)
+        ScenePalette palette,
+        float pixelScale = 1f)
     {
         if (bounds.Width < 4 || bounds.Height < 4)
         {
@@ -61,8 +68,9 @@ public sealed class SceneRenderer : IDisposable
 
         EnsureResources();
 
-        var scaledWidth = (int)MathF.Ceiling(bounds.Width * Supersample);
-        var scaledHeight = (int)MathF.Ceiling(bounds.Height * Supersample);
+        var density = Supersample * MathF.Max(pixelScale, 0.5f);
+        var scaledWidth = (int)MathF.Ceiling(bounds.Width * density);
+        var scaledHeight = (int)MathF.Ceiling(bounds.Height * density);
         var surface = EnsureSurface(scaledWidth, scaledHeight, context);
 
         if (surface is null)
@@ -74,7 +82,7 @@ public sealed class SceneRenderer : IDisposable
         }
 
         surface.Canvas.Clear(palette.Background);
-        DrawScene(surface.Canvas, scaledWidth, scaledHeight, model, camera, palette, Supersample);
+        DrawScene(surface.Canvas, scaledWidth, scaledHeight, model, camera, palette, density);
 
         // An exact 2:1 downscale with linear filtering already averages a 2x2 box per pixel;
         // a mip chain on a fresh image every frame would be rebuilt every frame for nothing.

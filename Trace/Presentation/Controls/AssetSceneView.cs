@@ -6,6 +6,7 @@ using SkiaSharp.Views.Windows;
 using Trace.Domain.Enums;
 using Trace.Presentation.Scene3D;
 using Uno.Extensions;
+using Uno.WinUI.Graphics2DSK;
 using Windows.Foundation;
 using Windows.Storage;
 
@@ -16,15 +17,19 @@ namespace Trace.Presentation.Controls;
 /// that the technician can turn to look at the side they are standing on.
 /// </summary>
 /// <remarks>
-/// Built on <see cref="SKXamlCanvas"/> rather than an OpenGL surface because Android is a
-/// Tier 1 target and Uno's GL canvas is desktop and Windows only. The geometry, camera and
-/// shading are all real; only the rasteriser is Skia.
+/// The view is a host around one of two drawing surfaces, chosen once at construction.
+/// Where the app renders through Skia — the desktop head, and Android with the Skia
+/// renderer — <see cref="SKCanvasElement"/> draws straight onto the window's own canvas,
+/// hardware-accelerated when the app is, with no intermediate bitmap. The WinAppSDK head
+/// does not render through Skia, so it falls back to <see cref="SKXamlCanvas"/>, which
+/// rasterises to a bitmap the XAML tree then displays. Both hand the same canvas to the
+/// same renderer; only the plumbing differs.
 ///
 /// The view also publishes where each inspection point projected to, so the XAML markers
 /// laid over it stay glued to their part as the model turns. Those markers are ordinary
 /// focusable controls — putting them in the scene would have cost keyboard access.
 /// </remarks>
-public sealed partial class AssetSceneView : SKXamlCanvas, IAnchorProjector
+public sealed partial class AssetSceneView : Grid, IAnchorProjector
 {
     public static readonly DependencyProperty KindProperty = DependencyProperty.Register(
         nameof(Kind),
@@ -50,6 +55,7 @@ public sealed partial class AssetSceneView : SKXamlCanvas, IAnchorProjector
 
     private readonly SceneRenderer _renderer = new();
     private readonly SceneCamera _camera = new();
+    private readonly ISceneSurface _surface;
 
     private SceneModel? _loadedModel;
     private int _loadVersion;
@@ -59,15 +65,21 @@ public sealed partial class AssetSceneView : SKXamlCanvas, IAnchorProjector
 
     public AssetSceneView()
     {
-        PaintSurface += OnPaintSurface;
+        // The surfaces draw but do not hit-test; the host needs a background of its own for
+        // pointer input to land on it.
+        Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
+
+        _surface = SKCanvasElement.IsSupportedOnCurrentPlatform()
+            ? new WindowCanvasSurface(this)
+            : new BitmapSurface(this);
+        Children.Add((UIElement)_surface);
 
         // The renderer holds a viewport-sized native surface; it goes when the view does.
         // It is recreated on the next paint if the view comes back.
         Unloaded += (_, _) => _renderer.Dispose();
 
-        // Dragging is handled through the pointer events below, so the canvas must not also
-        // interpret a drag as a manipulation. IsTapEnabled is deliberately not set: it is
-        // unimplemented in Uno and only raises Uno0001.
+        // Dragging is handled through the pointer events below, so the host must not also
+        // interpret a drag as a manipulation.
         ManipulationMode = ManipulationModes.None;
 
         PointerPressed += OnPointerPressed;
@@ -77,6 +89,8 @@ public sealed partial class AssetSceneView : SKXamlCanvas, IAnchorProjector
         PointerWheelChanged += OnPointerWheelChanged;
 
         ActualThemeChanged += (_, _) => Invalidate();
+
+        this.Log().LogInformation("Equipment view is drawing through {Surface}.", _surface.GetType().Name);
     }
 
     /// <summary>Raised after a frame, once the projected inspection point positions are current.</summary>
@@ -123,6 +137,24 @@ public sealed partial class AssetSceneView : SKXamlCanvas, IAnchorProjector
     public bool TryGetAnchor(string id, out AnchorProjection projection) =>
         _renderer.Anchors.TryGetValue(id, out projection);
 
+    /// <summary>Returns the camera to the three-quarter view an asset opens on.</summary>
+    public void ResetView()
+    {
+        _camera.Yaw = 0.62f;
+        _camera.Pitch = 0.36f;
+        _camera.Zoom = 1f;
+        Invalidate();
+    }
+
+    /// <summary>Requests a fresh frame from whichever surface is in use.</summary>
+    public void Invalidate() => _surface.Invalidate();
+
+    private static void OnKindChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
+        ((AssetSceneView)d).ResetView();
+
+    private static void OnPaletteChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
+        ((AssetSceneView)d).Invalidate();
+
     private static void OnModelSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
         _ = ((AssetSceneView)d).LoadModelAsync(e.NewValue as string ?? string.Empty);
 
@@ -160,39 +192,17 @@ public sealed partial class AssetSceneView : SKXamlCanvas, IAnchorProjector
         }
     }
 
-    /// <summary>Returns the camera to the three-quarter view an asset opens on.</summary>
-    public void ResetView()
-    {
-        _camera.Yaw = 0.62f;
-        _camera.Pitch = 0.36f;
-        _camera.Zoom = 1f;
-        Invalidate();
-    }
-
-    private static void OnKindChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-    {
-        var view = (AssetSceneView)d;
-        view.ResetView();
-    }
-
-    private void OnPaintSurface(object? sender, SKPaintSurfaceEventArgs e)
+    /// <summary>
+    /// One frame. <paramref name="bounds"/> is the drawing area in the canvas's own units and
+    /// <paramref name="pixelScale"/> how many device pixels each of those units covers, so the
+    /// renderer can size its supersampled surface for the real pixel density.
+    /// </summary>
+    private void Paint(SKCanvas canvas, GRRecordingContext? context, SKRect bounds, float pixelScale)
     {
         var model = _loadedModel ?? EquipmentModels.For(Kind);
-        var info = e.Info;
-
-        _renderer.Render(
-            e.Surface.Canvas,
-            e.Surface.Context,
-            new SKRect(0, 0, info.Width, info.Height),
-            model,
-            _camera,
-            ReadPalette());
-
+        _renderer.Render(canvas, context, bounds, model, _camera, ReadPalette(), pixelScale);
         ProjectionsChanged?.Invoke(this, EventArgs.Empty);
     }
-
-    private static void OnPaletteChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
-        ((AssetSceneView)d).Invalidate();
 
     /// <summary>
     /// Lighting colours come from the app theme so the machine sits in the same room as the
@@ -258,12 +268,67 @@ public sealed partial class AssetSceneView : SKXamlCanvas, IAnchorProjector
         Invalidate();
         e.Handled = true;
     }
+
+    private interface ISceneSurface
+    {
+        void Invalidate();
+    }
+
+    /// <summary>
+    /// Draws on the window's own Skia canvas. The canvas arrives already carrying the
+    /// display scale, and <c>area</c> is in logical units, so the scale is read back off
+    /// the canvas to size the supersampled surface for the real pixel density.
+    /// </summary>
+    private sealed partial class WindowCanvasSurface : SKCanvasElement, ISceneSurface
+    {
+        private readonly AssetSceneView _owner;
+
+        public WindowCanvasSurface(AssetSceneView owner) => _owner = owner;
+
+        protected override void RenderOverride(SKCanvas canvas, Size area)
+        {
+            var scale = canvas.TotalMatrix.ScaleX;
+            if (scale <= 0f)
+            {
+                scale = 1f;
+            }
+
+            _owner.Paint(
+                canvas,
+                canvas.Context,
+                new SKRect(0, 0, (float)area.Width, (float)area.Height),
+                scale);
+        }
+    }
+
+    /// <summary>
+    /// Rasterises to a bitmap the XAML tree displays, for the head that does not render
+    /// through Skia. Its paint arguments are already in device pixels.
+    /// </summary>
+    private sealed partial class BitmapSurface : SKXamlCanvas, ISceneSurface
+    {
+        private readonly AssetSceneView _owner;
+
+        public BitmapSurface(AssetSceneView owner)
+        {
+            _owner = owner;
+            PaintSurface += OnPaintSurface;
+        }
+
+        private void OnPaintSurface(object? sender, SKPaintSurfaceEventArgs e) =>
+            _owner.Paint(
+                e.Surface.Canvas,
+                e.Surface.Context,
+                new SKRect(0, 0, e.Info.Width, e.Info.Height),
+                1f);
+    }
 }
 
-/// <summary>Supplies the screen position of an inspection point after the scene is drawn.</summary>
+/// <summary>Something that can say where an inspection point landed on screen.</summary>
 public interface IAnchorProjector
 {
-    bool TryGetAnchor(string id, out AnchorProjection projection);
+    /// <summary>Raised after a frame, once the projections are current.</summary>
+    event EventHandler? ProjectionsChanged;
 
-    event EventHandler ProjectionsChanged;
+    bool TryGetAnchor(string id, out AnchorProjection projection);
 }
