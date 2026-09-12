@@ -5,7 +5,9 @@ using SkiaSharp;
 using SkiaSharp.Views.Windows;
 using Trace.Domain.Enums;
 using Trace.Presentation.Scene3D;
+using Uno.Extensions;
 using Windows.Foundation;
+using Windows.Storage;
 
 namespace Trace.Presentation.Controls;
 
@@ -42,8 +44,15 @@ public sealed partial class AssetSceneView : SKXamlCanvas, IAnchorProjector
         nameof(KeyLight), typeof(Brush), typeof(AssetSceneView),
         new PropertyMetadata(null, OnPaletteChanged));
 
+    public static readonly DependencyProperty ModelSourceProperty = DependencyProperty.Register(
+        nameof(ModelSource), typeof(string), typeof(AssetSceneView),
+        new PropertyMetadata(string.Empty, OnModelSourceChanged));
+
     private readonly SceneRenderer _renderer = new();
     private readonly SceneCamera _camera = new();
+
+    private SceneModel? _loadedModel;
+    private int _loadVersion;
 
     private Point _dragOrigin;
     private bool _isDragging;
@@ -51,6 +60,10 @@ public sealed partial class AssetSceneView : SKXamlCanvas, IAnchorProjector
     public AssetSceneView()
     {
         PaintSurface += OnPaintSurface;
+
+        // The renderer holds a viewport-sized native surface; it goes when the view does.
+        // It is recreated on the next paint if the view comes back.
+        Unloaded += (_, _) => _renderer.Dispose();
 
         // Dragging is handled through the pointer events below, so the canvas must not also
         // interpret a drag as a manipulation. IsTapEnabled is deliberately not set: it is
@@ -96,8 +109,56 @@ public sealed partial class AssetSceneView : SKXamlCanvas, IAnchorProjector
         set => SetValue(KeyLightProperty, value);
     }
 
+    /// <summary>
+    /// An <c>ms-appx:///</c> URI of a glTF binary for this asset. Empty draws the parametric
+    /// equipment for <see cref="Kind"/>, which is also what shows until the file has loaded
+    /// and what stays if it cannot be read — the technician never gets an empty viewport.
+    /// </summary>
+    public string ModelSource
+    {
+        get => (string)GetValue(ModelSourceProperty);
+        set => SetValue(ModelSourceProperty, value);
+    }
+
     public bool TryGetAnchor(string id, out AnchorProjection projection) =>
         _renderer.Anchors.TryGetValue(id, out projection);
+
+    private static void OnModelSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
+        _ = ((AssetSceneView)d).LoadModelAsync(e.NewValue as string ?? string.Empty);
+
+    private async Task LoadModelAsync(string uri)
+    {
+        // A stale load must not land over a newer one: the version taken here is compared
+        // before the result is accepted.
+        var version = ++_loadVersion;
+
+        if (string.IsNullOrWhiteSpace(uri))
+        {
+            _loadedModel = null;
+            Invalidate();
+            return;
+        }
+
+        try
+        {
+            var file = await StorageFile.GetFileFromApplicationUriAsync(new Uri(uri));
+            using var stream = await file.OpenStreamForReadAsync();
+            var model = await Task.Run(() => GltfEquipmentLoader.Load(stream));
+
+            if (version == _loadVersion)
+            {
+                _loadedModel = model;
+                this.Log().LogInformation(
+                    "Equipment model {Uri} loaded: {Triangles} triangles, {Parts} parts, {Anchors} inspection points.",
+                    uri, model.TriangleCount, model.Parts.Count, model.Anchors.Count);
+                Invalidate();
+            }
+        }
+        catch (Exception ex)
+        {
+            this.Log().LogWarning(ex, "Could not load the equipment model {Uri}; drawing the parametric model instead.", uri);
+        }
+    }
 
     /// <summary>Returns the camera to the three-quarter view an asset opens on.</summary>
     public void ResetView()
@@ -116,11 +177,12 @@ public sealed partial class AssetSceneView : SKXamlCanvas, IAnchorProjector
 
     private void OnPaintSurface(object? sender, SKPaintSurfaceEventArgs e)
     {
-        var model = EquipmentModels.For(Kind);
+        var model = _loadedModel ?? EquipmentModels.For(Kind);
         var info = e.Info;
 
         _renderer.Render(
             e.Surface.Canvas,
+            e.Surface.Context,
             new SKRect(0, 0, info.Width, info.Height),
             model,
             _camera,

@@ -23,12 +23,27 @@ public sealed class MeshPart
         Vertices = vertices;
         Indices = indices;
         Material = material;
+
+        // Geometry never moves, so a face normal is a property of the part, not of the
+        // frame. Computing it here takes one cross product and one square root per face
+        // out of every frame of an orbit.
+        Normals = new Vec3[indices.Length / 3];
+        for (var i = 0; i < Normals.Length; i++)
+        {
+            var a = vertices[indices[i * 3]];
+            var b = vertices[indices[(i * 3) + 1]];
+            var c = vertices[indices[(i * 3) + 2]];
+            Normals[i] = Vec3.Cross(b - a, c - a).Normalized;
+        }
     }
 
     public Vec3[] Vertices { get; }
 
     /// <summary>Triangle list, three indices per face, wound counter-clockwise when seen from outside.</summary>
     public int[] Indices { get; }
+
+    /// <summary>Outward unit normal per face, in model space.</summary>
+    public Vec3[] Normals { get; }
 
     public Material Material { get; }
 

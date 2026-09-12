@@ -61,8 +61,12 @@ decision is never below the fold.
 
 The Inspect tab draws a real 3D model of the asset, not an illustration:
 
-- Parametric solids (revolve, box, tube, ring) build a pump, air handler and compressor,
-  cached per `AssetKind`.
+- Geometry comes from a glTF 2.0 file when the asset has one (`Asset.ModelUri`, loaded
+  through `GltfEquipmentLoader`), and otherwise from parametric solids (revolve, box,
+  tube, ring) built per `AssetKind`. The parametric model is also what shows until a file
+  has loaded and what stays if it cannot be read. See `docs/REAL-ASSETS-SPEC.md`.
+- Inspection points in a file are named, mesh-less nodes whose names are point ids, so
+  the asset owns its own anchors. P-204 ships this way in `Assets/Models/p-204.glb`.
 - An orbit camera frames the model by fitting its projected outline to the viewport, so the
   machine fills a phone panel and a desktop one equally.
 - Lambert key light plus fill, sky and rim terms; backface culling; painter's-algorithm

@@ -77,6 +77,9 @@ public static class SeedData
         Model: "NK 80-250/270",
         SerialNumber: "GF-88231-04",
         InstalledOn: new DateTimeOffset(2019, 4, 18, 0, 0, 0, now.Offset),
+        // The pump is the one asset that ships with a model file; the other two draw the
+        // parametric equipment for their kind, which is also the fallback for this one.
+        ModelUri: "ms-appx:///Assets/Models/p-204.glb",
         Points: ImmutableList.Create(
             new InspectionPoint(
                 Id: "P-204-motor", AssetId: "P-204", Sequence: 1,

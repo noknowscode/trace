@@ -126,7 +126,8 @@
                             <Grid>
                                 <controls:AssetSceneView x:Name="Scene"
                                                          Style="{StaticResource AssetSceneViewStyle}"
-                                                         Kind="{Binding SchematicKind}" />
+                                                         Kind="{Binding SchematicKind}"
+                                                         ModelSource="{Binding ModelUri}" />
                                 <ItemsRepeater x:Name="MarkerLayer" ItemsSource="{Binding Markers}">
                                     <ItemsRepeater.Layout>
                                         <controls:SpatialMarkerLayout x:Name="MarkerLayout" />

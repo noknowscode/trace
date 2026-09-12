@@ -81,6 +81,10 @@ public partial record AssetModel
     public IFeed<AssetKind> SchematicKind =>
         Asset.Select(asset => asset?.Kind ?? AssetKind.CentrifugalPump);
 
+    /// <summary>The asset's own model file, or empty to draw the parametric equipment for its kind.</summary>
+    public IFeed<string> ModelUri =>
+        Asset.Select(asset => asset?.ModelUri ?? string.Empty);
+
     /// <summary>The points as the machine view needs them, carrying which one is open.</summary>
     public IListFeed<PointMarkerView> Markers =>
         Feed.Combine(Asset, SelectedPointId)

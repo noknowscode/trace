@@ -17,7 +17,8 @@ public partial record Asset(
     string Model,
     string SerialNumber,
     DateTimeOffset InstalledOn,
-    IImmutableList<InspectionPoint> Points)
+    IImmutableList<InspectionPoint> Points,
+    string? ModelUri = null)
 {
     /// <summary>Worst disposition across all points. Computed so it can never drift from the points.</summary>
     public AssetCondition Condition => Points.Count == 0

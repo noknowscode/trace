@@ -19,7 +19,7 @@ public readonly record struct ScenePalette(SKColor Background, SKColor Ground, S
 /// silhouette is cleaned up by rendering the whole scene at twice the size and scaling it
 /// down, which costs one extra surface and no per-frame branching.
 /// </remarks>
-public sealed class SceneRenderer
+public sealed class SceneRenderer : IDisposable
 {
     private const float Supersample = 2f;
 
@@ -27,27 +27,48 @@ public sealed class SceneRenderer
     private SKColor[] _colors = new SKColor[3072];
     private Face[] _faces = new Face[1024];
 
+    // Native Skia objects live across frames. The offscreen surface alone is the whole
+    // viewport at twice the size — recreating it per frame was the single largest cost of
+    // an orbit, and a mask filter left to the finaliser is native memory the GC cannot see.
+    private SKSurface? _surface;
+    private int _surfaceWidth;
+    private int _surfaceHeight;
+    private SKPaint? _meshPaint;
+    private SKPaint? _blitPaint;
+    private SKPaint? _shadowPaint;
+    private SKPath? _shadowPath;
+    private SKMaskFilter? _shadowBlur;
+    private float _shadowSigma = -1f;
+
     /// <summary>Where each inspection point landed, in 0..1 of the destination rectangle.</summary>
     public Dictionary<string, AnchorProjection> Anchors { get; } = [];
 
-    public void Render(SKCanvas canvas, SKRect bounds, SceneModel model, SceneCamera camera, ScenePalette palette)
+    /// <param name="context">The destination's GPU context, or null for a raster canvas.</param>
+    public void Render(
+        SKCanvas canvas,
+        GRRecordingContext? context,
+        SKRect bounds,
+        SceneModel model,
+        SceneCamera camera,
+        ScenePalette palette)
     {
-        canvas.Clear(palette.Background);
-
         if (bounds.Width < 4 || bounds.Height < 4)
         {
+            canvas.Clear(palette.Background);
+            Anchors.Clear();
             return;
         }
 
+        EnsureResources();
+
         var scaledWidth = (int)MathF.Ceiling(bounds.Width * Supersample);
         var scaledHeight = (int)MathF.Ceiling(bounds.Height * Supersample);
-
-        using var surface = SKSurface.Create(new SKImageInfo(
-            scaledWidth, scaledHeight, SKColorType.Rgba8888, SKAlphaType.Premul));
+        var surface = EnsureSurface(scaledWidth, scaledHeight, context);
 
         if (surface is null)
         {
             // Without an offscreen surface, draw straight to the canvas rather than nothing.
+            canvas.Clear(palette.Background);
             DrawScene(canvas, bounds.Width, bounds.Height, model, camera, palette, 1f);
             return;
         }
@@ -55,13 +76,75 @@ public sealed class SceneRenderer
         surface.Canvas.Clear(palette.Background);
         DrawScene(surface.Canvas, scaledWidth, scaledHeight, model, camera, palette, Supersample);
 
+        // An exact 2:1 downscale with linear filtering already averages a 2x2 box per pixel;
+        // a mip chain on a fresh image every frame would be rebuilt every frame for nothing.
         using var image = surface.Snapshot();
-        using var paint = new SKPaint { IsAntialias = true };
         canvas.DrawImage(
             image,
             new SKRect(0, 0, bounds.Width, bounds.Height),
-            new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear),
-            paint);
+            new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.None),
+            _blitPaint!);
+    }
+
+    /// <summary>
+    /// Releases the native Skia state. Safe to call between frames: the next render
+    /// recreates what it needs, so the owning view can drop everything on Unloaded and pick
+    /// up again if it is reloaded.
+    /// </summary>
+    public void Dispose()
+    {
+        _surface?.Dispose();
+        _surface = null;
+        _surfaceWidth = 0;
+        _surfaceHeight = 0;
+        if (_shadowPaint is not null)
+        {
+            _shadowPaint.MaskFilter = null;
+        }
+
+        _shadowBlur?.Dispose();
+        _shadowBlur = null;
+        _shadowSigma = -1f;
+        _meshPaint?.Dispose();
+        _blitPaint?.Dispose();
+        _shadowPaint?.Dispose();
+        _shadowPath?.Dispose();
+        _meshPaint = _blitPaint = _shadowPaint = null;
+        _shadowPath = null;
+    }
+
+    /// <summary>
+    /// The small native objects are created on first use and again after a
+    /// <see cref="Dispose"/>, so releasing them on Unloaded never leaves a later frame
+    /// drawing with a freed paint.
+    /// </summary>
+    private void EnsureResources()
+    {
+        _meshPaint ??= new SKPaint { IsAntialias = false, Color = SKColors.White };
+        _blitPaint ??= new SKPaint { IsAntialias = true };
+        _shadowPaint ??= new SKPaint { IsAntialias = true };
+        _shadowPath ??= new SKPath();
+    }
+
+    private SKSurface? EnsureSurface(int width, int height, GRRecordingContext? context)
+    {
+        if (_surface is not null && _surfaceWidth == width && _surfaceHeight == height)
+        {
+            return _surface;
+        }
+
+        _surface?.Dispose();
+        var info = new SKImageInfo(width, height, SKImageInfo.PlatformColorType, SKAlphaType.Premul);
+
+        // Follow the destination: a GPU-backed canvas gets a GPU-backed scratch surface so
+        // the final blit never crosses the bus, and a raster canvas gets raster.
+        _surface = context is not null
+            ? SKSurface.Create(context, budgeted: true, info) ?? SKSurface.Create(info)
+            : SKSurface.Create(info);
+
+        _surfaceWidth = width;
+        _surfaceHeight = height;
+        return _surface;
     }
 
     private void DrawScene(
@@ -90,6 +173,7 @@ public sealed class SceneRenderer
         {
             var vertices = part.Vertices;
             var indices = part.Indices;
+            var normals = part.Normals;
 
             for (var i = 0; i < indices.Length; i += 3)
             {
@@ -97,7 +181,7 @@ public sealed class SceneRenderer
                 var b = vertices[indices[i + 1]];
                 var c = vertices[indices[i + 2]];
 
-                var normal = Vec3.Cross(b - a, c - a).Normalized;
+                var normal = normals[i / 3];
 
                 var va = view.ToView(a);
                 var vb = view.ToView(b);
@@ -119,9 +203,9 @@ public sealed class SceneRenderer
                     continue;
                 }
 
-                var toEye = ((model.Centre - view.Eye).Length > 0
-                    ? (view.Eye - ((a + b + c) / 3f)).Normalized
-                    : Vec3.Up);
+                // The eye is always outside the model's bounding sphere, so this direction
+                // is never degenerate.
+                var toEye = (view.Eye - ((a + b + c) / 3f)).Normalized;
 
                 _faces[faceCount++] = new Face(
                     ax, ay, bx, by, cx, cy,
@@ -130,47 +214,54 @@ public sealed class SceneRenderer
             }
         }
 
-        if (faceCount == 0)
+        if (faceCount > 0)
         {
-            return;
+            // Painter's order: farthest first.
+            Array.Sort(_faces, 0, faceCount, FaceDepthComparer.Instance);
+
+            var used = faceCount * 3;
+            EnsureVertexCapacity(used);
+
+            for (var i = 0; i < faceCount; i++)
+            {
+                var face = _faces[i];
+                var v = i * 3;
+
+                _positions[v] = new SKPoint(face.AX, face.AY);
+                _positions[v + 1] = new SKPoint(face.BX, face.BY);
+                _positions[v + 2] = new SKPoint(face.CX, face.CY);
+                _colors[v] = face.Colour;
+                _colors[v + 1] = face.Colour;
+                _colors[v + 2] = face.Colour;
+            }
+
+            // SKVertices only takes whole arrays, and copying the used prefix out every frame
+            // defeated the pooling. Instead the tail past the last face is collapsed onto one
+            // point: a triangle with three identical corners covers no pixels, so the whole
+            // pooled buffer can be handed over as-is.
+            var last = _positions[used - 1];
+            for (var i = used; i < _positions.Length; i++)
+            {
+                _positions[i] = last;
+            }
+
+            // Skia combines the vertex colours with the paint through the blend mode:
+            // modulating against white passes them through untouched. Leaving the paint at
+            // its default black draws the whole machine as a silhouette.
+            using var mesh = SKVertices.CreateCopy(SKVertexMode.Triangles, _positions, _colors);
+            canvas.DrawVertices(mesh, SKBlendMode.Modulate, _meshPaint!);
         }
 
-        // Painter's order: farthest first.
-        Array.Sort(_faces, 0, faceCount, FaceDepthComparer.Instance);
-
-        EnsureVertexCapacity(faceCount * 3);
-
-        for (var i = 0; i < faceCount; i++)
-        {
-            var face = _faces[i];
-            var v = i * 3;
-
-            _positions[v] = new SKPoint(face.AX, face.AY);
-            _positions[v + 1] = new SKPoint(face.BX, face.BY);
-            _positions[v + 2] = new SKPoint(face.CX, face.CY);
-            _colors[v] = face.Colour;
-            _colors[v + 1] = face.Colour;
-            _colors[v + 2] = face.Colour;
-        }
-
-        var positions = _positions.AsSpan(0, faceCount * 3).ToArray();
-        var colours = _colors.AsSpan(0, faceCount * 3).ToArray();
-
-        // Skia combines the vertex colours with the paint through the blend mode: modulating
-        // against white passes them through untouched. Leaving the paint at its default
-        // black draws the whole machine as a silhouette.
-        using var mesh = SKVertices.CreateCopy(SKVertexMode.Triangles, positions, colours);
-        using var paint = new SKPaint { IsAntialias = false, Color = SKColors.White };
-        canvas.DrawVertices(mesh, SKBlendMode.Modulate, paint);
-
-        ProjectAnchors(model, view, width, height, scale);
+        // Anchors are refreshed even when nothing was drawn, or the markers would stay
+        // pinned where a previous frame put them.
+        ProjectAnchors(model, view, width, height);
     }
 
     /// <summary>
     /// Projects each inspection point and records whether the machine is between it and the
     /// camera, so a marker on the far side can be shown as behind rather than floating.
     /// </summary>
-    private void ProjectAnchors(SceneModel model, ViewTransform view, float width, float height, float scale)
+    private void ProjectAnchors(SceneModel model, ViewTransform view, float width, float height)
     {
         Anchors.Clear();
 
@@ -197,7 +288,7 @@ public sealed class SceneRenderer
         }
     }
 
-    private static void DrawGroundShadow(
+    private void DrawGroundShadow(
         SKCanvas canvas,
         SceneModel model,
         ViewTransform view,
@@ -220,7 +311,10 @@ public sealed class SceneRenderer
             ellipse[i] = new SKPoint(projected.X, projected.Y);
         }
 
-        using var path = new SKPath();
+        var path = _shadowPath!;
+        var paint = _shadowPaint!;
+
+        path.Reset();
         path.MoveTo(ellipse[0]);
         for (var i = 1; i < ellipse.Length; i++)
         {
@@ -229,13 +323,20 @@ public sealed class SceneRenderer
 
         path.Close();
 
-        using var paint = new SKPaint
+        // The blur is the most expensive operation in the frame and its radius only changes
+        // with the supersample factor, so the filter is rebuilt when that changes and not
+        // otherwise. Disposing a paint does not dispose its mask filter.
+        var sigma = 14f * scale;
+        if (_shadowBlur is null || _shadowSigma != sigma)
         {
-            IsAntialias = true,
-            Color = palette.Ground,
-            MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, 14f * scale),
-        };
+            paint.MaskFilter = null;
+            _shadowBlur?.Dispose();
+            _shadowBlur = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, sigma);
+            _shadowSigma = sigma;
+            paint.MaskFilter = _shadowBlur;
+        }
 
+        paint.Color = palette.Ground;
         canvas.DrawPath(path, paint);
     }
 
