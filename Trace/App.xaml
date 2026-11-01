@@ -11,7 +11,11 @@
         <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
         <utum:MaterialToolkitTheme
           xmlns:utum="using:Uno.Toolkit.UI.Material"
-          ColorOverrideSource="ms-appx:///Styles/ColorPaletteOverride.xaml">
+          xmlns:ut="using:Uno.Themes">
+          <!-- Uno Themes 9: colour overrides live on Colors (ColorOverrideSource is deprecated). -->
+          <utum:MaterialToolkitTheme.Colors>
+            <ut:ThemeColors OverrideSource="ms-appx:///Styles/ColorPaletteOverride.xaml" />
+          </utum:MaterialToolkitTheme.Colors>
           <!-- NOTE: You can override the default Roboto font by providing your font assets here. -->
           <!-- <utum:MaterialToolkitTheme.FontOverrideDictionary>
             <ResourceDictionary>

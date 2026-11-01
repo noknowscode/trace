@@ -36,7 +36,7 @@ public sealed class SceneRenderer : IDisposable
     private SKPaint? _meshPaint;
     private SKPaint? _blitPaint;
     private SKPaint? _shadowPaint;
-    private SKPath? _shadowPath;
+    private SKPathBuilder? _shadowBuilder;
     private SKMaskFilter? _shadowBlur;
     private float _shadowSigma = -1f;
 
@@ -116,9 +116,9 @@ public sealed class SceneRenderer : IDisposable
         _meshPaint?.Dispose();
         _blitPaint?.Dispose();
         _shadowPaint?.Dispose();
-        _shadowPath?.Dispose();
+        _shadowBuilder?.Dispose();
         _meshPaint = _blitPaint = _shadowPaint = null;
-        _shadowPath = null;
+        _shadowBuilder = null;
     }
 
     /// <summary>
@@ -131,7 +131,7 @@ public sealed class SceneRenderer : IDisposable
         _meshPaint ??= new SKPaint { IsAntialias = false, Color = SKColors.White };
         _blitPaint ??= new SKPaint { IsAntialias = true };
         _shadowPaint ??= new SKPaint { IsAntialias = true };
-        _shadowPath ??= new SKPath();
+        _shadowBuilder ??= new SKPathBuilder();
     }
 
     private SKSurface? EnsureSurface(int width, int height, GRRecordingContext? context)
@@ -319,17 +319,19 @@ public sealed class SceneRenderer : IDisposable
             ellipse[i] = new SKPoint(projected.X, projected.Y);
         }
 
-        var path = _shadowPath!;
+        // One builder reused across frames; Detach hands over the path and leaves the
+        // builder empty for the next frame.
+        var builder = _shadowBuilder!;
         var paint = _shadowPaint!;
 
-        path.Reset();
-        path.MoveTo(ellipse[0]);
+        builder.MoveTo(ellipse[0]);
         for (var i = 1; i < ellipse.Length; i++)
         {
-            path.LineTo(ellipse[i]);
+            builder.LineTo(ellipse[i]);
         }
 
-        path.Close();
+        builder.Close();
+        using var path = builder.Detach();
 
         // The blur is the most expensive operation in the frame and its radius only changes
         // with the supersample factor, so the filter is rebuilt when that changes and not

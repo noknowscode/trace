@@ -4,6 +4,11 @@
     <TargetFramework>net10.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <!--
+      UNOB0025: the tests run the app's plain net10.0 build on Uno's reference assemblies on purpose. They cover the
+      domain rules, the store, the workflows and the renderer, and never start the Uno runtime.
+    -->
+    <UnoDisableUNOB0025Validation>true</UnoDisableUNOB0025Validation>
   </PropertyGroup>
 
   <ItemGroup>

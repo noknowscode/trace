@@ -2,7 +2,9 @@ using Microsoft.UI.Input;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using SkiaSharp;
+#if WINDOWS
 using SkiaSharp.Views.Windows;
+#endif
 using Trace.Domain.Enums;
 using Trace.Presentation.Scene3D;
 using Uno.Extensions;
@@ -18,12 +20,14 @@ namespace Trace.Presentation.Controls;
 /// </summary>
 /// <remarks>
 /// The view is a host around one of two drawing surfaces, chosen once at construction.
-/// Where the app renders through Skia — the desktop head, and Android with the Skia
-/// renderer — <see cref="SKCanvasElement"/> draws straight onto the window's own canvas,
+/// Every Uno head (desktop, Android, iOS, WebAssembly) renders through Skia, so
+/// <see cref="SKCanvasElement"/> draws straight onto the window's own canvas,
 /// hardware-accelerated when the app is, with no intermediate bitmap. The WinAppSDK head
-/// does not render through Skia, so it falls back to <see cref="SKXamlCanvas"/>, which
-/// rasterises to a bitmap the XAML tree then displays. Both hand the same canvas to the
-/// same renderer; only the plumbing differs.
+/// does not render through Skia (Uno's SKCanvasElement there is an unsupported stub), so
+/// it falls back to SkiaSharp.Views.WinUI's <c>SKXamlCanvas</c>, which rasterises to a
+/// bitmap the XAML tree then displays. That fallback exists only in the WinAppSDK build:
+/// SkiaSharp.Views.WinUI is the only package that ships it. Both surfaces hand the same
+/// canvas to the same renderer; only the plumbing differs.
 ///
 /// The view also publishes where each inspection point projected to, so the XAML markers
 /// laid over it stay glued to their part as the model turns. Those markers are ordinary
@@ -69,9 +73,13 @@ public sealed partial class AssetSceneView : Grid, IAnchorProjector
         // pointer input to land on it.
         Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
 
+#if WINDOWS
         _surface = SKCanvasElement.IsSupportedOnCurrentPlatform()
             ? new WindowCanvasSurface(this)
             : new BitmapSurface(this);
+#else
+        _surface = new WindowCanvasSurface(this);
+#endif
         Children.Add((UIElement)_surface);
 
         // The renderer holds a viewport-sized native surface; it goes when the view does.
@@ -86,7 +94,10 @@ public sealed partial class AssetSceneView : Grid, IAnchorProjector
         PointerMoved += OnPointerMoved;
         PointerReleased += OnPointerReleased;
         PointerCaptureLost += (_, _) => _isDragging = false;
+#if !ANDROID && !IOS
+        // Mouse-wheel zoom; the wheel delta is not implemented on the touch-first heads (Uno0001).
         PointerWheelChanged += OnPointerWheelChanged;
+#endif
 
         ActualThemeChanged += (_, _) => Invalidate();
 
@@ -261,6 +272,7 @@ public sealed partial class AssetSceneView : Grid, IAnchorProjector
         e.Handled = true;
     }
 
+#if !ANDROID && !IOS
     private void OnPointerWheelChanged(object sender, PointerRoutedEventArgs e)
     {
         var delta = e.GetCurrentPoint(this).Properties.MouseWheelDelta;
@@ -268,6 +280,7 @@ public sealed partial class AssetSceneView : Grid, IAnchorProjector
         Invalidate();
         e.Handled = true;
     }
+#endif
 
     private interface ISceneSurface
     {
@@ -301,9 +314,10 @@ public sealed partial class AssetSceneView : Grid, IAnchorProjector
         }
     }
 
+#if WINDOWS
     /// <summary>
     /// Rasterises to a bitmap the XAML tree displays, for the head that does not render
-    /// through Skia. Its paint arguments are already in device pixels.
+    /// through Skia (WinAppSDK). Its paint arguments are already in device pixels.
     /// </summary>
     private sealed partial class BitmapSurface : SKXamlCanvas, ISceneSurface
     {
@@ -322,6 +336,7 @@ public sealed partial class AssetSceneView : Grid, IAnchorProjector
                 new SKRect(0, 0, e.Info.Width, e.Info.Height),
                 1f);
     }
+#endif
 }
 
 /// <summary>Something that can say where an inspection point landed on screen.</summary>

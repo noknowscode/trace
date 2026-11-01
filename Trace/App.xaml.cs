@@ -110,7 +110,7 @@ public partial class App : Application
             );
         MainWindow = builder.Window;
 
-#if DEBUG
+#if DEBUG && !NO_UNO_STUDIO
         // UseStudio blocks the window from ever being created when no DevServer is
         // reachable, which makes headless verification runs hang with no visible error.
         // TRACE_NO_HOTDESIGN=1 opts a run out of it.
