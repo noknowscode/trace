@@ -80,8 +80,9 @@ public partial class App : Application
                 {
                     services.AddSingleton(TimeProvider.System);
 
-                    // Persistence. The store root is resolved here, at composition time, so
-                    // nothing below this line has to know about platform storage paths.
+                    // Persistence. The store root is chosen here, at composition time (and opened
+                    // on first use), so nothing below this line has to know about platform storage
+                    // paths.
                     services.AddSingleton<ILocalFileStore>(_ => new LocalFileStore(OpenStoreRootAsync));
                     services.AddSingleton<ITraceStore, TraceStore>();
 

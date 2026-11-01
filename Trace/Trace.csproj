@@ -59,8 +59,8 @@
   <!--
     WinAppSDK: an x64 or ARM64 build, never AnyCPU, for the Skia natives behind the equipment view's SKXamlCanvas.
     Uno 7's WinUI libraries are built against WinRT.Runtime 2.3.1, and the SDK's default Windows projection carries
-    2.2.0 (CS1705). Projection revision .87 carries 2.3.1 for every platform version: 10.0.19041.87 is the CI-proven
-    pin on the 19041 heads, and 10.0.26100.87 is the same revision for this head's 26100 target.
+    2.2.0 (CS1705). Projection revision .87 carries 2.3.1: 10.0.19041.87 is the CI-proven pin on the 19041 heads,
+    and the 10.0.26100.87 package ships the same WinRT.Runtime 2.3.1 for this head's 26100 target.
   -->
   <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
     <Platforms>x64;ARM64</Platforms>
