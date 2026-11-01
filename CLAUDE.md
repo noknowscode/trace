@@ -21,12 +21,13 @@ Written specs win over the prototype. Complete Must Have before Nice to Have.
 - Theme: Material (dark default for field use, light supported).
 - Navigation: region-based via Uno.Extensions Navigation (`ViewMap`/`RouteMap` in App.xaml.cs). Contract: Today → Asset → Point → Complete → optional Corrective Action; back restores exact asset/tab context.
 - DI: Microsoft.Extensions.DependencyInjection via Uno.Extensions.Hosting.
-- Targets: `net10.0-android`, `net10.0-windows10.0.26100`, `net10.0-desktop` (+ plain `net10.0` for tests). Tier 1 = Android + Windows; desktop head is the dev/verify loop on non-Windows machines. WASM/iOS come later, after platform-service validation.
+- Targets: `net10.0-android`, `net10.0-ios`, `net10.0-windows10.0.26100` (WinAppSDK), `net10.0-browserwasm`, `net10.0-desktop` (+ plain `net10.0` for tests). Tier 1 = Android + Windows; desktop head is the dev/verify loop on non-Windows machines. iOS and WebAssembly run the same simulated platform services as every other head. Uno.Sdk skips the heads the build OS cannot build (iOS off macOS, WinAppSDK off Windows); `-p:TraceTargetFrameworks=<tfm>` builds one head without touching the test project.
+- Uno 7 defines `ANDROID`, `IOS`, `WINDOWS` (WinAppSDK), `__WASM__` and `__DESKTOP__`; there is no `__ANDROID__`/`__IOS__`. `Uno0001` (API not implemented on a head) is a build error.
 - All hardware/backends (camera, QR/NFC scan, network status, sync) sit behind interfaces in `Services/` with deterministic simulated implementations. Seed data must be replaceable without touching presentation.
 
 ## Project Structure
 
-- `Trace/` — single-project Uno app (Uno.Sdk 6.7.22, pinned in `global.json`)
+- `Trace/` — single-project Uno app (Uno.Sdk 7.0.0-dev.115, pinned in `global.json`)
   - `Trace/Domain/` — `Models/` (immutable records: Asset, Assignment, InspectionPoint, InspectionEvent, Evidence, CorrectiveAction, SyncOperation), `Enums/` (Disposition, SyncState, EvidenceType, CorrectivePriority, ActionStatus), `Rules/` (reading validation, Fail-requires-evidence, idempotent completion)
   - `Trace/Services/` — application service interfaces + simulated implementations (IAssetRepository, IInspectionRepository, ISyncQueue, INetworkStatusService, ICameraService, IAssetScanService, …)
   - `Trace/Infrastructure/` — `Persistence/`, `Repositories/`, `Platform/`, `Seed/` (P-204 pump scenario per UNO-BUILD-SPEC)
@@ -52,7 +53,9 @@ Note: there is deliberately no `Application/` folder — a `Trace.Application` n
 ## Build & Verify
 
 - Dev loop (Linux/CI container): `dotnet build Trace/Trace.csproj -f net10.0-desktop`
-- Tests: `dotnet test Trace.Tests/Trace.Tests.csproj` — the renderer tests draw for real, so the test project references `SkiaSharp.NativeAssets.Linux`; the app heads bring their own natives.
+- Tests: `dotnet test Trace.Tests/Trace.Tests.csproj -p:TraceTargetFrameworks=net10.0` (the override keeps restore off the mobile workloads) — the renderer tests draw for real, so the test project references `SkiaSharp.NativeAssets.Linux`; the app heads bring their own natives.
+- Build gate (`Directory.Build.props`): warnings are errors, `.editorconfig` style is enforced in the build, NuGet audit and trim-analysis warnings stay warnings. CI (`.github/workflows/ci.yml`) runs the tests, desktop publishes for win/linux/mac, the WinAppSDK build check, WebAssembly, Android and an iOS simulator build.
+- Debug-only: Uno.Sdk 7.0.0-dev.115's Hot Design and App MCP clients crash Debug launches (they reference `Uno.UI.Lottie`, which Uno 7 no longer ships), so `Trace.csproj` turns both off and defines `NO_UNO_STUDIO`; remove that block once a dev build fixes it.
 - Runtime verification in this container: `tools/run-desktop.sh <out.png> [w] [h] [settle] [steps…]` (Xvfb + xdotool + capture; `TRACE_RESET=1` clears the store and the theme preference). The `uno-app` MCP registered in `.mcp.json` exposes no tools here (it needs a signed-in Uno account), so the script is the verification path on this box; `uno_app_start` applies on the Windows machine.
-- Android/Windows heads build on the Windows 11 dev machine (Android SDK is not present in the web container; the `android` .NET workload must be installed — `dotnet workload restore`).
+- Android needs the `android` .NET workload (`dotnet workload restore`) plus an Android SDK and JDK; WebAssembly needs `wasm-tools`. The WinAppSDK head builds on Windows and the iOS head on macOS (CI covers both).
 - App MCP: `.mcp.json` registers the `uno-app` devserver — start sessions rooted in this folder so it loads; on a machine where it exposes tools, launch the app with `uno_app_start`, not bare `dotnet run`.

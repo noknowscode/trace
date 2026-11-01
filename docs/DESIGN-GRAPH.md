@@ -71,12 +71,12 @@ The Inspect tab draws a real 3D model of the asset, not an illustration:
   machine fills a phone panel and a desktop one equally.
 - Lambert key light plus fill, sky and rim terms; backface culling; painter's-algorithm
   triangle sort; one `DrawVertices` call into a 2× supersampled surface.
-- Drawn on the window's own Skia canvas through `SKCanvasElement` wherever the app renders
-  through Skia (desktop, and Android with the Skia renderer) — hardware-accelerated when
+- Drawn on the window's own Skia canvas through `SKCanvasElement` on every head that
+  renders through Skia (desktop, Android, iOS, WebAssembly) — hardware-accelerated when
   the app is, with no intermediate bitmap. The WinAppSDK head does not render through
-  Skia, so the view falls back to `SKXamlCanvas` there. The choice is made once per view
-  from `SKCanvasElement.IsSupportedOnCurrentPlatform()`; both surfaces feed the same
-  renderer.
+  Skia, so the view falls back to `SKXamlCanvas` (SkiaSharp.Views.WinUI) there; that
+  fallback is compiled only into the WinAppSDK build (`#if WINDOWS`). Both surfaces feed
+  the same renderer.
 - Inspection points are 3D anchors on the solids. The renderer publishes where each one
   projected to, and a `NonVirtualizingLayout` places the XAML markers there, dimming the
   ones that turned to the far side. The markers stay ordinary focusable controls so the

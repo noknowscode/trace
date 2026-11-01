@@ -99,10 +99,9 @@ Items that cannot be checked in this container are listed under "Not verified he
 
 ## Not verified here
 
-- **Android and Windows heads.** The Android SDK cannot be installed in this container —
-  `dl.google.com` and `aka.ms` are denied by the egress policy, so
-  `InstallAndroidDependencies` fails. The shared code compiles for `net10.0` and the
-  desktop head, and the renderer deliberately uses `SKXamlCanvas` rather than a GL surface
-  so it is portable to Android, but neither head has been built or run.
+- **Android, iOS, WebAssembly and Windows heads.** Release builds of the Android and
+  WebAssembly heads compile here with zero warnings; the iOS and WinAppSDK heads compile
+  only in CI (`.github/workflows/ci.yml`). None of the four has been run: the desktop head
+  is the only one exercised at runtime on this machine.
 - **Real hardware.** Camera, tag scanning, network state and the sync transport are
   deterministic simulations behind interfaces in `Services/`.
