@@ -9,18 +9,26 @@ namespace Trace.Infrastructure.Persistence;
 /// </summary>
 public sealed class LocalFileStore : ILocalFileStore
 {
-    private readonly string _root;
+    private readonly Func<ValueTask<string>> _openRoot;
     private readonly SemaphoreSlim _gate = new(1, 1);
+    private string? _root;
 
     public LocalFileStore(string root)
+        : this(() => ValueTask.FromResult(root))
     {
-        _root = root;
-        Directory.CreateDirectory(_root);
     }
+
+    /// <summary>
+    /// A store whose root is opened on first use rather than at construction. The app opens
+    /// it through StorageFolder: on WebAssembly the local folder is restored from browser
+    /// storage asynchronously and only a StorageFolder call waits for that, so a plain
+    /// System.IO read at startup could find the folder still empty.
+    /// </summary>
+    public LocalFileStore(Func<ValueTask<string>> openRoot) => _openRoot = openRoot;
 
     public async ValueTask<string?> ReadTextAsync(string key, CancellationToken ct)
     {
-        var path = PathFor(key);
+        var path = await PathForAsync(key);
         await _gate.WaitAsync(ct);
         try
         {
@@ -34,7 +42,7 @@ public sealed class LocalFileStore : ILocalFileStore
 
     public async ValueTask WriteTextAsync(string key, string content, CancellationToken ct)
     {
-        var path = PathFor(key);
+        var path = await PathForAsync(key);
         await _gate.WaitAsync(ct);
         try
         {
@@ -52,7 +60,7 @@ public sealed class LocalFileStore : ILocalFileStore
 
     public async ValueTask<string> WriteBytesAsync(string key, byte[] content, CancellationToken ct)
     {
-        var path = PathFor(key);
+        var path = await PathForAsync(key);
         await _gate.WaitAsync(ct);
         try
         {
@@ -66,19 +74,18 @@ public sealed class LocalFileStore : ILocalFileStore
         return new Uri(path).AbsoluteUri;
     }
 
-    public ValueTask DeleteAsync(string key, CancellationToken ct)
+    public async ValueTask DeleteAsync(string key, CancellationToken ct)
     {
-        var path = PathFor(key);
+        var path = await PathForAsync(key);
         if (File.Exists(path))
         {
             File.Delete(path);
         }
-
-        return ValueTask.CompletedTask;
     }
 
-    private string PathFor(string key)
+    private async ValueTask<string> PathForAsync(string key)
     {
+        _root ??= await _openRoot();
         var full = Path.Combine(_root, key);
         var directory = Path.GetDirectoryName(full);
         if (!string.IsNullOrEmpty(directory))

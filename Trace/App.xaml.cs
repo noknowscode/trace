@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
 using Trace.Infrastructure.Persistence;
 using Trace.Infrastructure.Platform;
 using Trace.Infrastructure.Repositories;
@@ -83,8 +82,7 @@ public partial class App : Application
 
                     // Persistence. The store root is resolved here, at composition time, so
                     // nothing below this line has to know about platform storage paths.
-                    services.AddSingleton<ILocalFileStore>(_ => new LocalFileStore(
-                        Path.Combine(ApplicationData.Current.LocalFolder.Path, "trace")));
+                    services.AddSingleton<ILocalFileStore>(_ => new LocalFileStore(OpenStoreRootAsync));
                     services.AddSingleton<ITraceStore, TraceStore>();
 
                     // Repositories over the shared snapshot stream.
@@ -130,6 +128,14 @@ public partial class App : Application
         // so this has to run after the navigation root exists.
         await Host.Services.GetRequiredService<IThemeService>().InitializeAsync();
     }
+
+    /// <summary>
+    /// The store's folder under the app's local data, opened through StorageFolder before any
+    /// file access: on WebAssembly that call is what waits for the browser-backed local folder
+    /// to be restored.
+    /// </summary>
+    private static async ValueTask<string> OpenStoreRootAsync() =>
+        (await ApplicationData.Current.LocalFolder.CreateFolderAsync("trace", CreationCollisionOption.OpenIfExists)).Path;
 
     private static void RegisterRoutes(IViewRegistry views, IRouteRegistry routes)
     {
