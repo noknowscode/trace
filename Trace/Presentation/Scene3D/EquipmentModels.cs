@@ -58,7 +58,7 @@ public static class EquipmentModels
     /// cooling fins, and a tapered tail. Returned as one profile so the frame revolves into
     /// a single closed solid.
     /// </summary>
-    private static List<(float Along, float Radius)> FinnedFrame(
+    private static (float Along, float Radius)[] FinnedFrame(
         float noseRadius,
         float bodyRadius,
         float finRadius,
@@ -90,7 +90,7 @@ public static class EquipmentModels
         profile.Add((length * 0.94f, bodyRadius * 0.9f));
         profile.Add((length, noseRadius * 1.25f));
 
-        return profile;
+        return profile.ToArray();
     }
 
     /// <summary>
