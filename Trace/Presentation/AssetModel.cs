@@ -212,6 +212,7 @@ public partial record AssetModel
         await LoadDraftAsync(draft, ct);
         await Confirmation.UpdateAsync(_ => string.Empty, ct);
         await CompletionError.UpdateAsync(_ => string.Empty, ct);
+        await IsDiscardPending.UpdateAsync(_ => false, ct);
 
         // What was recorded at the previous point stays with that point: corrective work
         // raised from here must come from an inspection of this point.
@@ -227,7 +228,42 @@ public partial record AssetModel
     {
         await IsInspectorOpen.UpdateAsync(_ => false, ct);
         await IsActionSheetOpen.UpdateAsync(_ => false, ct);
+        await IsDiscardPending.UpdateAsync(_ => false, ct);
         await SelectedPointId.UpdateAsync(_ => string.Empty, ct);
+    }
+
+    // ---- Discarding what was entered ----------------------------------------------------
+    //
+    // Leaving a point or closing the inspector keeps the draft, so nothing is lost and nothing
+    // asks. Discard is the one action that throws entered work away, so it is the one that
+    // confirms first (UNO-BUILD-SPEC: dirty entry confirms discard only when data would be lost).
+
+    /// <summary>True once something has been entered at the open point that a discard would lose.</summary>
+    public IFeed<bool> CanDiscard =>
+        Feed.Combine(SelectedPoint, Draft)
+            .Select(pair => pair.Item1 is not null && pair.Item2 is not null && pair.Item2.IsDirtyAgainst(pair.Item1));
+
+    /// <summary>A discard is waiting for the technician to confirm it.</summary>
+    public IState<bool> IsDiscardPending => State.Value(this, () => false);
+
+    public ValueTask AskDiscard(CancellationToken ct) => IsDiscardPending.UpdateAsync(_ => true, ct);
+
+    public ValueTask KeepDraft(CancellationToken ct) => IsDiscardPending.UpdateAsync(_ => false, ct);
+
+    /// <summary>Drops what was entered at the open point, once confirmed, and starts it afresh.</summary>
+    public async ValueTask DiscardDraft(CancellationToken ct)
+    {
+        await IsDiscardPending.UpdateAsync(_ => false, ct);
+
+        var point = await SelectedPoint;
+        if (point is null)
+        {
+            return;
+        }
+
+        await _workflow.DiscardDraftAsync(point.Id, ct);
+        await LoadDraftAsync(await _workflow.StartOrResumeDraftAsync(point, ct), ct);
+        await CompletionError.UpdateAsync(_ => string.Empty, ct);
     }
 
     public ValueTask SetPass(CancellationToken ct) => ChosenDisposition.UpdateAsync(_ => Disposition.Pass, ct);
@@ -276,6 +312,7 @@ public partial record AssetModel
         if (await SelectedPoint is { } open && open.Id == draft.PointId)
         {
             await LoadDraftAsync(await _workflow.StartOrResumeDraftAsync(open, ct), ct);
+            await IsDiscardPending.UpdateAsync(_ => false, ct);
         }
 
         await RecordedEvent.UpdateAsync(_ => outcome.Event!, ct);

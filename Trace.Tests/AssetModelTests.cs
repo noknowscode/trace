@@ -147,4 +147,39 @@ public class AssetModelTests
         (await model.CompletionError).Should().Contain("no longer available");
         (await model.Confirmation).Should().BeNullOrEmpty();
     }
+
+    [Test]
+    public async Task A_point_with_nothing_entered_offers_no_discard()
+    {
+        var model = await OpenAtAsync("P-204-seal");
+
+        (await model.CanDiscard).Should().BeFalse("a pristine draft has nothing to lose");
+    }
+
+    [Test]
+    public async Task Discarding_asks_first_then_starts_the_point_afresh()
+    {
+        var model = await OpenAtAsync("P-204-seal");
+        await EnterAsync(model, "1.6", Disposition.Fail, "Weeping at the gland.");
+        var entered = (await model.Draft)!;
+        await TestHarness.UntilAsync(async () =>
+            (await _harness.Store.GetAsync(default)).FindDraft("P-204-seal")?.Notes == "Weeping at the gland.");
+
+        (await model.CanDiscard).Should().BeTrue();
+
+        await model.AskDiscard(default);
+        (await model.IsDiscardPending).Should().BeTrue();
+        (await _harness.Store.GetAsync(default)).FindDraft("P-204-seal")!.Notes
+            .Should().Be("Weeping at the gland.", "nothing is thrown away until the technician confirms");
+
+        await model.DiscardDraft(default);
+
+        (await model.IsDiscardPending).Should().BeFalse();
+        var stored = (await _harness.Store.GetAsync(default)).FindDraft("P-204-seal")!;
+        stored.ClientToken.Should().NotBe(entered.ClientToken);
+        stored.Notes.Should().BeEmpty();
+        stored.Disposition.Should().Be(Disposition.None);
+        (await model.NoteText).Should().BeEmpty();
+        (await model.ReadingText).Should().Be("7.2", "the point starts again from its last reading");
+    }
 }

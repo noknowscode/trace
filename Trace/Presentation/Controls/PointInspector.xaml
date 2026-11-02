@@ -22,29 +22,68 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Identity -->
-        <Grid ColumnSpacing="{StaticResource SpaceS}">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <StackPanel Spacing="{StaticResource SpaceXXS}">
-                <TextBlock Text="INSPECTION POINT" Style="{StaticResource EyebrowText}" />
-                <TextBlock Text="{Binding SelectedPoint.Label}"
-                           Style="{StaticResource PanelTitleText}"
-                           TextWrapping="Wrap" />
-            </StackPanel>
-            <Button Grid.Column="1"
-                    Style="{StaticResource IconButtonStyle}"
-                    VerticalAlignment="Top"
-                    Command="{Binding CloseInspector}"
-                    AutomationProperties.Name="Close inspection point"
-                    ToolTipService.ToolTip="Close">
-                <Viewbox Width="{StaticResource IconSizeS}" Height="{StaticResource IconSizeS}">
-                    <PathIcon Data="{StaticResource IconFail}" />
-                </Viewbox>
-            </Button>
-        </Grid>
+        <!-- Identity, and the one action that throws entered work away, which confirms first. -->
+        <StackPanel Spacing="{StaticResource SpaceS}">
+            <Grid ColumnSpacing="{StaticResource SpaceS}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Spacing="{StaticResource SpaceXXS}">
+                    <TextBlock Text="INSPECTION POINT" Style="{StaticResource EyebrowText}" />
+                    <TextBlock Text="{Binding SelectedPoint.Label}"
+                               Style="{StaticResource PanelTitleText}"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+                <Button Grid.Column="1"
+                        Style="{StaticResource TextButtonStyle}"
+                        VerticalAlignment="Top"
+                        MinHeight="{StaticResource TouchTargetSize}"
+                        Command="{Binding AskDiscard}"
+                        Content="Discard"
+                        Visibility="{Binding CanDiscard, Converter={StaticResource BoolToVisibility}}"
+                        AutomationProperties.Name="Discard what was entered at this point" />
+                <Button Grid.Column="2"
+                        Style="{StaticResource IconButtonStyle}"
+                        VerticalAlignment="Top"
+                        Command="{Binding CloseInspector}"
+                        AutomationProperties.Name="Close inspection point"
+                        ToolTipService.ToolTip="Close">
+                    <Viewbox Width="{StaticResource IconSizeS}" Height="{StaticResource IconSizeS}">
+                        <PathIcon Data="{StaticResource IconFail}" />
+                    </Viewbox>
+                </Button>
+            </Grid>
+
+            <Border Style="{StaticResource TileSurface}"
+                    AutomationProperties.LiveSetting="Polite"
+                    Visibility="{Binding IsDiscardPending, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel Spacing="{StaticResource SpaceS}">
+                    <TextBlock Style="{StaticResource SupportingText}"
+                               Text="Discard what you entered here? The reading, the call, the note and any photos are removed from this device." />
+                    <Grid ColumnSpacing="{StaticResource SpaceS}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Button Style="{StaticResource OutlinedButtonStyle}"
+                                HorizontalAlignment="Stretch"
+                                MinHeight="{StaticResource TouchTargetSize}"
+                                Command="{Binding KeepDraft}"
+                                Content="Keep"
+                                AutomationProperties.Name="Keep what was entered" />
+                        <Button Grid.Column="1"
+                                Style="{StaticResource FilledButtonStyle}"
+                                HorizontalAlignment="Stretch"
+                                MinHeight="{StaticResource TouchTargetSize}"
+                                Command="{Binding DiscardDraft}"
+                                Content="Discard"
+                                AutomationProperties.Name="Confirm discard" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </StackPanel>
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="{StaticResource ScrollBarGutter}">
             <StackPanel Spacing="{StaticResource SpaceM}">

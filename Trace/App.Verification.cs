@@ -19,7 +19,8 @@ namespace Trace;
 /// does; <c>Point</c> also opens its seal housing point and enters an out-of-range reading;
 /// <c>Action</c> fails that point with a note and raises the corrective action sheet;
 /// <c>Again</c> completes the seal housing as Pass, enters a new reading and completes it again,
-/// and prints how many events the point gained.</item>
+/// and prints how many events the point gained; <c>Discard</c> enters the reading and asks to
+/// discard it, for the confirmation.</item>
 /// <item><c>--trace-from=Assets|Scan|Sync|Findings</c> opens that destination first and the asset
 /// from there; <c>--trace-back=1</c> then presses the asset's Back and prints where it landed.</item>
 /// <item><c>--trace-seed=empty</c> clears the round, the corrective actions and the queue after the
@@ -194,7 +195,7 @@ public partial class App
                 return;
             }
 
-            if (route is not ("Point" or "Action" or "Again"))
+            if (route is not ("Point" or "Action" or "Again" or "Discard"))
             {
                 return;
             }
@@ -234,6 +235,14 @@ public partial class App
             SetText(page, "New reading", "7.4");
             await Task.Delay(800);
             Console.Error.WriteLine($"VERIFY point opened={chip is not null}");
+
+            if (route is "Discard")
+            {
+                Invoke(page, "Discard what was entered at this point");
+                await Task.Delay(800);
+                Console.Error.WriteLine("VERIFY discard asked");
+                return;
+            }
 
             if (route is not "Action")
             {
