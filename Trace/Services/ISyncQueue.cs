@@ -12,6 +12,12 @@ public interface ISyncQueue
 
     IAsyncEnumerable<int> WatchPendingCount(CancellationToken ct);
 
+    /// <summary>
+    /// The files of this device's records that could not be read at launch and were set aside.
+    /// While there are any, an empty queue does not mean everything reached the server.
+    /// </summary>
+    IAsyncEnumerable<IImmutableList<string>> WatchSetAside(CancellationToken ct);
+
     /// <summary>Attempts every pending and failed operation. Returns the number that succeeded.</summary>
     ValueTask<SyncResult> SyncAsync(CancellationToken ct);
 

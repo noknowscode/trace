@@ -11,9 +11,10 @@ namespace Trace.Infrastructure.Repositories;
 /// Applies the completion rules and commits the result.
 /// </summary>
 /// <remarks>
-/// Every write happens inside a single store mutation, so an inspection can never exist
-/// without the point move and the outbox entry that belong with it — including when the
-/// device is offline, where the local commit is the whole of the transaction.
+/// Every write happens inside a single store mutation, and the store commits a mutation whole
+/// (through its journal, see <see cref="StoreCommit"/>), so an inspection can never exist
+/// without the point move and the outbox entry that belong with it, not even after a crash
+/// halfway through the write. Offline, the local commit is the whole of the transaction.
 /// </remarks>
 public sealed class InspectionWorkflow : IInspectionWorkflow
 {

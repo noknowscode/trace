@@ -83,6 +83,24 @@ public sealed class LocalFileStore : ILocalFileStore
         }
     }
 
+    public async ValueTask MoveAsync(string key, string newKey, CancellationToken ct)
+    {
+        var from = await PathForAsync(key);
+        var to = await PathForAsync(newKey);
+        await _gate.WaitAsync(ct);
+        try
+        {
+            if (File.Exists(from))
+            {
+                File.Move(from, to, overwrite: true);
+            }
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
     private async ValueTask<string> PathForAsync(string key)
     {
         _root ??= await _openRoot();

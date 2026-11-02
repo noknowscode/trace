@@ -17,4 +17,5 @@ namespace Trace.Infrastructure.Persistence;
 [JsonSerializable(typeof(ImmutableList<CorrectiveAction>))]
 [JsonSerializable(typeof(ImmutableList<SyncOperation>))]
 [JsonSerializable(typeof(ImmutableList<InspectionDraft>))]
+[JsonSerializable(typeof(StoreCommit))]
 internal sealed partial class TraceJsonContext : JsonSerializerContext;

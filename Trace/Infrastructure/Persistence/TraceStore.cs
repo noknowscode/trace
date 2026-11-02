@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using System.Threading.Channels;
 using Trace.Domain.Models;
 using Trace.Infrastructure.Seed;
@@ -12,6 +13,11 @@ namespace Trace.Infrastructure.Persistence;
 /// mutation actually touched. Section changes are detected by reference: an immutable list
 /// that a transform left alone is still the same object, so it is not rewritten.
 /// </summary>
+/// <remarks>
+/// A mutation that touches several sections is committed through a journal
+/// (<see cref="StoreCommit"/>), so it lands whole or not at all. A section that cannot be read
+/// at launch is set aside under a new name rather than overwritten, and the snapshot says so.
+/// </remarks>
 public sealed class TraceStore : ITraceStore
 {
     private const string AssetsKey = "assets.json";
@@ -20,6 +26,7 @@ public sealed class TraceStore : ITraceStore
     private const string ActionsKey = "actions.json";
     private const string QueueKey = "sync-queue.json";
     private const string DraftsKey = "drafts.json";
+    private const string CommitKey = "commit.json";
 
     private readonly ILocalFileStore _files;
     private readonly TimeProvider _time;
@@ -104,7 +111,19 @@ public sealed class TraceStore : ITraceStore
             // Disk first. Publishing the snapshot before the write means a failed write
             // leaves memory ahead of disk permanently: the section is already committed, so
             // the next mutation compares against it, finds it unchanged, and never retries.
-            await PersistChangedSectionsAsync(previous, next, ct);
+            try
+            {
+                await PersistAsync(StoreCommit.Between(previous, next), ct);
+            }
+            catch
+            {
+                // Disk may now hold part of this commit (a journal, some sections). The next
+                // read loads from disk again, which finishes the commit from its journal,
+                // instead of writing the next one on top of half of this one.
+                _current = null;
+                throw;
+            }
+
             _current = next;
         }
         finally
@@ -128,25 +147,40 @@ public sealed class TraceStore : ITraceStore
 
     private async Task<TraceSnapshot> LoadAsync(CancellationToken ct)
     {
+        var setAside = new List<string>();
+
+        // A commit interrupted after its journal landed is finished first: the journal holds
+        // the newer copy of every section it touched, so those sections are taken from it.
+        var pending = await ReadSectionAsync(CommitKey, TraceJsonContext.Default.StoreCommit, setAside, ct);
+
         // Every section is read before anything is decided. Reading the catalogue first and
         // returning early on a bad read is how the technician's outbox used to disappear:
         // an unreadable assets.json looked exactly like a first run.
-        var assets = await ReadAsync(AssetsKey, TraceJsonContext.Default.ImmutableListAsset, ct);
-        var assignments = await ReadAsync(AssignmentsKey, TraceJsonContext.Default.ImmutableListAssignment, ct);
-        var events = await ReadAsync(EventsKey, TraceJsonContext.Default.ImmutableListInspectionEvent, ct);
-        var actions = await ReadAsync(ActionsKey, TraceJsonContext.Default.ImmutableListCorrectiveAction, ct);
-        var queue = await ReadAsync(QueueKey, TraceJsonContext.Default.ImmutableListSyncOperation, ct);
-        var drafts = await ReadAsync(DraftsKey, TraceJsonContext.Default.ImmutableListInspectionDraft, ct);
+        var assets = await ReadAsync(AssetsKey, pending.Value?.Assets, TraceJsonContext.Default.ImmutableListAsset, setAside, ct);
+        var assignments = await ReadAsync(AssignmentsKey, pending.Value?.Assignments, TraceJsonContext.Default.ImmutableListAssignment, setAside, ct);
+        var events = await ReadAsync(EventsKey, pending.Value?.Events, TraceJsonContext.Default.ImmutableListInspectionEvent, setAside, ct);
+        var actions = await ReadAsync(ActionsKey, pending.Value?.Actions, TraceJsonContext.Default.ImmutableListCorrectiveAction, setAside, ct);
+        var queue = await ReadAsync(QueueKey, pending.Value?.Queue, TraceJsonContext.Default.ImmutableListSyncOperation, setAside, ct);
+        var drafts = await ReadAsync(DraftsKey, pending.Value?.Drafts, TraceJsonContext.Default.ImmutableListInspectionDraft, setAside, ct);
 
         if (assets.Value is { Count: > 0 })
         {
+            if (pending.Value is { } commit)
+            {
+                _log.LogWarning("Finishing an interrupted commit of {Sections} sections.", commit.SectionCount);
+                await PersistAsync(commit, ct);
+            }
+
             return new TraceSnapshot(
                 assets.Value,
                 assignments.Value ?? ImmutableList<Assignment>.Empty,
                 events.Value ?? ImmutableList<InspectionEvent>.Empty,
                 actions.Value ?? ImmutableList<CorrectiveAction>.Empty,
                 queue.Value ?? ImmutableList<SyncOperation>.Empty,
-                drafts.Value ?? ImmutableList<InspectionDraft>.Empty);
+                drafts.Value ?? ImmutableList<InspectionDraft>.Empty)
+            {
+                SetAside = setAside.ToImmutableList(),
+            };
         }
 
         // No usable catalogue. The app needs one to be navigable at all, so lay down the
@@ -174,8 +208,9 @@ public sealed class TraceStore : ITraceStore
             };
         }
 
-        await PersistChangedSectionsAsync(TraceSnapshot.Empty, seed, ct);
-        return seed;
+        // Writes every section through a fresh journal, which also retires a pending one.
+        await PersistAsync(StoreCommit.Between(TraceSnapshot.Empty, seed), ct);
+        return seed with { SetAside = setAside.ToImmutableList() };
     }
 
     /// <summary>
@@ -183,12 +218,25 @@ public sealed class TraceStore : ITraceStore
     /// not there yet", which are the same value but very different situations: the first is a
     /// recovery, the second is a first run.
     /// </summary>
-    private readonly record struct Section<T>(ImmutableList<T>? Value, bool Unreadable);
+    private readonly record struct Section<T>(T? Value, bool Unreadable)
+        where T : class;
 
-    private async Task<Section<T>> ReadAsync<T>(
+    private async Task<Section<ImmutableList<T>>> ReadAsync<T>(
         string key,
-        System.Text.Json.Serialization.Metadata.JsonTypeInfo<ImmutableList<T>> typeInfo,
+        ImmutableList<T>? committed,
+        JsonTypeInfo<ImmutableList<T>> typeInfo,
+        List<string> setAside,
+        CancellationToken ct) =>
+        committed is not null
+            ? new Section<ImmutableList<T>>(committed, Unreadable: false)
+            : await ReadSectionAsync(key, typeInfo, setAside, ct);
+
+    private async Task<Section<T>> ReadSectionAsync<T>(
+        string key,
+        JsonTypeInfo<T> typeInfo,
+        List<string> setAside,
         CancellationToken ct)
+        where T : class
     {
         var json = await _files.ReadTextAsync(key, ct);
         if (string.IsNullOrWhiteSpace(json))
@@ -202,45 +250,50 @@ public sealed class TraceStore : ITraceStore
         }
         catch (JsonException ex)
         {
-            // A corrupt document must not brick the app in the field. Drop this section and
-            // carry on — the caller keeps every section it could read.
-            _log.LogError(ex, "Could not read {Key}; continuing without it.", key);
+            // A corrupt document must not brick the app in the field, and must not be
+            // overwritten either: it may hold work that never reached the server. It is moved
+            // aside for support to recover, and the caller carries on with every section it
+            // could read.
+            var aside = $"{key}.unreadable-{_time.GetUtcNow():yyyyMMdd-HHmmss}";
+            await _files.MoveAsync(key, aside, ct);
+            setAside.Add(aside);
+
+            _log.LogError(ex, "Could not read {Key}; set it aside as {Aside} and continued without it.", key, aside);
             return new Section<T>(null, Unreadable: true);
         }
     }
 
-    private async Task PersistChangedSectionsAsync(
-        TraceSnapshot previous,
-        TraceSnapshot next,
-        CancellationToken ct)
+    private async Task PersistAsync(StoreCommit commit, CancellationToken ct)
     {
-        await WriteIfChangedAsync(AssetsKey, previous.Assets, next.Assets,
-            TraceJsonContext.Default.ImmutableListAsset, ct);
-        await WriteIfChangedAsync(AssignmentsKey, previous.Assignments, next.Assignments,
-            TraceJsonContext.Default.ImmutableListAssignment, ct);
-        await WriteIfChangedAsync(EventsKey, previous.Events, next.Events,
-            TraceJsonContext.Default.ImmutableListInspectionEvent, ct);
-        await WriteIfChangedAsync(ActionsKey, previous.Actions, next.Actions,
-            TraceJsonContext.Default.ImmutableListCorrectiveAction, ct);
-        await WriteIfChangedAsync(QueueKey, previous.Queue, next.Queue,
-            TraceJsonContext.Default.ImmutableListSyncOperation, ct);
-        await WriteIfChangedAsync(DraftsKey, previous.Drafts, next.Drafts,
-            TraceJsonContext.Default.ImmutableListInspectionDraft, ct);
-    }
-
-    private async Task WriteIfChangedAsync<T>(
-        string key,
-        IImmutableList<T> previous,
-        IImmutableList<T> next,
-        System.Text.Json.Serialization.Metadata.JsonTypeInfo<ImmutableList<T>> typeInfo,
-        CancellationToken ct)
-    {
-        if (ReferenceEquals(previous, next))
+        // One section is one file, and a file write is atomic on its own.
+        var journaled = commit.SectionCount > 1;
+        if (journaled)
         {
-            return;
+            await _files.WriteTextAsync(CommitKey, JsonSerializer.Serialize(commit, TraceJsonContext.Default.StoreCommit), ct);
         }
 
-        var json = JsonSerializer.Serialize(next.ToImmutableList(), typeInfo);
-        await _files.WriteTextAsync(key, json, ct);
+        await WriteAsync(AssetsKey, commit.Assets, TraceJsonContext.Default.ImmutableListAsset, ct);
+        await WriteAsync(AssignmentsKey, commit.Assignments, TraceJsonContext.Default.ImmutableListAssignment, ct);
+        await WriteAsync(EventsKey, commit.Events, TraceJsonContext.Default.ImmutableListInspectionEvent, ct);
+        await WriteAsync(ActionsKey, commit.Actions, TraceJsonContext.Default.ImmutableListCorrectiveAction, ct);
+        await WriteAsync(QueueKey, commit.Queue, TraceJsonContext.Default.ImmutableListSyncOperation, ct);
+        await WriteAsync(DraftsKey, commit.Drafts, TraceJsonContext.Default.ImmutableListInspectionDraft, ct);
+
+        if (journaled)
+        {
+            await _files.DeleteAsync(CommitKey, ct);
+        }
+    }
+
+    private async Task WriteAsync<T>(
+        string key,
+        ImmutableList<T>? section,
+        JsonTypeInfo<ImmutableList<T>> typeInfo,
+        CancellationToken ct)
+    {
+        if (section is not null)
+        {
+            await _files.WriteTextAsync(key, JsonSerializer.Serialize(section, typeInfo), ct);
+        }
     }
 }

@@ -237,6 +237,8 @@ public partial class App
             inner.WriteBytesAsync(key, content, ct);
 
         public ValueTask DeleteAsync(string key, CancellationToken ct) => inner.DeleteAsync(key, ct);
+
+        public ValueTask MoveAsync(string key, string newKey, CancellationToken ct) => inner.MoveAsync(key, newKey, ct);
     }
 }
 #endif

@@ -25,13 +25,28 @@ public partial record SyncModel
 
     public IFeed<bool> HasPending => PendingCount.Select(count => count > 0);
 
-    public IFeed<bool> IsSettled => PendingCount.Select(count => count == 0);
+    /// <summary>
+    /// Records that could not be read at launch and were set aside. Whatever they held is not
+    /// in the queue, so an empty queue is not proof that everything reached the server.
+    /// </summary>
+    private IFeed<IImmutableList<string>> SetAside => _recovery.Watch(_queue.WatchSetAside);
 
-    public IFeed<string> PendingLabel => PendingCount.Select(count => count switch
+    public IFeed<bool> HasSetAside => SetAside.Select(files => files.Count > 0);
+
+    public IFeed<string> SetAsideWarning => SetAside.Select(files => files.Count == 0
+        ? string.Empty
+        : $"TRACE could not read part of this device's records when it started and set them aside ({string.Join(", ", files)}). "
+            + "Work they held may not have reached the server. Keep this device as it is and contact support before reinstalling.");
+
+    public IFeed<bool> IsSettled =>
+        Feed.Combine(PendingCount, SetAside).Select(pair => pair.Item1 == 0 && pair.Item2.Count == 0);
+
+    public IFeed<string> PendingLabel => Feed.Combine(PendingCount, SetAside).Select(pair => pair.Item1 switch
     {
+        0 when pair.Item2.Count > 0 => "Nothing is queued, but part of this device's records could not be read.",
         0 => "Everything on this device has reached the server.",
         1 => "1 change is waiting to reach the server.",
-        _ => $"{count} changes are waiting to reach the server.",
+        _ => $"{pair.Item1} changes are waiting to reach the server.",
     });
 
     public IFeed<bool> IsOnline => Feed.AsyncEnumerable(_network.Watch);

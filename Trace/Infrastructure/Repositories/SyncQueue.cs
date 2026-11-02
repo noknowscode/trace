@@ -44,6 +44,9 @@ public sealed class SyncQueue : ISyncQueue
     public IAsyncEnumerable<int> WatchPendingCount(CancellationToken ct) =>
         StoreProjections.Project(_store.Watch(ct), s => s.PendingSyncCount, ct);
 
+    public IAsyncEnumerable<IImmutableList<string>> WatchSetAside(CancellationToken ct) =>
+        StoreProjections.ProjectList(_store.Watch(ct), s => s.SetAside, ct);
+
     public async ValueTask<SyncResult> SyncAsync(CancellationToken ct)
     {
         if (!_network.IsOnline)

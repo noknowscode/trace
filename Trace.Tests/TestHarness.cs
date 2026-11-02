@@ -59,6 +59,19 @@ internal sealed class TestHarness : IDisposable
     /// <summary>Opens a second store over the same directory, as a relaunch would.</summary>
     public TraceStore Reopen() => new(new LocalFileStore(_root), Time, NullLogger<TraceStore>.Instance);
 
+    /// <summary>
+    /// A store over the same directory whose writes stop dead at <paramref name="key"/>, the
+    /// way a process killed partway through a commit leaves the files.
+    /// </summary>
+    public TraceStore StoreThatDiesWriting(string key) =>
+        new(new DyingFileStore(new LocalFileStore(_root), key), Time, NullLogger<TraceStore>.Instance);
+
+    public InspectionWorkflow WorkflowOver(ITraceStore store) => new(
+        store,
+        Time,
+        Options.Create(new AppConfig { Technician = "Test Tech" }),
+        NullLogger<InspectionWorkflow>.Instance);
+
     public async Task<Asset> PumpAsync() =>
         (await Store.GetAsync(default)).FindAsset("P-204")
         ?? throw new InvalidOperationException("Seed asset P-204 is missing.");
@@ -154,4 +167,28 @@ internal sealed class RecordingNavigator : INavigator
         Requests.Add(request);
         return Task.FromResult<NavigationResponse?>(null);
     }
+}
+
+/// <summary>Writes nothing from <paramref name="fatalKey"/> on, as if the process died there.</summary>
+internal sealed class DyingFileStore(ILocalFileStore inner, string fatalKey) : ILocalFileStore
+{
+    private bool _dead;
+
+    public ValueTask<string?> ReadTextAsync(string name, CancellationToken ct) => inner.ReadTextAsync(name, ct);
+
+    public ValueTask WriteTextAsync(string name, string content, CancellationToken ct)
+    {
+        _dead |= name == fatalKey;
+        return _dead
+            ? throw new IOException($"The process died before {name} was written.")
+            : inner.WriteTextAsync(name, content, ct);
+    }
+
+    public ValueTask<string> WriteBytesAsync(string name, byte[] content, CancellationToken ct) =>
+        inner.WriteBytesAsync(name, content, ct);
+
+    public ValueTask DeleteAsync(string name, CancellationToken ct) =>
+        _dead ? throw new IOException($"The process died before {name} was deleted.") : inner.DeleteAsync(name, ct);
+
+    public ValueTask MoveAsync(string name, string newName, CancellationToken ct) => inner.MoveAsync(name, newName, ct);
 }

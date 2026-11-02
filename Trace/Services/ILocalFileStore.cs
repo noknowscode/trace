@@ -14,4 +14,7 @@ public interface ILocalFileStore
     ValueTask<string> WriteBytesAsync(string key, byte[] content, CancellationToken ct);
 
     ValueTask DeleteAsync(string key, CancellationToken ct);
+
+    /// <summary>Renames a file, replacing whatever <paramref name="newKey"/> held. Nothing happens when there is no file.</summary>
+    ValueTask MoveAsync(string key, string newKey, CancellationToken ct);
 }

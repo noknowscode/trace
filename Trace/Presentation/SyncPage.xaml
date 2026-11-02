@@ -37,6 +37,17 @@
                                Text="{Binding LastResult}"
                                Visibility="{Binding LastResult, Converter={StaticResource StringToVisibility}}" />
 
+                    <!-- Records that could not be read at launch: the queue below may be missing work. -->
+                    <Border Style="{StaticResource TileSurface}"
+                            AutomationProperties.LiveSetting="Polite"
+                            Visibility="{Binding HasSetAside, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel Spacing="{StaticResource SpaceS}">
+                            <controls:StatusChip Severity="Critical" Text="Records set aside" />
+                            <TextBlock Style="{StaticResource SupportingText}"
+                                       Text="{Binding SetAsideWarning}" />
+                        </StackPanel>
+                    </Border>
+
                     <!-- Wraps on a phone: three buttons do not fit across 328 px. -->
                     <controls:WrapPanel HorizontalSpacing="{StaticResource SpaceS}" VerticalSpacing="{StaticResource SpaceS}">
                         <Button Style="{StaticResource FilledButtonStyle}"
