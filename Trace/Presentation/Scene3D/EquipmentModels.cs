@@ -17,6 +17,9 @@ namespace Trace.Presentation.Scene3D;
 /// </remarks>
 public static class EquipmentModels
 {
+    // The equipment's own paint and metal, as a glTF file would carry them: data about the
+    // machine, the same in both themes. The light the machine is seen under comes from the
+    // theme (AssetSceneViewStyle).
     private static readonly Material CastIron = Material.Painted(new SKColor(0x5E, 0x6C, 0x68));
     private static readonly Material Steel = Material.Machined(new SKColor(0x8A, 0x98, 0x95));
     private static readonly Material DarkSteel = Material.Machined(new SKColor(0x47, 0x53, 0x50));

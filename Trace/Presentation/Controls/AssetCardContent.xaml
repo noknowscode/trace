@@ -9,12 +9,9 @@
         there is no separate dashboard tile telling the technician what the machine already
         says. Bound against an AssetSummary inherited from the item container.
     -->
-    <Grid RowSpacing="{StaticResource SpaceM}">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
+    <!-- A StackPanel rather than a three-row Grid: a Grid keeps the gap around an empty Reason
+         row, which left assets off today's round with a double gap. -->
+    <StackPanel Spacing="{StaticResource SpaceM}">
 
         <Grid ColumnSpacing="{StaticResource SpaceM}">
             <Grid.ColumnDefinitions>
@@ -36,12 +33,11 @@
                                  VerticalAlignment="Top" />
         </Grid>
 
-        <TextBlock Grid.Row="1"
-                   Text="{Binding Reason}"
+        <TextBlock Text="{Binding Reason}"
                    Style="{StaticResource SupportingText}"
                    Visibility="{Binding Reason, Converter={StaticResource StringToVisibility}}" />
 
-        <controls:WrapPanel Grid.Row="2" HorizontalSpacing="{StaticResource SpaceS}" VerticalSpacing="{StaticResource SpaceS}">
+        <controls:WrapPanel HorizontalSpacing="{StaticResource SpaceS}" VerticalSpacing="{StaticResource SpaceS}">
             <Border Style="{StaticResource ValueChip}">
                 <TextBlock Text="{Binding Progress}" Style="{StaticResource ChipValueText}" />
             </Border>
@@ -53,5 +49,5 @@
                                  Text="{Binding FindingsText}"
                                  Visibility="{Binding HasFindings, Converter={StaticResource BoolToVisibility}}" />
         </controls:WrapPanel>
-    </Grid>
+    </StackPanel>
 </UserControl>

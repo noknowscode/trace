@@ -179,12 +179,16 @@
                                         <TextBlock Style="{StaticResource SupportingText}"
                                                    Text="Drag to turn the machine" />
                                     </Border>
-                                    <Button Grid.Column="1"
-                                            Style="{StaticResource TextButtonStyle}"
-                                            MinHeight="{StaticResource TouchTargetSize}"
-                                            Click="OnResetView"
-                                            Content="Reset view"
-                                            AutomationProperties.Name="Reset view" />
+                                    <!-- On a plate of its own, like the hint: over the machine the bare label was hard to read. -->
+                                    <Border Grid.Column="1"
+                                            Background="{ThemeResource SurfaceBrush}"
+                                            CornerRadius="{StaticResource ControlRadius}">
+                                        <Button Style="{StaticResource TextButtonStyle}"
+                                                MinHeight="{StaticResource TouchTargetSize}"
+                                                Click="OnResetView"
+                                                Content="Reset view"
+                                                AutomationProperties.Name="Reset view" />
+                                    </Border>
                                 </Grid>
                             </Grid>
                         </Border>
