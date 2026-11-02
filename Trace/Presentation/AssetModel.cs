@@ -303,12 +303,6 @@ public partial record AssetModel
 
     public IFeed<bool> HasEvidence => Draft.Select(draft => draft?.HasEvidence == true);
 
-    public IState<bool> IsEvidenceOpen => State.Value(this, () => false);
-
-    public ValueTask ShowEvidence(CancellationToken ct) => IsEvidenceOpen.UpdateAsync(_ => true, ct);
-
-    public ValueTask HideEvidence(CancellationToken ct) => IsEvidenceOpen.UpdateAsync(_ => false, ct);
-
     public async ValueTask AttachPhoto(CancellationToken ct)
     {
         var point = await SelectedPoint;
@@ -322,7 +316,6 @@ public partial record AssetModel
             && await _camera.RequestPermissionAsync(ct) != Services.CameraPermission.Granted)
         {
             // The denied state has its own recovery panel; nothing more to do here.
-            await IsEvidenceOpen.UpdateAsync(_ => true, ct);
             return;
         }
 
@@ -339,8 +332,6 @@ public partial record AssetModel
         {
             Evidence = current.Evidence.Add(saved),
         }, ct);
-
-        await IsEvidenceOpen.UpdateAsync(_ => true, ct);
     }
 
     /// <summary>
