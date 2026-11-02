@@ -1,7 +1,8 @@
 ﻿<UserControl x:Class="Trace.Presentation.Controls.PointInspector"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:controls="using:Trace.Presentation.Controls">
+             xmlns:controls="using:Trace.Presentation.Controls"
+             IsTabStop="False">
 
     <!--
         Everything one inspection point needs. Hosted as a bottom sheet on a phone and as a
@@ -14,7 +15,7 @@
         are pinned. The guidance, the previous reading, the notes and the evidence are
         reference and capture material, and they scroll.
     -->
-    <Grid RowSpacing="14">
+    <Grid RowSpacing="{StaticResource SpaceM}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -22,53 +23,51 @@
         </Grid.RowDefinitions>
 
         <!-- Identity -->
-        <Grid ColumnSpacing="8">
+        <Grid ColumnSpacing="{StaticResource SpaceS}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <StackPanel Spacing="2">
+            <StackPanel Spacing="{StaticResource SpaceXXS}">
                 <TextBlock Text="INSPECTION POINT" Style="{StaticResource EyebrowText}" />
                 <TextBlock Text="{Binding SelectedPoint.Label}"
                            Style="{StaticResource PanelTitleText}"
                            TextWrapping="Wrap" />
             </StackPanel>
             <Button Grid.Column="1"
-                    Style="{StaticResource TextButtonStyle}"
-                    Width="44"
-                    Height="44"
-                    Padding="0"
+                    Style="{StaticResource IconButtonStyle}"
                     VerticalAlignment="Top"
                     Command="{Binding CloseInspector}"
-                    AutomationProperties.Name="Close inspection point">
-                <Viewbox Width="14" Height="14">
+                    AutomationProperties.Name="Close inspection point"
+                    ToolTipService.ToolTip="Close">
+                <Viewbox Width="{StaticResource IconSizeS}" Height="{StaticResource IconSizeS}">
                     <PathIcon Data="{StaticResource IconFail}" />
                 </Viewbox>
             </Button>
         </Grid>
 
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,4,0">
-            <StackPanel Spacing="14">
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="{StaticResource ScrollBarGutter}">
+            <StackPanel Spacing="{StaticResource SpaceM}">
 
                 <TextBlock Text="{Binding SelectedPoint.Guidance}"
                            Style="{StaticResource SupportingText}" />
 
                 <!-- Last reading and the band it is judged against -->
                 <Border Style="{StaticResource TileSurface}">
-                    <Grid ColumnSpacing="10">
+                    <Grid ColumnSpacing="{StaticResource SpaceM}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Spacing="{StaticResource SpaceXS}" VerticalAlignment="Center">
                             <TextBlock Text="{Binding SelectedPoint.LatestReadingText}"
                                        Style="{StaticResource MetricLargeText}" />
                             <TextBlock Text="{Binding SelectedPoint.Unit}"
                                        Style="{StaticResource MetricSmallUnitText}"
                                        VerticalAlignment="Bottom"
-                                       Margin="0,0,0,4" />
+                                       Margin="{StaticResource UnitBaselineGap}" />
                         </StackPanel>
-                        <StackPanel Grid.Column="1" Spacing="1" VerticalAlignment="Center">
+                        <StackPanel Grid.Column="1" Spacing="{StaticResource SpaceXXS}" VerticalAlignment="Center">
                             <TextBlock Text="{Binding SelectedPoint.ReadingType}"
                                        Style="{StaticResource FieldLabelText}" />
                             <TextBlock Style="{StaticResource SupportingText}">
@@ -80,23 +79,23 @@
                 </Border>
 
                 <!-- Notes -->
-                <StackPanel Spacing="6">
+                <StackPanel Spacing="{StaticResource SpaceS}">
                     <TextBlock Text="Notes" Style="{StaticResource FieldLabelText}" />
                     <TextBox Text="{Binding NoteText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                              AcceptsReturn="True"
                              TextWrapping="Wrap"
-                             MinHeight="88"
-                             MaxHeight="160"
+                             MinHeight="{StaticResource NotesMinHeight}"
+                             MaxHeight="{StaticResource NotesMaxHeight}"
                              PlaceholderText="What did you see, hear or smell?"
                              AutomationProperties.Name="Inspection notes" />
                 </StackPanel>
 
                 <!-- Evidence -->
-                <StackPanel Spacing="8">
+                <StackPanel Spacing="{StaticResource SpaceS}">
                     <Grid>
                         <TextBlock Text="Evidence" Style="{StaticResource FieldLabelText}"
                                    VerticalAlignment="Center" />
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="4">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="{StaticResource SpaceXS}">
                             <!-- No hardware here to refuse the app, so the denial a real
                                  device would produce is reachable on demand. -->
                             <Button Style="{StaticResource TextButtonStyle}"
@@ -104,7 +103,7 @@
                                     Command="{Binding DenyCameraForDemo}"
                                     Content="Simulate denial"
                                     Visibility="{Binding IsCameraDenied, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}"
-                                    AutomationProperties.Name="Simulate the camera being denied" />
+                                    AutomationProperties.Name="Simulate denial of camera access" />
                             <Button Style="{StaticResource TextButtonStyle}"
                                     MinHeight="{StaticResource TouchTargetSize}"
                                     Command="{Binding AttachPhoto}"
@@ -116,7 +115,7 @@
                     <!-- Camera denied: the only way back on a real device is settings. -->
                     <Border Style="{StaticResource TileSurface}"
                             Visibility="{Binding IsCameraDenied, Converter={StaticResource BoolToVisibility}}">
-                        <StackPanel Spacing="8">
+                        <StackPanel Spacing="{StaticResource SpaceS}">
                             <controls:StatusChip Severity="Critical" Text="Camera access denied" />
                             <TextBlock Style="{StaticResource SupportingText}"
                                        Text="TRACE cannot open the camera. Photos are optional — a written note also satisfies a failed point — but to attach one, allow camera access for TRACE in system settings." />
@@ -125,29 +124,31 @@
                                     MinHeight="{StaticResource TouchTargetSize}"
                                     Command="{Binding GrantCameraFromSettings}"
                                     Content="Open settings"
-                                    AutomationProperties.Name="Open camera settings" />
+                                    AutomationProperties.Name="Open settings for camera access" />
                         </StackPanel>
                     </Border>
 
                     <ItemsRepeater ItemsSource="{Binding Draft.Evidence}">
                         <ItemsRepeater.Layout>
-                            <StackLayout Spacing="8" />
+                            <StackLayout Spacing="{StaticResource SpaceS}" />
                         </ItemsRepeater.Layout>
                         <ItemsRepeater.ItemTemplate>
                             <DataTemplate>
-                                <Border Style="{StaticResource TileSurface}" Padding="8">
-                                    <Grid ColumnSpacing="10">
+                                <Border Style="{StaticResource TileSurface}" Padding="{StaticResource InsetS}">
+                                    <Grid ColumnSpacing="{StaticResource SpaceM}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
-                                        <Border Width="64"
-                                                Height="64"
-                                                CornerRadius="8"
+                                        <Border Width="{StaticResource EvidenceThumbSize}"
+                                                Height="{StaticResource EvidenceThumbSize}"
+                                                CornerRadius="{StaticResource SmallRadius}"
                                                 Background="{ThemeResource SurfaceBrush}">
-                                            <Image Source="{Binding LocalUri}" Stretch="UniformToFill" />
+                                            <Image Source="{Binding LocalUri}"
+                                                   Stretch="UniformToFill"
+                                                   AutomationProperties.Name="{Binding Caption}" />
                                         </Border>
-                                        <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                        <StackPanel Grid.Column="1" Spacing="{StaticResource SpaceXXS}" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding Caption}"
                                                        Style="{StaticResource BodyText}"
                                                        TextWrapping="Wrap" />
@@ -169,19 +170,18 @@
         </ScrollViewer>
 
         <!-- Enter, decide, commit: always on screen. -->
-        <StackPanel Grid.Row="2" Spacing="10">
+        <StackPanel Grid.Row="2" Spacing="{StaticResource SpaceM}">
 
-            <StackPanel Spacing="6">
+            <StackPanel Spacing="{StaticResource SpaceS}">
                 <TextBlock Text="New reading" Style="{StaticResource FieldLabelText}" />
                 <TextBox Text="{Binding ReadingText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                          InputScope="Number"
                          MinHeight="{StaticResource TouchTargetSize}"
-                         FontSize="20"
+                         FontSize="{StaticResource ReadingFontSize}"
                          AutomationProperties.Name="New reading" />
             </StackPanel>
 
-            <Grid ColumnSpacing="8">
-
+            <Grid ColumnSpacing="{StaticResource SpaceS}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
@@ -209,19 +209,15 @@
                                                 AutomationProperties.Name="Record fail" />
                 </Grid>
 
-
             <!--
                 The confirmation of what was just recorded sits with the point it belongs
                 to, rather than floating over the workspace where it would cover the very
                 buttons the technician needs next.
             -->
-            <Border Background="{ThemeResource PrimaryContainerBrush}"
-                    BorderBrush="{ThemeResource PrimaryBrush}"
-                    BorderThickness="1"
-                    CornerRadius="{StaticResource ControlRadius}"
-                    Padding="12,10"
+            <Border Style="{StaticResource ConfirmationSurface}"
+                    AutomationProperties.LiveSetting="Polite"
                     Visibility="{Binding HasConfirmation, Converter={StaticResource BoolToVisibility}}">
-                <Grid ColumnSpacing="8">
+                <Grid ColumnSpacing="{StaticResource SpaceS}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
@@ -240,9 +236,10 @@
             </Border>
 
             <Border Style="{StaticResource TileSurface}"
+                    AutomationProperties.LiveSetting="Polite"
                     Visibility="{Binding ValidationMessage, Converter={StaticResource StringToVisibility}}">
-                <StackPanel Spacing="8">
-                    <controls:WrapPanel HorizontalSpacing="8" VerticalSpacing="6">
+                <StackPanel Spacing="{StaticResource SpaceS}">
+                    <controls:WrapPanel HorizontalSpacing="{StaticResource SpaceS}" VerticalSpacing="{StaticResource SpaceS}">
                         <controls:StatusChip Severity="Critical" Text="Fix this"
                                              Visibility="{Binding HasBlocker, Converter={StaticResource BoolToVisibility}}" />
                         <controls:StatusChip Severity="Caution" Text="Out of range"
@@ -260,7 +257,7 @@
                     IsEnabled="{Binding CanComplete}"
                     Command="{Binding CompletePoint}"
                     Content="Complete point"
-                    AutomationProperties.Name="Complete this inspection point" />
+                    AutomationProperties.Name="Complete point" />
 
             <Button Style="{StaticResource OutlinedButtonStyle}"
                     HorizontalAlignment="Stretch"
@@ -268,7 +265,7 @@
                     Command="{Binding OpenActionSheet}"
                     Content="Create corrective action"
                     Visibility="{Binding CanRaiseAction, Converter={StaticResource BoolToVisibility}}"
-                    AutomationProperties.Name="Create a corrective action from this failure" />
+                    AutomationProperties.Name="Create corrective action" />
         </StackPanel>
     </Grid>
 </UserControl>

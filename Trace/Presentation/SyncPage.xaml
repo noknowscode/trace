@@ -7,8 +7,11 @@
       NavigationCacheMode="Required"
       Background="{ThemeResource BackgroundBrush}">
 
-    <utu:SafeArea Insets="VisibleBounds">
-        <Grid RowSpacing="16" Padding="{StaticResource PagePadding}">
+    <utu:SafeArea Insets="VisibleBounds" IsTabStop="False">
+        <!-- One column, as on Today: 16 px sides on a phone, 24 from Normal, centred at ContentMaxWidth from Widest. -->
+        <Grid RowSpacing="{StaticResource SpaceL}"
+              Padding="{utu:Responsive Narrow={StaticResource PagePadding}, Normal={StaticResource PagePaddingWide}}"
+              MaxWidth="{StaticResource ContentMaxWidth}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -20,21 +23,22 @@
                                  Supporting="{Binding PendingLabel}" />
 
             <Border Grid.Row="1" Style="{StaticResource CardSurface}">
-                <StackPanel Spacing="12">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
+                <StackPanel Spacing="{StaticResource SpaceM}">
+                    <controls:WrapPanel HorizontalSpacing="{StaticResource SpaceS}" VerticalSpacing="{StaticResource SpaceS}">
                         <controls:StatusChip Severity="Positive" Text="Online"
                                              Visibility="{Binding IsOnline, Converter={StaticResource BoolToVisibility}}" />
                         <controls:StatusChip Severity="Caution" Text="Offline"
                                              Visibility="{Binding IsOffline, Converter={StaticResource BoolToVisibility}}" />
                         <controls:StatusChip Severity="Positive" Text="All changes synchronized"
                                              Visibility="{Binding IsSettled, Converter={StaticResource BoolToVisibility}}" />
-                    </StackPanel>
+                    </controls:WrapPanel>
 
                     <TextBlock Style="{StaticResource SupportingText}"
                                Text="{Binding LastResult}"
                                Visibility="{Binding LastResult, Converter={StaticResource StringToVisibility}}" />
 
-                    <utu:AutoLayout Orientation="Horizontal" Spacing="8">
+                    <!-- Wraps on a phone: three buttons do not fit across 328 px. -->
+                    <controls:WrapPanel HorizontalSpacing="{StaticResource SpaceS}" VerticalSpacing="{StaticResource SpaceS}">
                         <Button Style="{StaticResource FilledButtonStyle}"
                                 MinHeight="{StaticResource TouchTargetSize}"
                                 Command="{Binding SyncNow}"
@@ -48,8 +52,8 @@
                         <Button Style="{StaticResource TextButtonStyle}"
                                 MinHeight="{StaticResource TouchTargetSize}"
                                 Command="{Binding ToggleConnection}"
-                                Content="Toggle connection" />
-                    </utu:AutoLayout>
+                                Content="{Binding ConnectionAction}" />
+                    </controls:WrapPanel>
 
                     <TextBlock Style="{StaticResource SupportingText}"
                                Visibility="{Binding IsOffline, Converter={StaticResource BoolToVisibility}}"
@@ -57,23 +61,26 @@
                 </StackPanel>
             </Border>
 
-            <mvux:FeedView Grid.Row="2" Source="{Binding Operations}">
+            <mvux:FeedView IsTabStop="False" Grid.Row="2"
+                           Source="{Binding Operations}"
+                           ProgressTemplate="{StaticResource FeedProgressTemplate}"
+                           ErrorTemplate="{StaticResource FeedErrorTemplate}">
                 <mvux:FeedView.ValueTemplate>
                     <DataTemplate>
                         <ScrollViewer>
                             <ItemsRepeater ItemsSource="{Binding Data}">
                                 <ItemsRepeater.Layout>
-                                    <StackLayout Spacing="8" />
+                                    <StackLayout Spacing="{StaticResource SpaceS}" />
                                 </ItemsRepeater.Layout>
                                 <ItemsRepeater.ItemTemplate>
                                     <DataTemplate>
                                         <Border Style="{StaticResource TileSurface}">
-                                            <Grid ColumnSpacing="12">
+                                            <Grid ColumnSpacing="{StaticResource SpaceM}">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="*" />
                                                     <ColumnDefinition Width="Auto" />
                                                 </Grid.ColumnDefinitions>
-                                                <StackPanel Spacing="3">
+                                                <StackPanel Spacing="{StaticResource SpaceXS}">
                                                     <TextBlock Text="{Binding EntityType}"
                                                                Style="{StaticResource EyebrowText}" />
                                                     <TextBlock Text="{Binding Description}"
@@ -99,7 +106,7 @@
                 <mvux:FeedView.NoneTemplate>
                     <DataTemplate>
                         <Border Style="{StaticResource CardSurface}" VerticalAlignment="Top">
-                            <StackPanel Spacing="8">
+                            <StackPanel Spacing="{StaticResource SpaceS}">
                                 <TextBlock Text="Nothing waiting to sync" Style="{StaticResource SectionHeaderText}" />
                                 <TextBlock Style="{StaticResource SupportingText}"
                                            Text="Completed inspections and corrective actions appear here until the server confirms them." />

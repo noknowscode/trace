@@ -7,8 +7,32 @@
       NavigationCacheMode="Required"
       Background="{ThemeResource BackgroundBrush}">
 
-    <utu:SafeArea Insets="VisibleBounds,SoftInput">
-        <Grid x:Name="PageRoot" Padding="{StaticResource PagePadding}" RowSpacing="12">
+    <!--
+        System bars come off as attached insets. The on-screen keyboard is handled by a SafeArea
+        control with only SoftInput, which wraps the page in its own ScrollViewer so a focused
+        reading field can be scrolled above the keyboard. A ScrollViewer measures its content at
+        infinite height, though, which left the workspace's star row unbounded: the machine and
+        the inspector ran off the bottom of the window. The page frame is therefore pinned to the
+        keyboard area's height in code-behind, so the rows below divide the window, not infinity.
+
+        Layout per width category (utu:Responsive, Toolkit default breakpoints):
+        * Narrow (a phone, below 600): back on its own row and the four tabs full width beneath
+          it, so "Documents" is never clipped; the inspector is a bottom sheet over the machine.
+        * Normal (600-800): back and tabs share one row; the inspector is still a sheet.
+        * Wide (800-1080): the inspector docks beside the machine at 360, the tablet's
+          "canvas + pinned inspector".
+        * Widest (1080 and up): docked at 400, and the workspace stops at WorkspaceMaxWidth and
+          centres.
+        The inspector is one element at every size. Moving the same element rather than swapping
+        two copies keeps a half-entered reading alive across a resize; re-parenting would unload it.
+    -->
+    <Grid utu:SafeArea.Insets="VisibleBounds">
+    <utu:SafeArea x:Name="KeyboardArea" Insets="SoftInput" IsTabStop="False" SizeChanged="OnKeyboardAreaResized">
+    <Grid x:Name="PageFrame">
+        <Grid x:Name="PageRoot"
+              Padding="{utu:Responsive Narrow={StaticResource PagePadding}, Normal={StaticResource PagePaddingWide}}"
+              MaxWidth="{StaticResource WorkspaceMaxWidth}"
+              RowSpacing="{StaticResource SpaceM}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -16,68 +40,40 @@
             </Grid.RowDefinitions>
 
             <!--
-                The inspector is one element at every size. On a phone it sits over the
-                machine as a bottom sheet; on a workstation it docks beside it. Moving the
-                same element rather than swapping two copies keeps a half-entered reading
-                alive across a resize — re-parenting would unload it.
+                Back and the tabs share one row from Normal up, so the asset identity can move onto
+                the equipment view, where it labels the machine instead of sitting in a band above
+                it. Connection state stays here because it is true of every tab.
             -->
-            <VisualStateManager.VisualStateGroups>
-                <VisualStateGroup x:Name="WorkspaceStates">
-                    <VisualState x:Name="Handheld">
-                        <VisualState.StateTriggers>
-                            <AdaptiveTrigger MinWindowWidth="0" />
-                        </VisualState.StateTriggers>
-                        <VisualState.Setters>
-                            <Setter Target="InspectorHost.(Grid.Column)" Value="0" />
-                            <Setter Target="InspectorHost.(Grid.ColumnSpan)" Value="2" />
-                            <Setter Target="InspectorHost.VerticalAlignment" Value="Bottom" />
-                            <Setter Target="InspectorHost.Width" Value="NaN" />
-                            <Setter Target="InspectorHost.CornerRadius" Value="14" />
-                        </VisualState.Setters>
-                    </VisualState>
-                    <VisualState x:Name="Workstation">
-                        <VisualState.StateTriggers>
-                            <AdaptiveTrigger MinWindowWidth="1000" />
-                        </VisualState.StateTriggers>
-                        <VisualState.Setters>
-                            <Setter Target="InspectorHost.(Grid.Column)" Value="1" />
-                            <Setter Target="InspectorHost.(Grid.ColumnSpan)" Value="1" />
-                            <Setter Target="InspectorHost.VerticalAlignment" Value="Stretch" />
-                            <Setter Target="InspectorHost.Width" Value="400" />
-                            <Setter Target="InspectorHost.CornerRadius" Value="18" />
-                        </VisualState.Setters>
-                    </VisualState>
-                </VisualStateGroup>
-            </VisualStateManager.VisualStateGroups>
-
-            <!--
-                Back and the tabs share one row so the asset identity can move onto the
-                equipment view, where it labels the machine instead of sitting in a band
-                above it. Connection state stays here because it is true of every tab.
-            -->
-            <Grid ColumnSpacing="8">
+            <Grid ColumnSpacing="{StaticResource SpaceS}"
+                  RowSpacing="{utu:Responsive Narrow={StaticResource SpaceXS}, Normal=0}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-                <Button Style="{StaticResource TextButtonStyle}"
-                        Width="44"
-                        Height="44"
-                        Padding="0"
+                <Button Style="{StaticResource IconButtonStyle}"
                         VerticalAlignment="Center"
                         Command="{Binding Back}"
-                        AutomationProperties.Name="Back to today">
-                    <Viewbox Width="18" Height="18">
+                        AutomationProperties.Name="Back to today"
+                        ToolTipService.ToolTip="Back to today">
+                    <Viewbox Width="{StaticResource IconSizeM}" Height="{StaticResource IconSizeM}">
                         <PathIcon Data="{StaticResource IconBack}" />
                     </Viewbox>
                 </Button>
 
-                <utu:TabBar Grid.Column="1"
+                <utu:TabBar Grid.Row="{utu:Responsive Narrow=1, Normal=0}"
+                            Grid.Column="{utu:Responsive Narrow=0, Normal=1}"
+                            Grid.ColumnSpan="{utu:Responsive Narrow=3, Normal=1}"
+                            MaxWidth="{StaticResource AssetTabsMaxWidth}"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Center"
                             Style="{StaticResource MaterialTopTabBarStyle}"
+                            IsTabStop="False"
                             SelectedIndex="{Binding TabIndex, Mode=TwoWay}">
                     <utu:TabBarItem Content="Overview" AutomationProperties.Name="Overview" Style="{StaticResource MaterialTopTabBarItemStyle}" />
                     <utu:TabBarItem Content="Inspect" AutomationProperties.Name="Inspect" Style="{StaticResource MaterialTopTabBarItemStyle}" />
@@ -106,14 +102,16 @@
             <Grid x:Name="WorkspaceHost" Grid.Row="2" SizeChanged="OnWorkspaceResized">
 
                 <!-- ============================ INSPECT ============================ -->
+                <!-- The gap opens only when the inspector docks: a sheet spans both columns, and an
+                     empty column must not shave the machine. -->
                 <Grid Visibility="{Binding IsInspect, Converter={StaticResource BoolToVisibility}}"
-                      ColumnSpacing="12">
+                      ColumnSpacing="{utu:Responsive Narrow=0, Wide={StaticResource SpaceM}}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition x:Name="InspectorColumn" Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <Grid RowSpacing="12">
+                    <Grid x:Name="SceneStack" RowSpacing="{StaticResource SpaceM}">
                         <Grid.RowDefinitions>
                             <RowDefinition x:Name="SceneRow" Height="*" />
                             <RowDefinition Height="Auto" />
@@ -122,13 +120,18 @@
                         <!-- The machine, with its points pinned to it. The scene takes all the
                              height it is given: the camera frames the model to whatever
                              aspect the workspace has. -->
-                        <Border x:Name="SceneCard" Style="{StaticResource CardSurface}" Padding="12" MinHeight="260">
+                        <Border x:Name="SceneCard"
+                                Style="{StaticResource CardSurface}"
+                                Padding="{StaticResource TilePadding}"
+                                MinHeight="{StaticResource SceneMinHeight}">
                             <Grid>
                                 <controls:AssetSceneView x:Name="Scene"
                                                          Style="{StaticResource AssetSceneViewStyle}"
                                                          Kind="{Binding SchematicKind}"
                                                          ModelSource="{Binding ModelUri}" />
-                                <ItemsRepeater x:Name="MarkerLayer" ItemsSource="{Binding Markers}">
+                                <!-- Each marker, and below each chip, is its own tab stop: ItemsRepeater otherwise
+                                     takes Tab once, and the points after the first are out of a keyboard's reach. -->
+                                <ItemsRepeater x:Name="MarkerLayer" ItemsSource="{Binding Markers}" TabFocusNavigation="Local">
                                     <ItemsRepeater.Layout>
                                         <controls:SpatialMarkerLayout x:Name="MarkerLayout" />
                                     </ItemsRepeater.Layout>
@@ -148,47 +151,50 @@
                                     </ItemsRepeater.ItemTemplate>
                                 </ItemsRepeater>
                                 <!--
-                                    The machine's nameplate, on the machine. The plate is the
-                                    same brush the scene paints its background with, so it is
-                                    invisible over empty canvas and only resolves into a plate
-                                    where the model would otherwise sit behind the text. It
-                                    takes no pointer input: a drag that starts on it still
-                                    turns the machine.
+                                    The machine's nameplate, on the machine, across the top. The
+                                    plate is the same brush the scene paints its background with,
+                                    so it is invisible over empty canvas and only resolves into a
+                                    plate where the model would otherwise sit behind the text. It
+                                    takes no pointer input: a drag that starts on it still turns
+                                    the machine.
                                 -->
-                                <Border HorizontalAlignment="Left"
-                                        VerticalAlignment="Top"
-                                        Margin="0,0,100,0"
-                                        Padding="10,6"
-                                        CornerRadius="10"
-                                        Background="{ThemeResource SurfaceBrush}"
-                                        IsHitTestVisible="False">
+                                <Border Style="{StaticResource ScenePlate}"
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Top">
                                     <controls:PageHeader Eyebrow="{Binding Designation}"
                                                          Title="{Binding AssetName}"
                                                          Supporting="{Binding Location}" />
                                 </Border>
 
-                                <Button Style="{StaticResource TextButtonStyle}"
-                                        HorizontalAlignment="Right"
-                                        VerticalAlignment="Top"
-                                        MinHeight="{StaticResource TouchTargetSize}"
-                                        Click="OnResetView"
-                                        Content="Reset view"
-                                        AutomationProperties.Name="Reset the equipment view" />
-                                <Border HorizontalAlignment="Left"
-                                        VerticalAlignment="Bottom"
-                                        Padding="8,4"
-                                        CornerRadius="8"
-                                        Background="{ThemeResource SurfaceBrush}"
-                                        IsHitTestVisible="False">
-                                    <TextBlock Style="{StaticResource SupportingText}"
-                                               Text="Drag to turn the machine" />
-                                </Border>
+                                <!-- How to turn the machine and how to put it back, together along the bottom. -->
+                                <Grid VerticalAlignment="Bottom" ColumnSpacing="{StaticResource SpaceS}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Style="{StaticResource ScenePlate}"
+                                            HorizontalAlignment="Left"
+                                            VerticalAlignment="Center"
+                                            Padding="{StaticResource ChipPadding}">
+                                        <TextBlock Style="{StaticResource SupportingText}"
+                                                   Text="Drag to turn the machine" />
+                                    </Border>
+                                    <Button Grid.Column="1"
+                                            Style="{StaticResource TextButtonStyle}"
+                                            MinHeight="{StaticResource TouchTargetSize}"
+                                            Click="OnResetView"
+                                            Content="Reset view"
+                                            AutomationProperties.Name="Reset view" />
+                                </Grid>
                             </Grid>
                         </Border>
 
                         <!-- Every point also reachable as a list: a marker on a machine is
                              not a usable target for a screen reader or a keyboard. -->
-                        <StackPanel x:Name="PointListPanel" Grid.Row="1" Spacing="8">
+                        <StackPanel x:Name="PointListPanel"
+                                    Grid.Row="1"
+                                    Spacing="{StaticResource SpaceS}"
+                                    SizeChanged="OnWorkspaceResized">
                             <TextBlock Text="Inspection points" Style="{StaticResource FieldLabelText}" />
                             <!-- A strip rather than a wrap: on a phone four points do not
                                  fit across, and a scrolling strip keeps the machine above it
@@ -197,22 +203,22 @@
                                           VerticalScrollBarVisibility="Disabled"
                                           HorizontalScrollMode="Auto"
                                           VerticalScrollMode="Disabled">
-                                <ItemsRepeater ItemsSource="{Binding Markers}">
+                                <ItemsRepeater ItemsSource="{Binding Markers}" TabFocusNavigation="Local">
                                     <ItemsRepeater.Layout>
-                                        <StackLayout Orientation="Horizontal" Spacing="8" />
+                                        <StackLayout Orientation="Horizontal" Spacing="{StaticResource SpaceS}" />
                                     </ItemsRepeater.Layout>
                                     <ItemsRepeater.ItemTemplate>
                                         <DataTemplate>
                                             <Button Style="{StaticResource CardButtonStyle}"
-                                                    Padding="12,8"
+                                                    Padding="{StaticResource CompactCardPadding}"
                                                     HorizontalAlignment="Left"
                                                     Command="{Binding DataContext.SelectMarker, ElementName=PageRoot}"
                                                     CommandParameter="{Binding}"
                                                     AutomationProperties.Name="{Binding Point.Label}">
-                                                <StackPanel Spacing="4">
+                                                <StackPanel Spacing="{StaticResource SpaceXS}">
                                                     <TextBlock Text="{Binding Point.Label}"
                                                                Style="{StaticResource CardTitleText}" />
-                                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <StackPanel Orientation="Horizontal" Spacing="{StaticResource SpaceS}">
                                                         <TextBlock Style="{StaticResource SupportingText}">
                                                             <Run Text="{Binding Point.LatestReadingText}" />
                                                             <Run Text="{Binding Point.Unit}" />
@@ -230,36 +236,47 @@
                         </StackPanel>
                     </Grid>
 
-                    <!-- The inspector: a sheet on a phone, a docked pane on a workstation. -->
+                    <!-- The inspector: a bottom sheet below Wide, a docked pane from Wide up. Its height
+                         cap comes from the measured workspace (code-behind). -->
                     <Border x:Name="InspectorHost"
-                            Grid.Column="0"
-                            Grid.ColumnSpan="2"
-                            VerticalAlignment="Bottom"
-                            MaxHeight="520"
-                            Background="{ThemeResource SurfaceBrush}"
-                            BorderBrush="{ThemeResource OutlineBrush}"
-                            BorderThickness="1"
-                            CornerRadius="14"
-                            Padding="{StaticResource SheetPadding}"
+                            Style="{StaticResource SheetSurface}"
+                            Grid.Column="{utu:Responsive Narrow=0, Wide=1}"
+                            Grid.ColumnSpan="{utu:Responsive Narrow=2, Wide=1}"
+                            VerticalAlignment="{utu:Responsive Narrow=Bottom, Wide=Stretch}"
+                            Width="{utu:Responsive Narrow=NaN, Wide={StaticResource InspectorWidthWide}, Widest={StaticResource InspectorWidthWidest}}"
+                            CornerRadius="{utu:Responsive Narrow={StaticResource SheetRadius}, Wide={StaticResource CardRadius}}"
+                            Padding="{utu:Responsive Narrow={StaticResource SheetPadding}, Normal={StaticResource SheetPaddingWide}}"
                             Visibility="{Binding IsInspectorOpen, Converter={StaticResource BoolToVisibility}}">
                         <controls:PointInspector />
                     </Border>
                 </Grid>
 
                 <!-- ============================ OVERVIEW ============================ -->
+                <!--
+                    Overview, History and Documents read as one column under the header: the full
+                    workspace width until it reaches ContentMaxWidth, then no wider, still aligned
+                    with the header on the left.
+                -->
+                <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MaxWidth="{StaticResource ContentMaxWidth}" />
+                </Grid.ColumnDefinitions>
+
                 <ScrollViewer Visibility="{Binding IsOverview, Converter={StaticResource BoolToVisibility}}">
-                    <StackPanel Spacing="12">
-                        <mvux:FeedView Source="{Binding Asset}">
+                    <StackPanel Spacing="{StaticResource SpaceM}">
+                        <mvux:FeedView IsTabStop="False" Source="{Binding Asset}"
+                                       ProgressTemplate="{StaticResource FeedProgressTemplate}"
+                                       ErrorTemplate="{StaticResource FeedErrorTemplate}">
                             <mvux:FeedView.ValueTemplate>
                                 <DataTemplate>
                                     <Border Style="{StaticResource CardSurface}">
-                                        <StackPanel Spacing="10">
+                                        <StackPanel Spacing="{StaticResource SpaceM}">
                                             <TextBlock Text="Condition" Style="{StaticResource SectionHeaderText}" />
-                                            <controls:WrapPanel HorizontalSpacing="8" VerticalSpacing="8">
+                                            <controls:WrapPanel HorizontalSpacing="{StaticResource SpaceS}" VerticalSpacing="{StaticResource SpaceS}">
                                                 <controls:StatusChip
                                                     Severity="{Binding Data.Condition, Converter={StaticResource ToSeverity}}"
                                                     Text="{Binding Data.Condition}" />
-                                                <Border Style="{StaticResource TileSurface}" Padding="10,5">
+                                                <Border Style="{StaticResource ValueChip}">
                                                     <TextBlock Style="{StaticResource ChipValueText}">
                                                         <Run Text="{Binding Data.InspectedPointCount}" />
                                                         <Run Text="of" />
@@ -275,7 +292,7 @@
                             <mvux:FeedView.NoneTemplate>
                                 <DataTemplate>
                                     <Border Style="{StaticResource CardSurface}">
-                                        <StackPanel Spacing="8">
+                                        <StackPanel Spacing="{StaticResource SpaceS}">
                                             <controls:StatusChip Severity="Critical" Text="Asset unavailable" />
                                             <TextBlock Style="{StaticResource SupportingText}"
                                                        Text="This asset is no longer on the device. It may have been reassigned since your last sync." />
@@ -286,23 +303,25 @@
                         </mvux:FeedView>
 
                         <TextBlock Text="Open findings" Style="{StaticResource SectionHeaderText}" />
-                        <mvux:FeedView Source="{Binding Findings}">
+                        <mvux:FeedView IsTabStop="False" Source="{Binding Findings}"
+                                       ProgressTemplate="{StaticResource FeedProgressTemplate}"
+                                       ErrorTemplate="{StaticResource FeedErrorTemplate}">
                             <mvux:FeedView.ValueTemplate>
                                 <DataTemplate>
                                     <ItemsRepeater ItemsSource="{Binding Data}">
                                         <ItemsRepeater.Layout>
-                                            <StackLayout Spacing="8" />
+                                            <StackLayout Spacing="{StaticResource SpaceS}" />
                                         </ItemsRepeater.Layout>
                                         <ItemsRepeater.ItemTemplate>
                                             <DataTemplate>
                                                 <Border Style="{StaticResource TileSurface}">
-                                                    <StackPanel Spacing="4">
+                                                    <StackPanel Spacing="{StaticResource SpaceXS}">
                                                         <TextBlock Text="{Binding PointLabel}"
                                                                    Style="{StaticResource EyebrowText}" />
                                                         <TextBlock Text="{Binding Summary}"
                                                                    Style="{StaticResource BodyText}"
                                                                    TextWrapping="Wrap" />
-                                                        <controls:WrapPanel HorizontalSpacing="8" VerticalSpacing="6">
+                                                        <controls:WrapPanel HorizontalSpacing="{StaticResource SpaceS}" VerticalSpacing="{StaticResource SpaceS}">
                                                             <controls:StatusChip
                                                                 Severity="{Binding Priority, Converter={StaticResource ToSeverity}}"
                                                                 Text="{Binding Priority}" />
@@ -329,31 +348,30 @@
                 </ScrollViewer>
 
                 <!-- ============================ HISTORY ============================ -->
-                <mvux:FeedView Source="{Binding History}"
+                <mvux:FeedView IsTabStop="False" Source="{Binding History}"
+                               ProgressTemplate="{StaticResource FeedProgressTemplate}"
+                               ErrorTemplate="{StaticResource FeedErrorTemplate}"
                                Visibility="{Binding IsHistory, Converter={StaticResource BoolToVisibility}}">
                     <mvux:FeedView.ValueTemplate>
                         <DataTemplate>
                             <ScrollViewer>
                                 <ItemsRepeater ItemsSource="{Binding Data}">
                                     <ItemsRepeater.Layout>
-                                        <StackLayout Spacing="8" />
+                                        <StackLayout Spacing="{StaticResource SpaceS}" />
                                     </ItemsRepeater.Layout>
                                     <ItemsRepeater.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Style="{StaticResource CardSurface}" Padding="14">
-                                                <Grid ColumnSpacing="12">
+                                            <Border Style="{StaticResource CardSurface}" Padding="{StaticResource TilePadding}">
+                                                <Grid ColumnSpacing="{StaticResource SpaceM}">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="Auto" />
                                                         <ColumnDefinition Width="*" />
                                                         <ColumnDefinition Width="Auto" />
                                                     </Grid.ColumnDefinitions>
 
-                                                    <!-- Timeline spine -->
-                                                    <Border Width="4"
-                                                            CornerRadius="2"
-                                                            Background="{ThemeResource OutlineBrush}" />
+                                                    <Border Style="{StaticResource TimelineSpine}" />
 
-                                                    <StackPanel Grid.Column="1" Spacing="4">
+                                                    <StackPanel Grid.Column="1" Spacing="{StaticResource SpaceXS}">
                                                         <TextBlock Text="{Binding PointLabel}"
                                                                    Style="{StaticResource EyebrowText}" />
                                                         <TextBlock Text="{Binding ReadingText}"
@@ -361,14 +379,14 @@
                                                         <TextBlock Text="{Binding Notes}"
                                                                    Style="{StaticResource SupportingText}"
                                                                    Visibility="{Binding Notes, Converter={StaticResource StringToVisibility}}" />
-                                                        <controls:WrapPanel HorizontalSpacing="8" VerticalSpacing="6">
+                                                        <controls:WrapPanel HorizontalSpacing="{StaticResource SpaceS}" VerticalSpacing="{StaticResource SpaceS}">
                                                             <controls:StatusChip
                                                                 Severity="{Binding Disposition, Converter={StaticResource ToSeverity}}"
                                                                 Text="{Binding Disposition}" />
                                                             <controls:StatusChip
                                                                 Severity="{Binding SyncState, Converter={StaticResource ToSeverity}}"
                                                                 Text="{Binding SyncState}" />
-                                                            <Border Style="{StaticResource TileSurface}" Padding="10,5">
+                                                            <Border Style="{StaticResource ValueChip}">
                                                                 <TextBlock Style="{StaticResource ChipValueText}"
                                                                            Text="{Binding Technician}" />
                                                             </Border>
@@ -390,7 +408,7 @@
                     <mvux:FeedView.NoneTemplate>
                         <DataTemplate>
                             <Border Style="{StaticResource CardSurface}" VerticalAlignment="Top">
-                                <StackPanel Spacing="8">
+                                <StackPanel Spacing="{StaticResource SpaceS}">
                                     <TextBlock Text="No inspections recorded"
                                                Style="{StaticResource SectionHeaderText}" />
                                     <TextBlock Style="{StaticResource SupportingText}"
@@ -403,14 +421,16 @@
 
                 <!-- ============================ DOCUMENTS ============================ -->
                 <ScrollViewer Visibility="{Binding IsDocuments, Converter={StaticResource BoolToVisibility}}">
-                    <mvux:FeedView Source="{Binding Asset}">
+                    <mvux:FeedView IsTabStop="False" Source="{Binding Asset}"
+                                   ProgressTemplate="{StaticResource FeedProgressTemplate}"
+                                   ErrorTemplate="{StaticResource FeedErrorTemplate}">
                         <mvux:FeedView.ValueTemplate>
                             <DataTemplate>
-                                <StackPanel Spacing="12">
+                                <StackPanel Spacing="{StaticResource SpaceM}">
                                     <Border Style="{StaticResource CardSurface}">
-                                        <StackPanel Spacing="10">
+                                        <StackPanel Spacing="{StaticResource SpaceM}">
                                             <TextBlock Text="Nameplate" Style="{StaticResource SectionHeaderText}" />
-                                            <Grid ColumnSpacing="16" RowSpacing="8">
+                                            <Grid ColumnSpacing="{StaticResource SpaceL}" RowSpacing="{StaticResource SpaceS}">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto" />
                                                     <ColumnDefinition Width="*" />
@@ -443,7 +463,7 @@
                                     </Border>
 
                                     <Border Style="{StaticResource TileSurface}">
-                                        <StackPanel Spacing="6">
+                                        <StackPanel Spacing="{StaticResource SpaceS}">
                                             <TextBlock Text="No documents on this device"
                                                        Style="{StaticResource SectionHeaderText}" />
                                             <TextBlock Style="{StaticResource SupportingText}"
@@ -453,22 +473,39 @@
                                 </StackPanel>
                             </DataTemplate>
                         </mvux:FeedView.ValueTemplate>
+                        <mvux:FeedView.NoneTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource CardSurface}">
+                                    <StackPanel Spacing="{StaticResource SpaceS}">
+                                        <controls:StatusChip Severity="Critical" Text="Asset unavailable" />
+                                        <TextBlock Style="{StaticResource SupportingText}"
+                                                   Text="This asset is no longer on the device, so its nameplate and documents are not either." />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </mvux:FeedView.NoneTemplate>
                     </mvux:FeedView>
                 </ScrollViewer>
+                </Grid>
             </Grid>
 
-            <!-- Corrective action, raised from the point that failed. -->
-            <Grid Grid.RowSpan="3"
-                  Background="#99000000"
-                  Visibility="{Binding IsActionSheetOpen, Converter={StaticResource BoolToVisibility}}">
-                <Border Style="{StaticResource SheetSurface}"
-                        MaxWidth="520"
-                        VerticalAlignment="Center"
-                        HorizontalAlignment="Center"
-                        Margin="16">
+        </Grid>
+
+        <!--
+            Corrective action, raised from the point that failed. A modal sheet over the whole
+            page: centred at DialogMaxWidth from Normal up, the full width less a margin on a phone.
+        -->
+        <Grid Background="{ThemeResource SheetScrimBrush}"
+              Visibility="{Binding IsActionSheetOpen, Converter={StaticResource BoolToVisibility}}">
+            <Border Style="{StaticResource SheetSurface}"
+                    MaxWidth="{StaticResource DialogMaxWidth}"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                    Margin="{StaticResource InsetL}"
+                    Padding="{utu:Responsive Narrow={StaticResource SheetPadding}, Normal={StaticResource SheetPaddingWide}}">
                     <ScrollViewer>
-                        <StackPanel Spacing="14">
-                            <StackPanel Spacing="2">
+                        <StackPanel Spacing="{StaticResource SpaceM}">
+                            <StackPanel Spacing="{StaticResource SpaceXXS}">
                                 <TextBlock Text="CORRECTIVE ACTION" Style="{StaticResource EyebrowText}" />
                                 <TextBlock Style="{StaticResource PanelTitleText}"
                                            TextWrapping="Wrap">
@@ -479,7 +516,7 @@
                                            Text="The asset, the point and the inspection that failed are carried across automatically." />
                             </StackPanel>
 
-                            <StackPanel Spacing="6">
+                            <StackPanel Spacing="{StaticResource SpaceS}">
                                 <TextBlock Text="Summary" Style="{StaticResource FieldLabelText}" />
                                 <TextBox Text="{Binding ActionSummary, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                          MinHeight="{StaticResource TouchTargetSize}"
@@ -488,23 +525,36 @@
                                          AutomationProperties.Name="Corrective action summary" />
                             </StackPanel>
 
-                            <Grid ColumnSpacing="12">
+                            <!-- Side by side from Normal; stacked on a phone, where two pickers
+                                 across 300 px cut "Mechanical Team" short. -->
+                            <Grid ColumnSpacing="{utu:Responsive Narrow=0, Normal={StaticResource SpaceM}}"
+                                  RowSpacing="{utu:Responsive Narrow={StaticResource SpaceM}, Normal=0}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <StackPanel Spacing="6">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <StackPanel Spacing="{StaticResource SpaceS}"
+                                            Grid.ColumnSpan="{utu:Responsive Narrow=2, Normal=1}">
                                     <TextBlock Text="Priority" Style="{StaticResource FieldLabelText}" />
                                     <ComboBox ItemsSource="{Binding Priorities}"
                                               SelectedItem="{Binding ActionPriority, Mode=TwoWay}"
                                               HorizontalAlignment="Stretch"
+                                              MinHeight="{StaticResource TouchTargetSize}"
                                               AutomationProperties.Name="Priority" />
                                 </StackPanel>
-                                <StackPanel Grid.Column="1" Spacing="6">
+                                <StackPanel Grid.Row="{utu:Responsive Narrow=1, Normal=0}"
+                                            Grid.Column="{utu:Responsive Narrow=0, Normal=1}"
+                                            Grid.ColumnSpan="{utu:Responsive Narrow=2, Normal=1}"
+                                            Spacing="{StaticResource SpaceS}">
                                     <TextBlock Text="Assignee" Style="{StaticResource FieldLabelText}" />
                                     <ComboBox ItemsSource="{Binding Assignees}"
                                               SelectedItem="{Binding ActionAssignee, Mode=TwoWay}"
                                               HorizontalAlignment="Stretch"
+                                              MinHeight="{StaticResource TouchTargetSize}"
                                               AutomationProperties.Name="Assignee" />
                                 </StackPanel>
                             </Grid>
@@ -513,7 +563,7 @@
                                        Style="{StaticResource ErrorText}"
                                        Visibility="{Binding ActionError, Converter={StaticResource StringToVisibility}}" />
 
-                            <Grid ColumnSpacing="8">
+                            <Grid ColumnSpacing="{StaticResource SpaceS}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="*" />
@@ -533,8 +583,9 @@
                             </Grid>
                         </StackPanel>
                     </ScrollViewer>
-                </Border>
-            </Grid>
+            </Border>
         </Grid>
+    </Grid>
     </utu:SafeArea>
+    </Grid>
 </Page>

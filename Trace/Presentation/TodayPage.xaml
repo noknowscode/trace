@@ -8,8 +8,15 @@
       NavigationCacheMode="Required"
       Background="{ThemeResource BackgroundBrush}">
 
-    <utu:SafeArea Insets="VisibleBounds">
-        <Grid RowSpacing="16" Padding="{StaticResource PagePadding}">
+    <utu:SafeArea Insets="VisibleBounds" IsTabStop="False">
+        <!--
+            One column at every width. Narrow keeps 16 px sides for a phone; from Normal up the
+            page breathes at 24; at Widest the column stops at ContentMaxWidth and centres, so a
+            card never stretches across a monitor.
+        -->
+        <Grid RowSpacing="{StaticResource SpaceL}"
+              Padding="{utu:Responsive Narrow={StaticResource PagePadding}, Normal={StaticResource PagePaddingWide}}"
+              MaxWidth="{StaticResource ContentMaxWidth}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -25,14 +32,23 @@
                 needs to know what the device is holding before deciding where to walk next.
             -->
             <Border Grid.Row="1" Style="{StaticResource TileSurface}">
-                <Grid ColumnSpacing="12">
+                <!-- Status beside the controls from Normal; on a phone the controls drop below
+                     the status, so neither squeezes the other's labels. -->
+                <Grid ColumnSpacing="{StaticResource SpaceM}"
+                      RowSpacing="{utu:Responsive Narrow={StaticResource SpaceS}, Normal=0}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
 
-                    <StackPanel Spacing="4" VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
+                    <StackPanel Spacing="{StaticResource SpaceXS}"
+                                VerticalAlignment="Center"
+                                Grid.ColumnSpan="{utu:Responsive Narrow=2, Normal=1}">
+                        <controls:WrapPanel HorizontalSpacing="{StaticResource SpaceS}" VerticalSpacing="{StaticResource SpaceS}">
                             <controls:StatusChip Severity="Positive"
                                                  Text="Online"
                                                  Visibility="{Binding IsOnline, Converter={StaticResource BoolToVisibility}}" />
@@ -42,7 +58,7 @@
                             <controls:StatusChip Severity="Info"
                                                  Text="{Binding PendingLabel}"
                                                  Visibility="{Binding HasPending, Converter={StaticResource BoolToVisibility}}" />
-                        </StackPanel>
+                        </controls:WrapPanel>
                         <TextBlock Style="{StaticResource SupportingText}"
                                    Text="Inspections always save on the device first."
                                    Visibility="{Binding IsOffline, Converter={StaticResource BoolToVisibility}}" />
@@ -50,31 +66,39 @@
 
                     <!-- Device controls live together: whether this handset is working
                          offline, and which theme suits where it is being used. -->
-                    <controls:WrapPanel Grid.Column="1" HorizontalSpacing="8" VerticalSpacing="8"
+                    <controls:WrapPanel Grid.Row="{utu:Responsive Narrow=1, Normal=0}"
+                                        Grid.Column="{utu:Responsive Narrow=0, Normal=1}"
+                                        Grid.ColumnSpan="{utu:Responsive Narrow=2, Normal=1}"
+                                        HorizontalSpacing="{StaticResource SpaceS}"
+                                        VerticalSpacing="{StaticResource SpaceS}"
                                         VerticalAlignment="Center">
                         <Button Style="{StaticResource OutlinedButtonStyle}"
                                 MinHeight="{StaticResource TouchTargetSize}"
                                 Command="{Binding ToggleConnection}"
-                                AutomationProperties.Name="Toggle offline mode">
+                                AutomationProperties.Name="{Binding ConnectionAction}">
                             <TextBlock Text="{Binding ConnectionAction}" />
                         </Button>
-                        <Button Style="{StaticResource TextButtonStyle}"
+                        <!-- Named by their visible labels ("Go offline", "Light theme"): the label says what a press does. -->
+                        <Button x:Name="ThemeToggle"
+                                Style="{StaticResource TextButtonStyle}"
                                 MinHeight="{StaticResource TouchTargetSize}"
                                 Command="{Binding ToggleTheme}"
-                                AutomationProperties.Name="Switch theme">
+                                AutomationProperties.Name="{Binding ThemeAction}">
                             <TextBlock Text="{Binding ThemeAction}" />
                         </Button>
                     </controls:WrapPanel>
                 </Grid>
             </Border>
 
-            <mvux:FeedView Grid.Row="2" Source="{Binding Assignments}">
+            <mvux:FeedView IsTabStop="False" Grid.Row="2"
+                           Source="{Binding Assignments}"
+                           ErrorTemplate="{StaticResource FeedErrorTemplate}">
                 <mvux:FeedView.ValueTemplate>
                     <DataTemplate>
                         <ScrollViewer>
-                            <ItemsRepeater ItemsSource="{Binding Data}">
+                            <ItemsRepeater ItemsSource="{Binding Data}" TabFocusNavigation="Local">
                                 <ItemsRepeater.Layout>
-                                    <StackLayout Spacing="12" />
+                                    <StackLayout Spacing="{StaticResource SpaceM}" />
                                 </ItemsRepeater.Layout>
                                 <ItemsRepeater.ItemTemplate>
                                     <DataTemplate>
@@ -93,8 +117,11 @@
 
                 <mvux:FeedView.ProgressTemplate>
                     <DataTemplate>
-                        <StackPanel Spacing="12" VerticalAlignment="Center" HorizontalAlignment="Center">
-                            <ProgressRing IsActive="True" Width="32" Height="32" />
+                        <StackPanel Spacing="{StaticResource SpaceM}" VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <ProgressRing IsActive="True"
+                                          Width="{StaticResource ProgressSize}"
+                                          Height="{StaticResource ProgressSize}"
+                                          AutomationProperties.Name="Loading your round" />
                             <TextBlock Text="Loading your round…" Style="{StaticResource SupportingText}" />
                         </StackPanel>
                     </DataTemplate>
@@ -103,7 +130,7 @@
                 <mvux:FeedView.NoneTemplate>
                     <DataTemplate>
                         <Border Style="{StaticResource CardSurface}" VerticalAlignment="Top">
-                            <StackPanel Spacing="8">
+                            <StackPanel Spacing="{StaticResource SpaceS}">
                                 <TextBlock Text="Nothing assigned today"
                                            Style="{StaticResource SectionHeaderText}" />
                                 <TextBlock Style="{StaticResource SupportingText}"

@@ -6,9 +6,17 @@
       NavigationCacheMode="Required"
       Background="{ThemeResource BackgroundBrush}">
 
-    <utu:SafeArea Insets="VisibleBounds,SoftInput">
-        <ScrollViewer>
-            <StackPanel Spacing="16" Padding="{StaticResource PagePadding}" MaxWidth="620" HorizontalAlignment="Left">
+    <!--
+        A form, so the SafeArea control: with SoftInput it brings its own ScrollViewer and keeps the
+        code field above an on-screen keyboard. The form is one column: full width with 16 px sides
+        on a phone, FormMaxWidth beside the rail from Normal, centred from Widest like the other
+        destinations' columns.
+    -->
+    <utu:SafeArea Insets="VisibleBounds,SoftInput" IsTabStop="False">
+            <StackPanel Spacing="{StaticResource SpaceL}"
+                        Padding="{utu:Responsive Narrow={StaticResource PagePadding}, Normal={StaticResource PagePaddingWide}}"
+                        MaxWidth="{StaticResource FormMaxWidth}"
+                        HorizontalAlignment="{utu:Responsive Narrow=Stretch, Normal=Left, Widest=Center}">
 
                 <controls:PageHeader Eyebrow="IDENTIFY"
                                      Title="Scan"
@@ -17,9 +25,11 @@
                 <!-- Viewfinder. Stands in for the camera preview on this build. -->
                 <Border Style="{StaticResource CardSurface}"
                         Background="{ThemeResource SurfaceVariantBrush}"
-                        MinHeight="220">
+                        MinHeight="{StaticResource ViewfinderMinHeight}">
                     <Grid>
-                        <Viewbox Width="96" Height="96" Opacity="0.32">
+                        <Viewbox Width="{StaticResource ViewfinderGlyphSize}"
+                                 Height="{StaticResource ViewfinderGlyphSize}"
+                                 Opacity="{StaticResource ViewfinderGlyphOpacity}">
                             <PathIcon Data="{StaticResource IconScan}" />
                         </Viewbox>
                         <TextBlock Style="{StaticResource SupportingText}"
@@ -37,7 +47,7 @@
                         Content="Scan a tag" />
 
                 <Border Style="{StaticResource CardSurface}">
-                    <StackPanel Spacing="12">
+                    <StackPanel Spacing="{StaticResource SpaceM}">
                         <TextBlock Text="Enter a code" Style="{StaticResource SectionHeaderText}" />
                         <TextBlock Style="{StaticResource SupportingText}"
                                    Text="Accepts an asset tag such as P-204, or a full tag payload." />
@@ -55,7 +65,7 @@
 
                 <Border Style="{StaticResource TileSurface}"
                         Visibility="{Binding NotResolved, Converter={StaticResource BoolToVisibility}}">
-                    <StackPanel Spacing="6">
+                    <StackPanel Spacing="{StaticResource SpaceS}">
                         <controls:StatusChip Severity="Critical" Text="Asset unavailable" />
                         <TextBlock Text="{Binding ResultMessage}" Style="{StaticResource SupportingText}" />
                         <TextBlock Style="{StaticResource SupportingText}"
@@ -63,6 +73,5 @@
                     </StackPanel>
                 </Border>
             </StackPanel>
-        </ScrollViewer>
     </utu:SafeArea>
 </Page>

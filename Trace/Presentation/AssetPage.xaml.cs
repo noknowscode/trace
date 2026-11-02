@@ -2,12 +2,7 @@ namespace Trace.Presentation;
 
 public sealed partial class AssetPage : Page
 {
-    /// <summary>How much of the workspace a bottom sheet may cover on a handheld.</summary>
-    private const double SheetHeightFraction = 0.86;
-
-    private const double WorkstationWidth = 1000;
-
-    /// <summary>Tallest the equipment view goes, relative to how wide it is.</summary>
+    /// <summary>Tallest the equipment view goes under a sheet, relative to how wide it is.</summary>
     private const double SceneAspectLimit = 0.8;
 
     public AssetPage()
@@ -18,10 +13,26 @@ public sealed partial class AssetPage : Page
         // ElementName. Handing it over here is the whole wiring between the 3D view and the
         // markers laid over it.
         Loaded += (_, _) => MarkerLayout.Anchors = Scene;
+
+        // The inspector docks or becomes a sheet when the width category changes (its Grid
+        // column is responsive in XAML). The workspace does not always change size at that
+        // moment, so the sizing below also follows the column.
+        InspectorHost.RegisterPropertyChangedCallback(Grid.ColumnProperty, (_, _) => ApplyWorkspaceLayout());
     }
 
     /// <summary>
-    /// Caps the inspector to the workspace it sits in.
+    /// Pins the page frame to the visible height. The keyboard-aware SafeArea scrolls its
+    /// content, so without a definite height the star rows inside would be measured against
+    /// infinity; with it, the page fills the window exactly and scrolls only by what an
+    /// on-screen keyboard covers.
+    /// </summary>
+    private void OnKeyboardAreaResized(object sender, SizeChangedEventArgs e) =>
+        PageFrame.Height = e.NewSize.Height;
+
+    private void OnWorkspaceResized(object sender, SizeChangedEventArgs e) => ApplyWorkspaceLayout();
+
+    /// <summary>
+    /// Caps the inspector to the workspace it sits in and sizes the equipment view.
     /// </summary>
     /// <remarks>
     /// A Stretch alignment grows an element to fill its cell but never shrinks it below its
@@ -29,35 +40,37 @@ public sealed partial class AssetPage : Page
     /// drags the whole workspace taller than the window instead of scrolling inside itself.
     /// The cap has to come from the measured row, which only code can see.
     /// </remarks>
-    private void OnWorkspaceResized(object sender, SizeChangedEventArgs e)
+    private void ApplyWorkspaceLayout()
     {
-        var available = e.NewSize.Height;
-        if (available <= 0)
+        var width = WorkspaceHost.ActualWidth;
+        var height = WorkspaceHost.ActualHeight;
+        if (width <= 0 || height <= 0)
         {
             return;
         }
 
-        var isWorkstation = ActualWidth >= WorkstationWidth;
+        // Docked (Wide and up) the inspector has its own column; as a sheet it spans both.
+        var isDocked = Grid.GetColumn(InspectorHost) == 1;
 
-        InspectorHost.MaxHeight = isWorkstation
-            ? available
-            : Math.Max(220, available * SheetHeightFraction);
+        // A sheet may cover the whole workspace: on a short phone the reading, the three
+        // calls and Complete point need all of it, and the tabs above stay visible.
+        InspectorHost.MaxHeight = height;
 
-        // On a handheld the workspace column is narrow and tall, and a star row would give
-        // the equipment view all of it: a portrait box around a machine that is wider than
-        // it is tall. Sizing the view to a landscape shape and letting the row collapse to
-        // it keeps the machine as large as it can usefully be and brings the point list up
-        // directly underneath rather than stranding it at the bottom of the window.
-        if (isWorkstation)
+        if (isDocked)
         {
             SceneRow.Height = new GridLength(1, GridUnitType.Star);
             SceneCard.Height = double.NaN;
+            return;
         }
-        else
-        {
-            SceneRow.Height = GridLength.Auto;
-            SceneCard.Height = Math.Max(SceneCard.MinHeight, e.NewSize.Width * SceneAspectLimit);
-        }
+
+        // Under a sheet the workspace column is narrow and often tall, and a star row would
+        // give the equipment view all of it: a portrait box around a machine that is wider
+        // than it is tall. Sizing the view to a landscape shape, within the height left once
+        // the point list is placed, keeps the machine as large as it can usefully be and
+        // brings the point list up directly underneath it.
+        var room = height - PointListPanel.ActualHeight - SceneStack.RowSpacing;
+        SceneRow.Height = GridLength.Auto;
+        SceneCard.Height = Math.Max(SceneCard.MinHeight, Math.Min(width * SceneAspectLimit, room));
     }
 
     private void OnResetView(object sender, RoutedEventArgs e) => Scene.ResetView();
