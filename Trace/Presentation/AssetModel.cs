@@ -192,10 +192,7 @@ public partial record AssetModel
         var draft = await _workflow.StartOrResumeDraftAsync(point, ct);
 
         await SelectedPointId.UpdateAsync(_ => point.Id, ct);
-        await Draft.UpdateAsync(_ => draft, ct);
-        await ReadingText.UpdateAsync(_ => draft.ReadingText, ct);
-        await NoteText.UpdateAsync(_ => draft.Notes, ct);
-        await ChosenDisposition.UpdateAsync(_ => draft.Disposition, ct);
+        await LoadDraftAsync(draft, ct);
         await Confirmation.UpdateAsync(_ => string.Empty, ct);
 
         // What was recorded at the previous point stays with that point: corrective work
@@ -235,6 +232,15 @@ public partial record AssetModel
         {
             // The blocker is already on screen through Validation; nothing was written.
             return;
+        }
+
+        // The draft is finished work now, and the store has already dropped it. The editor
+        // moves on to a fresh draft for the point: left holding the completed one, the next
+        // edit would save it back, and every later Complete here would be a duplicate of
+        // this inspection that records nothing.
+        if (await SelectedPoint is { } open && open.Id == draft.PointId)
+        {
+            await LoadDraftAsync(await _workflow.StartOrResumeDraftAsync(open, ct), ct);
         }
 
         await RecordedEvent.UpdateAsync(_ => outcome.Event!, ct);
@@ -404,6 +410,15 @@ public partial record AssetModel
     public async ValueTask Back(CancellationToken ct) => await _navigator.NavigateRouteAsync(this, "../Today", cancellation: ct);
 
     // ---- Editor plumbing ---------------------------------------------------------------
+
+    /// <summary>Puts a draft in the editor: the draft itself, then each field it feeds.</summary>
+    private async ValueTask LoadDraftAsync(InspectionDraft draft, CancellationToken ct)
+    {
+        await Draft.UpdateAsync(_ => draft, ct);
+        await ReadingText.UpdateAsync(_ => draft.ReadingText, ct);
+        await NoteText.UpdateAsync(_ => draft.Notes, ct);
+        await ChosenDisposition.UpdateAsync(_ => draft.Disposition, ct);
+    }
 
     private async ValueTask OnReadingChanged(string? value, CancellationToken ct) =>
         await Draft.UpdateAsync(

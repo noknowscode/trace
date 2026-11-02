@@ -42,6 +42,26 @@ public class AssetModelTests
         (await _harness.Store.GetAsync(default)).Actions;
 
     [Test]
+    public async Task Completing_a_point_editing_it_and_completing_it_again_records_two_inspections()
+    {
+        var before = (await _harness.Store.GetAsync(default)).Events.Count(e => e.PointId == "P-204-seal");
+        var model = await OpenAtAsync("P-204-seal");
+
+        await EnterAsync(model, "1.6", Disposition.Pass);
+        await model.CompletePoint(default);
+
+        // The editor kept the completed draft, saved it back on the next edit, and every
+        // later Complete at this point was reported as "Already recorded" and wrote nothing.
+        await EnterAsync(model, "2.1", Disposition.Watch);
+        await model.CompletePoint(default);
+
+        var events = (await _harness.Store.GetAsync(default)).Events.Where(e => e.PointId == "P-204-seal").ToList();
+        events.Should().HaveCount(before + 2);
+        events.Should().ContainSingle(e => e.Reading == 2.1 && e.Disposition == Disposition.Watch);
+        (await model.Confirmation).Should().StartWith("Seal housing recorded as Watch");
+    }
+
+    [Test]
     public async Task Corrective_work_is_offered_only_from_an_inspection_recorded_as_fail()
     {
         var model = await OpenAtAsync("P-204-seal");

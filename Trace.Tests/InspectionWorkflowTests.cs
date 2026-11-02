@@ -135,6 +135,38 @@ public class InspectionWorkflowTests
     }
 
     [Test]
+    public async Task A_completed_draft_saved_again_does_not_come_back()
+    {
+        var draft = await DraftForSealAsync("1.6", Disposition.Pass);
+        await _harness.Workflow.CompleteAsync(draft, default);
+
+        // An editor still holding the completed draft saves it on the next keystroke.
+        await _harness.Workflow.SaveDraftAsync(draft with { ReadingText = "1.9" }, default);
+
+        (await _harness.Store.GetAsync(default)).FindDraft("P-204-seal").Should().BeNull();
+
+        var next = await _harness.Workflow.StartOrResumeDraftAsync(await _harness.PointAsync("P-204-seal"), default);
+        next.ClientToken.Should().NotBe(draft.ClientToken);
+        next.ReadingText.Should().Be("1.6", "a new draft starts from the reading just recorded");
+    }
+
+    [Test]
+    public async Task A_duplicate_completion_clears_a_draft_left_holding_its_token()
+    {
+        var draft = await DraftForSealAsync("1.6", Disposition.Pass);
+        await _harness.Workflow.CompleteAsync(draft, default);
+
+        // A store written before drafts with a completed token were refused can still hold one.
+        await _harness.Store.MutateAsync(s => s with { Drafts = s.Drafts.Add(draft) }, default);
+
+        var again = await _harness.Workflow.CompleteAsync(draft, default);
+
+        again.WasDuplicate.Should().BeTrue();
+        (await _harness.Store.GetAsync(default)).FindDraft("P-204-seal").Should().BeNull(
+            "the point must take a fresh draft, or every later completion there is this duplicate");
+    }
+
+    [Test]
     public async Task A_corrective_action_inherits_its_asset_point_and_source_event()
     {
         var draft = await DraftForSealAsync("7.4", Disposition.Fail, "Seal weeping under load.");

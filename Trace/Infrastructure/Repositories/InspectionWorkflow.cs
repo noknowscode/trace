@@ -40,23 +40,33 @@ public sealed class InspectionWorkflow : IInspectionWorkflow
         InspectionPoint point,
         CancellationToken ct)
     {
-        var draft = InspectionDraft.For(point);
-
         // The lookup has to happen inside the mutation. Checking first and adding after
         // leaves a window where two openings of the same point each add a draft, and the
         // editor then saves into one row and resumes from another — each with its own
         // client token, so the idempotency guard on completion no longer matches either.
+        // A new draft starts from the point as stored, so straight after a completion it
+        // carries the reading just recorded rather than the one the caller last saw.
         var committed = await _store.MutateAsync(
-            s => s.FindDraft(point.Id) is null ? s with { Drafts = s.Drafts.Add(draft) } : s,
+            s => s.FindDraft(point.Id) is null
+                ? s with { Drafts = s.Drafts.Add(InspectionDraft.For(s.FindAsset(point.AssetId)?.FindPoint(point.Id) ?? point)) }
+                : s,
             ct);
 
-        return committed.FindDraft(point.Id) ?? draft;
+        return committed.FindDraft(point.Id) ?? InspectionDraft.For(point);
     }
 
     public async ValueTask SaveDraftAsync(InspectionDraft draft, CancellationToken ct) =>
         await _store.MutateAsync(
             s =>
             {
+                // A draft whose token already produced an event is finished work. Saving it
+                // again would park that token on the point, and every later Complete there
+                // would resolve to the old event as a duplicate and record nothing.
+                if (s.Events.Any(e => e.ClientToken == draft.ClientToken))
+                {
+                    return s;
+                }
+
                 var existing = s.Drafts.FirstOrDefault(d => d.PointId == draft.PointId);
 
                 if (existing is null)
@@ -96,9 +106,11 @@ public sealed class InspectionWorkflow : IInspectionWorkflow
         }
 
         // A repeated submission of the same draft resolves to the event it already produced.
-        // Nothing is written, and the caller sees the same outcome as the first tap.
+        // No second event is written, and the caller sees the same outcome as the first tap.
+        // A draft still holding that token is cleared, so the point takes new work again.
         if (snapshot.Events.FirstOrDefault(e => e.ClientToken == draft.ClientToken) is { } already)
         {
+            await _store.MutateAsync(s => WithoutDraft(s, draft.ClientToken), ct);
             return new CompletionOutcome(true, already, InspectionRules.Validate(point, draft), true, true);
         }
 
@@ -139,7 +151,7 @@ public sealed class InspectionWorkflow : IInspectionWorkflow
                 // read above and this mutation.
                 if (s.Events.Any(e => e.ClientToken == draft.ClientToken))
                 {
-                    return s;
+                    return WithoutDraft(s, draft.ClientToken);
                 }
 
                 var current = s.FindAsset(asset.Id);
@@ -189,6 +201,11 @@ public sealed class InspectionWorkflow : IInspectionWorkflow
 
         return new CompletionOutcome(true, stored, validation, WasQueued: !duplicate, WasDuplicate: duplicate);
     }
+
+    private static TraceSnapshot WithoutDraft(TraceSnapshot s, string clientToken) =>
+        s.Drafts.Any(d => d.ClientToken == clientToken)
+            ? s with { Drafts = s.Drafts.RemoveAll(d => d.ClientToken == clientToken) }
+            : s;
 
     public async ValueTask<CorrectiveActionOutcome> RaiseCorrectiveActionAsync(
         CorrectiveActionRequest request,
