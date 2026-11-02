@@ -83,7 +83,11 @@ public partial class App : Application
                     // Persistence. The store root is chosen here, at composition time (and opened
                     // on first use), so nothing below this line has to know about platform storage
                     // paths.
+#if DEBUG
+                    services.AddSingleton(_ => WithVerificationFaults(new LocalFileStore(OpenStoreRootAsync)));
+#else
                     services.AddSingleton<ILocalFileStore>(_ => new LocalFileStore(OpenStoreRootAsync));
+#endif
                     services.AddSingleton<ITraceStore, TraceStore>();
 
                     // Repositories over the shared snapshot stream.
@@ -125,9 +129,13 @@ public partial class App : Application
             initialRoute: "Main"
         );
 
-        // Restores the theme the technician last chose. The service resolves the root itself,
-        // so this has to run after the navigation root exists.
-        await Host.Services.GetRequiredService<IThemeService>().InitializeAsync();
+        // The theme the technician last chose is restored by the theme service itself: it is
+        // scoped to the navigation, and the instance the round's model takes applies the saved
+        // choice as soon as it is created. Asking the root provider for one here created a second
+        // instance on a root that is never loaded, and awaiting it stopped OnLaunched for good.
+#if DEBUG
+        await ApplyVerificationAsync();
+#endif
     }
 
     /// <summary>
