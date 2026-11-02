@@ -9,8 +9,9 @@ set -u
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK=${1:?work dir}; shift
 ROUTES=("$@")
-# Empty and Error are Today with an empty round, and with store reads failing (the Try again state).
-[ ${#ROUTES[@]} -eq 0 ] && ROUTES=(Today Assets Scan Asset Point Action Asset:History Sync Findings Empty Error)
+# Empty and Error are Today with an empty round, and with store reads failing (the Try again state);
+# InspectError is the asset's Inspect tab with its record unreadable.
+[ ${#ROUTES[@]} -eq 0 ] && ROUTES=(Today Assets Scan Asset Point Discard Action Asset:History Sync Findings Empty Error InspectError)
 WIDTHS="360 599 600 800 1080 1920"
 SHEETS="$ROOT/docs/evidence"
 mkdir -p "$WORK" "$SHEETS"
@@ -23,6 +24,7 @@ for theme in dark light; do
       Today) ;;
       Empty) args+=(--trace-seed=empty) ;;
       Error) args+=(--trace-fault=load) ;;
+      InspectError) args+=(--trace-fault=load --trace-route=Asset) ;;
       *) args+=(--trace-route=$route) ;;
     esac
     "$ROOT/tools/matrix.sh" "$WORK" "$name" "$WIDTHS" 640 16 -- "${args[@]}" \

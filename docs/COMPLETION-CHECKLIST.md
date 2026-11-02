@@ -14,7 +14,10 @@ Items that cannot be checked in this container are listed under "Not verified he
 - [x] Today list opens with realistic assigned assets.
 - [x] Asset cards open the correct asset.
 - [x] Back returns to the previous context without losing an in-progress inspection.
-      (A note typed into a point survives Today and back — `check-draft-return.png`.)
+      (A note typed into a point survives Today and back — `check-draft-return.png`. Back
+      returns to the destination that opened the asset: Today, Assets, Scan or Findings,
+      checked with `--trace-from=<destination> --trace-back=1` and by pointer from Assets.)
+- [x] Discarding entered work confirms first; leaving a point keeps its draft and does not ask.
 - [x] Inspect tab exposes all configured inspection points.
 - [x] History tab shows previous events ordered correctly.
 - [x] Sync destination exposes pending, failed and synced operations.
@@ -31,10 +34,14 @@ Items that cannot be checked in this container are listed under "Not verified he
 - [x] Fail requires a note or evidence before completion.
 - [x] Completed inspection updates the selected point immediately.
 - [x] Completed inspection appends a history event.
+- [x] The same point can be completed again: the editor starts a fresh draft after each
+      completion (`--trace-route=Again` records two events; covered by a model test).
+- [x] A completion that records nothing says why in the inspector.
 
 ## Corrective action
 - [x] A failed point can create a corrective action.
-- [x] Source asset, point and inspection event are carried automatically.
+- [x] Source asset, point and inspection event are carried automatically, and only from an
+      event recorded as Fail at that point (workflow and model tests).
 - [x] Priority and assignee are selectable.
 - [x] Summary is required.
 - [x] Confirmation is shown after creation.
@@ -57,6 +64,8 @@ Items that cannot be checked in this container are listed under "Not verified he
 - [x] Successful sync clears pending count.
 - [x] Failed sync state can be retried.
 - [x] State survives a restart.
+- [x] A completion interrupted between its files is finished on the next launch, and an
+      unreadable file is set aside and reported on Sync rather than overwritten (store tests).
       (The app persists snapshots as JSON in local storage; a queued operation was still
       pending after the process was restarted — `check-persist-sync.png`. This replaces the
       prototype's localStorage requirement.)
@@ -65,7 +74,8 @@ Items that cannot be checked in this container are listed under "Not verified he
 - [x] Loading state exists.
 - [x] Error state exists, with a Try again that reads the store again.
       (`error-dark.jpg`; `--trace-fault=load`, then Try again shows the round. Covered by
-      `FeedRecoveryTests`.)
+      `FeedRecoveryTests`. The asset's Inspect tab has the same state, with the asset's name
+      above it, instead of a default machine: `inspecterror-dark.jpg`.)
 - [x] Empty assignments state exists.
       (`check-empty-today.png`, with a route back out through Scan or Assets.)
 - [x] Populated state exists.
