@@ -91,20 +91,47 @@
             <!--
                 The tabs without an equipment view still have to say which machine they are
                 about — recording against the wrong asset is the failure this app exists to
-                prevent — so identity appears here whenever the canvas is not carrying it.
+                prevent — so identity appears here whenever the canvas is not carrying it,
+                including on Inspect while the machine is loading or could not be read.
             -->
             <controls:PageHeader Grid.Row="1"
                                  Eyebrow="{Binding Designation}"
                                  Title="{Binding AssetName}"
                                  Supporting="{Binding Location}"
-                                 Visibility="{Binding IsInspect, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
+                                 Visibility="{Binding ShowsMachine, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
 
             <Grid x:Name="WorkspaceHost" Grid.Row="2" SizeChanged="OnWorkspaceResized">
 
                 <!-- ============================ INSPECT ============================ -->
+                <!--
+                    The asset's loading, error and unavailable states. It sits under the machine and
+                    shows nothing once the asset is read, when the machine below covers it.
+                -->
+                <mvux:FeedView IsTabStop="False" Source="{Binding Asset}"
+                               ProgressTemplate="{StaticResource FeedProgressTemplate}"
+                               ErrorTemplate="{StaticResource FeedErrorTemplate}"
+                               Visibility="{Binding IsInspect, Converter={StaticResource BoolToVisibility}}">
+                    <mvux:FeedView.ValueTemplate>
+                        <DataTemplate>
+                            <Grid />
+                        </DataTemplate>
+                    </mvux:FeedView.ValueTemplate>
+                    <mvux:FeedView.NoneTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource CardSurface}" VerticalAlignment="Top">
+                                <StackPanel Spacing="{StaticResource SpaceS}">
+                                    <controls:StatusChip Severity="Critical" Text="Asset unavailable" />
+                                    <TextBlock Style="{StaticResource SupportingText}"
+                                               Text="This asset is no longer on the device, so its inspection points are not either. It may have been reassigned since your last sync." />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </mvux:FeedView.NoneTemplate>
+                </mvux:FeedView>
+
                 <!-- The gap opens only when the inspector docks: a sheet spans both columns, and an
                      empty column must not shave the machine. -->
-                <Grid Visibility="{Binding IsInspect, Converter={StaticResource BoolToVisibility}}"
+                <Grid Visibility="{Binding ShowsMachine, Converter={StaticResource BoolToVisibility}}"
                       ColumnSpacing="{utu:Responsive Narrow=0, Wide={StaticResource SpaceM}}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />

@@ -123,6 +123,14 @@ public partial record AssetModel
 
     public IFeed<bool> IsInspect => TabIndex.Select(index => index == (int)AssetTab.Inspect);
 
+    /// <summary>
+    /// The machine is drawn only once its record has been read. Until then, after a failed
+    /// read, or when the asset has left the device, the Inspect tab shows that state instead
+    /// of a default pump with no points.
+    /// </summary>
+    public IFeed<bool> ShowsMachine =>
+        Feed.Combine(IsInspect, Asset).Select(pair => pair.Item1 && pair.Item2 is not null);
+
     public IFeed<bool> IsHistory => TabIndex.Select(index => index == (int)AssetTab.History);
 
     public IFeed<bool> IsDocuments => TabIndex.Select(index => index == (int)AssetTab.Documents);
