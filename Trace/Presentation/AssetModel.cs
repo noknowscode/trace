@@ -34,6 +34,7 @@ public partial record AssetModel
     private readonly INavigator _navigator;
     private readonly NavigationOrigin _origin;
     private readonly FeedRecovery _recovery;
+    private readonly TimeProvider _time;
 
     public AssetModel(
         AssetSummary summary,
@@ -46,7 +47,8 @@ public partial record AssetModel
         INetworkStatusService network,
         INavigator navigator,
         NavigationOrigin origin,
-        FeedRecovery recovery)
+        FeedRecovery recovery,
+        TimeProvider time)
     {
         _summary = summary;
         _assets = assets;
@@ -59,6 +61,7 @@ public partial record AssetModel
         _navigator = navigator;
         _origin = origin;
         _recovery = recovery;
+        _time = time;
 
         // Each editor folds straight into the draft, and the draft is persisted on every
         // change, so walking away from a half-entered reading never loses it.
@@ -330,7 +333,7 @@ public partial record AssetModel
         }
 
         var saved = await _evidence.SavePhotoAsync(
-            point.Id, capture.Content, capture.Extension, $"{point.Label} · {DateTimeOffset.Now:t}", ct);
+            point.Id, capture.Content, capture.Extension, $"{point.Label} · {_time.GetLocalNow():t}", ct);
 
         await Draft.UpdateAsync(current => current is null ? null! : current with
         {

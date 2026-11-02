@@ -21,7 +21,8 @@ public partial record TodayModel
         ISyncQueue sync,
         IThemeService theme,
         FeedRecovery recovery,
-        IOptions<AppConfig> config)
+        IOptions<AppConfig> config,
+        TimeProvider time)
     {
         _assignments = assignments;
         _network = network;
@@ -32,7 +33,7 @@ public partial record TodayModel
         Technician = string.IsNullOrWhiteSpace(config.Value.Technician)
             ? "Technician"
             : config.Value.Technician!;
-        Today = DateTimeOffset.Now.ToString("dddd d MMMM");
+        Today = time.GetLocalNow().ToString("dddd d MMMM");
     }
 
     public string Technician { get; }

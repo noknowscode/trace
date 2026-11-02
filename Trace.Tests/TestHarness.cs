@@ -33,7 +33,7 @@ internal sealed class TestHarness : IDisposable
             Time,
             Options.Create(new AppConfig { Technician = "Test Tech" }),
             NullLogger<InspectionWorkflow>.Instance);
-        Evidence = new LocalEvidenceStore(Files);
+        Evidence = new LocalEvidenceStore(Files, Time);
     }
 
     public TestTimeProvider Time { get; }
@@ -113,7 +113,8 @@ internal sealed class TestHarness : IDisposable
             Network,
             new NullNavigator(),
             origin ?? new NavigationOrigin(),
-            new FeedRecovery());
+            new FeedRecovery(),
+            Time);
     }
 
     /// <summary>Polls <paramref name="condition"/> until it holds, for up to 5 s.</summary>

@@ -11,8 +11,13 @@ namespace Trace.Infrastructure.Platform;
 public sealed class LocalEvidenceStore : ILocalEvidenceStore
 {
     private readonly ILocalFileStore _files;
+    private readonly TimeProvider _time;
 
-    public LocalEvidenceStore(ILocalFileStore files) => _files = files;
+    public LocalEvidenceStore(ILocalFileStore files, TimeProvider time)
+    {
+        _files = files;
+        _time = time;
+    }
 
     public async ValueTask<Evidence> SavePhotoAsync(
         string pointId,
@@ -24,9 +29,9 @@ public sealed class LocalEvidenceStore : ILocalEvidenceStore
         var id = $"ev-{Guid.NewGuid():N}";
         var uri = await _files.WriteBytesAsync($"evidence/{pointId}/{id}{extension}", content, ct);
 
-        return new Evidence(id, EvidenceType.Photo, uri, caption, DateTimeOffset.Now);
+        return new Evidence(id, EvidenceType.Photo, uri, caption, _time.GetLocalNow());
     }
 
     public Evidence CreateNote(string caption) =>
-        new($"ev-{Guid.NewGuid():N}", EvidenceType.Note, string.Empty, caption, DateTimeOffset.Now);
+        new($"ev-{Guid.NewGuid():N}", EvidenceType.Note, string.Empty, caption, _time.GetLocalNow());
 }
