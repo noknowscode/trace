@@ -10,16 +10,18 @@ public partial record SyncModel
 {
     private readonly ISyncQueue _queue;
     private readonly INetworkStatusService _network;
+    private readonly FeedRecovery _recovery;
 
-    public SyncModel(ISyncQueue queue, INetworkStatusService network)
+    public SyncModel(ISyncQueue queue, INetworkStatusService network, FeedRecovery recovery)
     {
         _queue = queue;
         _network = network;
+        _recovery = recovery;
     }
 
-    public IListFeed<SyncOperation> Operations => ListFeed.AsyncEnumerable(_queue.Watch);
+    public IListFeed<SyncOperation> Operations => _recovery.WatchList(_queue.Watch);
 
-    public IFeed<int> PendingCount => Feed.AsyncEnumerable(_queue.WatchPendingCount);
+    public IFeed<int> PendingCount => _recovery.Watch(_queue.WatchPendingCount);
 
     public IFeed<bool> HasPending => PendingCount.Select(count => count > 0);
 
@@ -38,7 +40,14 @@ public partial record SyncModel
 
     public IState<string> LastResult => State<string>.Empty(this);
 
-    public IState<bool> HasFailures => State.Value(this, () => false);
+    /// <summary>
+    /// Read from the queue itself, so failed uploads left over from an earlier session can be
+    /// retried as soon as the screen opens, not only after a sync pass in this one.
+    /// </summary>
+    public IFeed<bool> HasFailures => _recovery.Watch(_queue.Watch)
+        .Select(operations => operations.Any(operation => operation.Status == SyncState.Failed));
+
+    public IFeed<string> ConnectionAction => IsOnline.Select(online => online ? "Go offline" : "Go online");
 
     public async ValueTask SyncNow(CancellationToken ct)
     {
@@ -54,15 +63,16 @@ public partial record SyncModel
         };
 
         await LastResult.UpdateAsync(_ => message, ct);
-        await HasFailures.UpdateAsync(_ => result.Failed > 0, ct);
     }
 
     public async ValueTask RetryFailed(CancellationToken ct)
     {
         await _queue.RetryAllFailedAsync(ct);
         await LastResult.UpdateAsync(_ => "Failed uploads are queued again. Sync when you have signal.", ct);
-        await HasFailures.UpdateAsync(_ => false, ct);
     }
 
     public void ToggleConnection() => _network.SetOffline(_network.IsOnline);
+
+    /// <summary>Reads the device's records again after a failed read.</summary>
+    public void Retry() => _recovery.Retry();
 }

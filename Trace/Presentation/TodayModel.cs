@@ -13,18 +13,21 @@ public partial record TodayModel
     private readonly INetworkStatusService _network;
     private readonly ISyncQueue _sync;
     private readonly IThemeService _theme;
+    private readonly FeedRecovery _recovery;
 
     public TodayModel(
         IAssignmentRepository assignments,
         INetworkStatusService network,
         ISyncQueue sync,
         IThemeService theme,
+        FeedRecovery recovery,
         IOptions<AppConfig> config)
     {
         _assignments = assignments;
         _network = network;
         _sync = sync;
         _theme = theme;
+        _recovery = recovery;
 
         Technician = string.IsNullOrWhiteSpace(config.Value.Technician)
             ? "Technician"
@@ -36,7 +39,10 @@ public partial record TodayModel
 
     public string Today { get; }
 
-    public IListFeed<AssetSummary> Assignments => ListFeed.AsyncEnumerable(_assignments.WatchToday);
+    public IListFeed<AssetSummary> Assignments => _recovery.WatchList(_assignments.WatchToday);
+
+    /// <summary>Reads the device's records again after a failed read.</summary>
+    public void Retry() => _recovery.Retry();
 
     public IFeed<bool> IsOnline => Feed.AsyncEnumerable(_network.Watch);
 
@@ -44,7 +50,7 @@ public partial record TodayModel
 
     public IFeed<string> ConnectionLabel => IsOnline.Select(online => online ? "Online" : "Offline");
 
-    public IFeed<int> PendingCount => Feed.AsyncEnumerable(_sync.WatchPendingCount);
+    public IFeed<int> PendingCount => _recovery.Watch(_sync.WatchPendingCount);
 
     public IFeed<bool> HasPending => PendingCount.Select(count => count > 0);
 

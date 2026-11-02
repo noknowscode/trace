@@ -32,6 +32,7 @@ public partial record AssetModel
     private readonly ILocalEvidenceStore _evidence;
     private readonly INetworkStatusService _network;
     private readonly INavigator _navigator;
+    private readonly FeedRecovery _recovery;
 
     public AssetModel(
         AssetSummary summary,
@@ -42,7 +43,8 @@ public partial record AssetModel
         ICameraService camera,
         ILocalEvidenceStore evidence,
         INetworkStatusService network,
-        INavigator navigator)
+        INavigator navigator,
+        FeedRecovery recovery)
     {
         _summary = summary;
         _assets = assets;
@@ -53,6 +55,7 @@ public partial record AssetModel
         _evidence = evidence;
         _network = network;
         _navigator = navigator;
+        _recovery = recovery;
 
         // Each editor folds straight into the draft, and the draft is persisted on every
         // change, so walking away from a half-entered reading never loses it.
@@ -70,7 +73,10 @@ public partial record AssetModel
 
     public string AssetName => _summary.AssetName;
 
-    public IFeed<Asset> Asset => Feed.AsyncEnumerable(ct => _assets.Watch(_summary.AssetId, ct));
+    public IFeed<Asset> Asset => _recovery.Watch(ct => _assets.Watch(_summary.AssetId, ct));
+
+    /// <summary>Reads the device's records again after a failed read.</summary>
+    public void Retry() => _recovery.Retry();
 
     public IListFeed<InspectionPoint> Points =>
         Asset.Select(asset => asset is null
@@ -97,10 +103,10 @@ public partial record AssetModel
             .AsListFeed();
 
     public IListFeed<InspectionEvent> History =>
-        ListFeed.AsyncEnumerable(ct => _inspections.WatchHistory(_summary.AssetId, ct));
+        _recovery.WatchList(ct => _inspections.WatchHistory(_summary.AssetId, ct));
 
     public IListFeed<CorrectiveAction> Findings =>
-        ListFeed.AsyncEnumerable(ct => _actions.WatchForAsset(_summary.AssetId, ct));
+        _recovery.WatchList(ct => _actions.WatchForAsset(_summary.AssetId, ct));
 
     public IFeed<bool> IsOffline => Feed.AsyncEnumerable(_network.Watch).Select(online => !online);
 

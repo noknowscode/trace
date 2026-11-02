@@ -11,24 +11,29 @@ public partial record SupervisorFindingsModel
 {
     private readonly ICorrectiveActionRepository _actions;
     private readonly IAssetRepository _assets;
+    private readonly FeedRecovery _recovery;
 
-    public SupervisorFindingsModel(ICorrectiveActionRepository actions, IAssetRepository assets)
+    public SupervisorFindingsModel(
+        ICorrectiveActionRepository actions,
+        IAssetRepository assets,
+        FeedRecovery recovery)
     {
         _actions = actions;
         _assets = assets;
+        _recovery = recovery;
     }
 
-    public IListFeed<CorrectiveAction> Actions => ListFeed.AsyncEnumerable(_actions.WatchAll);
+    public IListFeed<CorrectiveAction> Actions => _recovery.WatchList(_actions.WatchAll);
 
     /// <summary>Assets that are failed or on watch, so a supervisor sees condition and work together.</summary>
     public IListFeed<AssetSummary> AtRisk =>
-        Feed.AsyncEnumerable(_assets.WatchSummaries)
+        _recovery.Watch(_assets.WatchSummaries)
             .Select(assets => assets
                 .Where(a => a.Condition is AssetCondition.Failed or AssetCondition.Watch)
                 .ToImmutableList() as IImmutableList<AssetSummary>)
             .AsListFeed();
 
-    public IFeed<string> Headline => Feed.AsyncEnumerable(_actions.WatchAll).Select(actions =>
+    public IFeed<string> Headline => _recovery.Watch(_actions.WatchAll).Select(actions =>
     {
         var open = actions.Count(a => a.Status != ActionStatus.Complete);
         return open switch
@@ -38,4 +43,7 @@ public partial record SupervisorFindingsModel
             _ => $"{open} corrective actions are open.",
         };
     });
+
+    /// <summary>Reads the device's records again after a failed read.</summary>
+    public void Retry() => _recovery.Retry();
 }
