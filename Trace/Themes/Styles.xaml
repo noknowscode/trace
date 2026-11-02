@@ -1,6 +1,8 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:controls="using:Trace.Presentation.Controls">
+                    xmlns:controls="using:Trace.Presentation.Controls"
+                    xmlns:mvux="using:Uno.Extensions.Reactive.UI"
+                    xmlns:utu="using:Uno.Toolkit.UI">
 
     <!--
         Shared surfaces and text roles. The surface hierarchy from the design graph reads as
@@ -191,82 +193,84 @@
     </Style>
 
     <!--
-        Machine surfaces for the spatial view. The body reads as a solid object by tinting
-        the on-surface role rather than by using a fixed grey, so the machine stays legible
-        in both themes. Recesses and highlights are plain black and white at low alpha
-        because shadow and shine are dark and bright in every theme.
-    -->
-    <Style x:Key="MachineBodyRect" TargetType="Rectangle">
-        <Setter Property="Fill" Value="{ThemeResource OnSurfaceVariantBrush}" />
-        <Setter Property="Opacity" Value="0.3" />
-    </Style>
-
-    <Style x:Key="MachineEdgeRect" TargetType="Rectangle">
-        <Setter Property="Fill" Value="{ThemeResource OnSurfaceVariantBrush}" />
-        <Setter Property="Opacity" Value="0.42" />
-    </Style>
-
-    <Style x:Key="MachineBodyEllipse" TargetType="Ellipse">
-        <Setter Property="Fill" Value="{ThemeResource OnSurfaceVariantBrush}" />
-        <Setter Property="Opacity" Value="0.3" />
-    </Style>
-
-    <Style x:Key="MachineEdgeEllipse" TargetType="Ellipse">
-        <Setter Property="Fill" Value="{ThemeResource OnSurfaceVariantBrush}" />
-        <Setter Property="Opacity" Value="0.42" />
-    </Style>
-
-    <Style x:Key="MachineRecessRect" TargetType="Rectangle">
-        <Setter Property="Fill" Value="Black" />
-        <Setter Property="Opacity" Value="0.26" />
-    </Style>
-
-    <Style x:Key="MachineRecessEllipse" TargetType="Ellipse">
-        <Setter Property="Fill" Value="Black" />
-        <Setter Property="Opacity" Value="0.26" />
-    </Style>
-
-    <Style x:Key="MachineHighlightRect" TargetType="Rectangle">
-        <Setter Property="Fill" Value="White" />
-        <Setter Property="Opacity" Value="0.08" />
-    </Style>
-
-    <!-- Count on a navigation icon. Radius is half the height so Skia draws a circle. -->
-    <Style x:Key="CountBadge" TargetType="Border">
-        <Setter Property="Background" Value="{ThemeResource ErrorBrush}" />
-        <Setter Property="CornerRadius" Value="9" />
-        <Setter Property="MinWidth" Value="18" />
-        <Setter Property="Height" Value="18" />
-        <Setter Property="Padding" Value="5,0" />
-        <Setter Property="HorizontalAlignment" Value="Right" />
-        <Setter Property="VerticalAlignment" Value="Top" />
-        <Setter Property="Margin" Value="0,-6,-10,0" />
-    </Style>
-
-    <Style x:Key="BadgeText" TargetType="TextBlock" BasedOn="{StaticResource LabelSmall}">
-        <Setter Property="Foreground" Value="{ThemeResource OnErrorBrush}" />
-        <Setter Property="HorizontalAlignment" Value="Center" />
-        <Setter Property="VerticalAlignment" Value="Center" />
-    </Style>
-
-    <!-- The number a technician reads at arm's length in a mechanical room. -->
-    <Style x:Key="MetricValueText" TargetType="TextBlock" BasedOn="{StaticResource DisplaySmall}">
-        <Setter Property="Foreground" Value="{ThemeResource OnSurfaceBrush}" />
-    </Style>
-
-    <Style x:Key="MetricUnitText" TargetType="TextBlock" BasedOn="{StaticResource TitleMedium}">
-        <Setter Property="Foreground" Value="{ThemeResource OnSurfaceVariantBrush}" />
-    </Style>
-
-    <!--
         The equipment viewport is lit by the room it is drawn into. These have to come from a
         Style: the renderer reads the brushes off the control, and a ThemeResource resolves
         per theme only when it arrives through a setter.
     -->
     <Style x:Key="AssetSceneViewStyle" TargetType="controls:AssetSceneView">
         <Setter Property="SceneBackground" Value="{ThemeResource SurfaceBrush}" />
-        <Setter Property="GroundShadow" Value="{ThemeResource ScrimBrush}" />
+        <Setter Property="GroundShadow" Value="{ThemeResource SceneGroundShadowBrush}" />
         <Setter Property="KeyLight" Value="{ThemeResource OnSurfaceBrush}" />
+        <Setter Property="FillLight" Value="{ThemeResource SceneFillLightBrush}" />
+    </Style>
+
+    <!--
+        Feed states shared by every data-driven view. Inside a FeedView template the DataContext
+        is the feed's state (in the error template, the exception), so Try again walks up to the
+        FeedView and calls Retry on the page model behind it (FeedRecovery). FeedView's own
+        Refresh would do nothing here: the feeds are live watches, which MVUX does not restart.
+    -->
+    <DataTemplate x:Key="FeedProgressTemplate">
+        <ProgressRing IsActive="True"
+                      Width="{StaticResource ProgressSize}"
+                      Height="{StaticResource ProgressSize}"
+                      Margin="{StaticResource InsetL}"
+                      HorizontalAlignment="Center"
+                      VerticalAlignment="Top"
+                      AutomationProperties.Name="Loading" />
+    </DataTemplate>
+
+    <DataTemplate x:Key="FeedErrorTemplate">
+        <Border Style="{StaticResource CardSurface}" VerticalAlignment="Top">
+            <StackPanel Spacing="{StaticResource SpaceS}">
+                <controls:StatusChip Severity="Critical" Text="Could not read this device's records" />
+                <TextBlock Style="{StaticResource SupportingText}"
+                           Text="Nothing was changed. Try again; if it keeps failing, restart TRACE." />
+                <Button Style="{StaticResource OutlinedButtonStyle}"
+                        HorizontalAlignment="Left"
+                        MinHeight="{StaticResource TouchTargetSize}"
+                        Content="Try again"
+                        Command="{utu:AncestorBinding AncestorType=mvux:FeedView, Path=DataContext.Retry}"
+                        AutomationProperties.Name="Try again to read the records" />
+            </StackPanel>
+        </Border>
+    </DataTemplate>
+
+    <!-- A value shown as a chip without a status: progress, due time, assignee. -->
+    <Style x:Key="ValueChip" TargetType="Border" BasedOn="{StaticResource TileSurface}">
+        <Setter Property="Padding" Value="{StaticResource ChipPadding}" />
+        <Setter Property="MinHeight" Value="{StaticResource ChipMinHeight}" />
+    </Style>
+
+    <!-- A plate laid over the equipment view: the nameplate and the drag hint. -->
+    <Style x:Key="ScenePlate" TargetType="Border">
+        <Setter Property="Background" Value="{ThemeResource SurfaceBrush}" />
+        <Setter Property="CornerRadius" Value="{StaticResource ControlRadius}" />
+        <Setter Property="Padding" Value="{StaticResource CompactCardPadding}" />
+        <Setter Property="IsHitTestVisible" Value="False" />
+    </Style>
+
+    <!-- What was just recorded, beside the point it belongs to. -->
+    <Style x:Key="ConfirmationSurface" TargetType="Border">
+        <Setter Property="Background" Value="{ThemeResource PrimaryContainerBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource PrimaryBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource ControlRadius}" />
+        <Setter Property="Padding" Value="{StaticResource TilePadding}" />
+    </Style>
+
+    <!-- The spine down the left of a history entry. -->
+    <Style x:Key="TimelineSpine" TargetType="Border">
+        <Setter Property="Width" Value="4" />
+        <Setter Property="CornerRadius" Value="{StaticResource SpineRadius}" />
+        <Setter Property="Background" Value="{ThemeResource OutlineBrush}" />
+    </Style>
+
+    <!-- An icon-only button: a glyph in a square gloved-hand target. -->
+    <Style x:Key="IconButtonStyle" TargetType="Button" BasedOn="{StaticResource TextButtonStyle}">
+        <Setter Property="Width" Value="{StaticResource TouchTargetSize}" />
+        <Setter Property="Height" Value="{StaticResource TouchTargetSize}" />
+        <Setter Property="Padding" Value="0" />
     </Style>
 
 </ResourceDictionary>

@@ -53,6 +53,10 @@ public sealed partial class AssetSceneView : Grid, IAnchorProjector
         nameof(KeyLight), typeof(Brush), typeof(AssetSceneView),
         new PropertyMetadata(null, OnPaletteChanged));
 
+    public static readonly DependencyProperty FillLightProperty = DependencyProperty.Register(
+        nameof(FillLight), typeof(Brush), typeof(AssetSceneView),
+        new PropertyMetadata(null, OnPaletteChanged));
+
     public static readonly DependencyProperty ModelSourceProperty = DependencyProperty.Register(
         nameof(ModelSource), typeof(string), typeof(AssetSceneView),
         new PropertyMetadata(string.Empty, OnModelSourceChanged));
@@ -132,6 +136,13 @@ public sealed partial class AssetSceneView : Grid, IAnchorProjector
     {
         get => (Brush?)GetValue(KeyLightProperty);
         set => SetValue(KeyLightProperty, value);
+    }
+
+    /// <summary>Colour of the bounce light that keeps the shadow side of the machine readable.</summary>
+    public Brush? FillLight
+    {
+        get => (Brush?)GetValue(FillLightProperty);
+        set => SetValue(FillLightProperty, value);
     }
 
     /// <summary>
@@ -220,23 +231,23 @@ public sealed partial class AssetSceneView : Grid, IAnchorProjector
     /// rest of the UI in both light and dark.
     /// </summary>
     /// <remarks>
-    /// The three brushes are set from a Style rather than read out of
+    /// The brushes are set from a Style (AssetSceneViewStyle) rather than read out of
     /// <see cref="Application"/>.Resources: the application dictionary is fixed to the
     /// application's own theme, so it would keep handing back dark colours after the
-    /// technician switched the root to light.
+    /// technician switched the root to light. Through the Style they are theme resources
+    /// that re-resolve on a switch, and each change repaints the view. An unset brush
+    /// contributes nothing rather than a colour of its own.
     /// </remarks>
     private ScenePalette ReadPalette() => new(
-        Background: Resolve(SceneBackground, new SKColor(0x10, 0x1A, 0x18)),
-        Ground: Resolve(GroundShadow, new SKColor(0, 0, 0)).WithAlpha(90),
-        KeyLight: Resolve(KeyLight, new SKColor(0xE8, 0xF3, 0xEE)),
-        // A cool neutral bounce rather than the brand colour: tinting the fill with Primary
-        // turned every machine mint green.
-        FillLight: new SKColor(0x7E, 0x8C, 0x99));
+        Background: Resolve(SceneBackground),
+        Ground: Resolve(GroundShadow),
+        KeyLight: Resolve(KeyLight),
+        FillLight: Resolve(FillLight));
 
-    private static SKColor Resolve(Brush? brush, SKColor fallback) =>
+    private static SKColor Resolve(Brush? brush) =>
         brush is SolidColorBrush solid
-            ? new SKColor(solid.Color.R, solid.Color.G, solid.Color.B, solid.Color.A)
-            : fallback;
+            ? ScenePalette.FromColor(solid.Color.A, solid.Color.R, solid.Color.G, solid.Color.B, solid.Opacity)
+            : SKColors.Transparent;
 
     private void OnPointerPressed(object sender, PointerRoutedEventArgs e)
     {

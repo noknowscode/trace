@@ -3,7 +3,15 @@ using SkiaSharp;
 namespace Trace.Presentation.Scene3D;
 
 /// <summary>The colours the scene is lit and grounded with, taken from the app theme.</summary>
-public readonly record struct ScenePalette(SKColor Background, SKColor Ground, SKColor KeyLight, SKColor FillLight);
+public readonly record struct ScenePalette(SKColor Background, SKColor Ground, SKColor KeyLight, SKColor FillLight)
+{
+    /// <summary>
+    /// A theme colour as the renderer needs it, with the brush's own opacity folded into the
+    /// alpha, so a resource can say "black at 35 %" once.
+    /// </summary>
+    public static SKColor FromColor(byte alpha, byte red, byte green, byte blue, double opacity) =>
+        new(red, green, blue, (byte)Math.Round(alpha * Math.Clamp(opacity, 0d, 1d)));
+}
 
 /// <summary>
 /// Rasterises a <see cref="SceneModel"/>.

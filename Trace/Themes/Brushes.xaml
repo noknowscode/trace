@@ -1,0 +1,34 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+        The few colours TRACE needs beyond the Material roles, per theme. Everything else comes
+        from the palette in Styles/ColorPaletteOverride, which is generated and not edited by
+        hand. Reference these with ThemeResource so a light/dark switch re-resolves them.
+
+        The values happen to match in both themes today; they live here so either can be tuned
+        alone. Default mirrors Dark: TRACE starts dark (a field-use decision in the brief), so a theme
+        the dictionaries do not name falls back to the working default.
+    -->
+    <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Dark">
+            <!-- Behind a modal sheet: the page recedes without disappearing. -->
+            <SolidColorBrush x:Key="SheetScrimBrush" Color="#000000" Opacity="0.6" />
+            <!-- The contact shadow under the machine. The renderer takes colour and opacity from the brush. -->
+            <SolidColorBrush x:Key="SceneGroundShadowBrush" Color="#000000" Opacity="0.35" />
+            <!-- A cool neutral bounce rather than the brand colour: tinting the fill with Primary turned every machine mint green. -->
+            <SolidColorBrush x:Key="SceneFillLightBrush" Color="#7E8C99" />
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Light">
+            <SolidColorBrush x:Key="SheetScrimBrush" Color="#000000" Opacity="0.6" />
+            <SolidColorBrush x:Key="SceneGroundShadowBrush" Color="#000000" Opacity="0.35" />
+            <SolidColorBrush x:Key="SceneFillLightBrush" Color="#7E8C99" />
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Default">
+            <SolidColorBrush x:Key="SheetScrimBrush" Color="#000000" Opacity="0.6" />
+            <SolidColorBrush x:Key="SceneGroundShadowBrush" Color="#000000" Opacity="0.35" />
+            <SolidColorBrush x:Key="SceneFillLightBrush" Color="#7E8C99" />
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
+
+</ResourceDictionary>
