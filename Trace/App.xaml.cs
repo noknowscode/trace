@@ -69,13 +69,6 @@ public partial class App : Application
                 )
                 // Enable localization (see appsettings.json for supported languages)
                 .UseLocalization()
-                .UseHttp((context, services) => {
-#if DEBUG
-                // DelegatingHandler will be automatically injected
-                services.AddTransient<DelegatingHandler, DebugHttpHandler>();
-#endif
-
-})
                 .ConfigureServices((context, services) =>
                 {
                     services.AddSingleton(TimeProvider.System);

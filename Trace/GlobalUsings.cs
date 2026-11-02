@@ -10,8 +10,6 @@ global using Trace.Domain.Rules;
 global using Trace.Models;
 global using Trace.Presentation;
 global using Trace.Services;
-global using Trace.Services.Endpoints;
-global using Uno.Extensions.Http.Kiota;
 global using Uno.Extensions.Toolkit;
 global using ApplicationExecutionState = Windows.ApplicationModel.Activation.ApplicationExecutionState;
 [assembly: Uno.Extensions.Reactive.Config.BindableGenerationTool(3)]
