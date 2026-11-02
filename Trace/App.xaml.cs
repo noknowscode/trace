@@ -101,6 +101,9 @@ public partial class App : Application
                     // One retry for every screen that failed to read the store.
                     services.AddSingleton<FeedRecovery>();
 
+                    // Where an asset was opened from, for its Back.
+                    services.AddSingleton<NavigationOrigin>();
+
                     // Platform capabilities. Each is a deterministic stand-in for hardware
                     // TRACE does not own; swapping in a device implementation is a one-line
                     // change here.
@@ -131,6 +134,13 @@ public partial class App : Application
             () => Task.FromResult(builder.Build()),
             initialRoute: "Main"
         );
+
+        // The destinations share one region, which keeps no back stack: record each one as it
+        // is shown, so an asset's Back returns to the destination it was opened from. The
+        // route after a navigation reads Main/<destination>, so the segment under Main is it.
+        var origin = Host.Services.GetRequiredService<NavigationOrigin>();
+        Host.Services.GetRequiredService<IRouteNotifier>().RouteChanged +=
+            (_, e) => origin.Shown(e.Route?.Next()?.Base);
 
         // The theme the technician last chose is restored by the theme service itself: it is
         // scoped to the navigation, and the instance the round's model takes applies the saved

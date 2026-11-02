@@ -1,6 +1,7 @@
 #if DEBUG
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Media;
+using Trace.Infrastructure.Persistence;
 using Trace.Presentation.Controls;
 
 namespace Trace;
@@ -16,7 +17,11 @@ namespace Trace;
 /// <item><c>--trace-route=Today|Assets|Scan|Sync|Findings</c> opens a destination the way its tab
 /// does; <c>Asset[:Overview|Inspect|History|Documents]</c> opens P-204 the way a card on the round
 /// does; <c>Point</c> also opens its seal housing point and enters an out-of-range reading;
-/// <c>Action</c> fails that point with a note and raises the corrective action sheet.</item>
+/// <c>Action</c> fails that point with a note and raises the corrective action sheet;
+/// <c>Again</c> completes the seal housing as Pass, enters a new reading and completes it again,
+/// and prints how many events the point gained.</item>
+/// <item><c>--trace-from=Assets|Scan|Sync|Findings</c> opens that destination first and the asset
+/// from there; <c>--trace-back=1</c> then presses the asset's Back and prints where it landed.</item>
 /// <item><c>--trace-seed=empty</c> clears the round, the corrective actions and the queue after the
 /// store loads, for the empty states.</item>
 /// <item><c>--trace-focus=log</c> prints every element keyboard focus lands on.</item>
@@ -117,20 +122,63 @@ public partial class App
             }
 
             AssetSummary? pump = null;
-            await foreach (var summaries in Host.Services.GetRequiredService<IAssetRepository>().WatchSummaries(CancellationToken.None))
+            try
             {
-                pump = summaries.FirstOrDefault(s => s.AssetId == "P-204");
-                break;
+                await foreach (var summaries in Host.Services.GetRequiredService<IAssetRepository>().WatchSummaries(CancellationToken.None))
+                {
+                    pump = summaries.FirstOrDefault(s => s.AssetId == "P-204");
+                    break;
+                }
+            }
+            catch (IOException)
+            {
+                // --trace-fault=load: the store cannot be read yet, so open the pump from its
+                // identity alone, as a card drawn before the failure would, for the error state.
+                pump = new AssetSummary(
+                    "P-204", "P-204", "Centrifugal Pump", "Pump", "Water Treatment", "Area B",
+                    string.Empty, string.Empty, null, 0, 0, AssetCondition.Unknown, 0);
             }
 
-            var response = await navigator.NavigateRouteAsync(today, "../Asset", data: pump);
-            Console.Error.WriteLine($"VERIFY route={spec} asset={pump?.AssetId} success={response?.Success}");
+            // The asset opens from the destination named by --trace-from, as its own list would.
+            FrameworkElement opener = today;
+            if (VerificationArg("from") is { } from && from != "Today")
+            {
+                await navigator.NavigateRouteAsync(today, $"../{from}");
+                await Task.Delay(800);
+                opener = from switch
+                {
+                    "Assets" => Find<AssetsPage>(root),
+                    "Scan" => Find<ScanPage>(root),
+                    "Sync" => Find<SyncPage>(root),
+                    "Findings" => Find<SupervisorFindingsPage>(root),
+                    _ => (FrameworkElement?)null,
+                } ?? today;
+            }
+
+            var response = await (opener.Navigator() ?? navigator).NavigateRouteAsync(opener, "../Asset", data: pump);
+            Console.Error.WriteLine($"VERIFY route={spec} asset={pump?.AssetId} from={opener.GetType().Name} success={response?.Success}");
 
             await Task.Delay(1500);
             var page = Find<AssetPage>(root);
             if (page is null)
             {
                 Console.Error.WriteLine("VERIFY asset page not found");
+                return;
+            }
+
+            if (VerificationArg("back") is "1")
+            {
+                Invoke(page, "Back");
+                await Task.Delay(1200);
+                var shown = new FrameworkElement?[]
+                    {
+                        today, Find<AssetsPage>(root), Find<ScanPage>(root), Find<SyncPage>(root),
+                        Find<SupervisorFindingsPage>(root), page,
+                    }
+                    .Where(p => p is { Parent: FrameworkElement { Visibility: Visibility.Visible } })
+                    .Select(p => p!.GetType().Name);
+                Console.Error.WriteLine(
+                    $"VERIFY back origin={Host.Services.GetRequiredService<NavigationOrigin>().Route} shown={string.Join(",", shown)}");
                 return;
             }
 
@@ -146,7 +194,7 @@ public partial class App
                 return;
             }
 
-            if (route is not ("Point" or "Action"))
+            if (route is not ("Point" or "Action" or "Again"))
             {
                 return;
             }
@@ -157,6 +205,31 @@ public partial class App
                 && b is not InspectionPointMarker);
             chip?.Command?.Execute(chip.CommandParameter);
             await Task.Delay(1500);
+
+            if (route is "Again")
+            {
+                // Complete, edit, complete again: two events, not one and a duplicate.
+                var store = Host.Services.GetRequiredService<ITraceStore>();
+                int SealEvents(TraceSnapshot s) => s.Events.Count(e => e.PointId == "P-204-seal");
+                var before = SealEvents(await store.GetAsync(CancellationToken.None));
+
+                SetText(page, "New reading", "1.6");
+                await Task.Delay(800);
+                Invoke(page, "Record pass");
+                await Task.Delay(800);
+                Invoke(page, "Complete point");
+                await Task.Delay(1500);
+                SetText(page, "New reading", "2.1");
+                await Task.Delay(800);
+                Invoke(page, "Record watch");
+                await Task.Delay(800);
+                Invoke(page, "Complete point");
+                await Task.Delay(1500);
+
+                var after = SealEvents(await store.GetAsync(CancellationToken.None));
+                Console.Error.WriteLine($"VERIFY again seal events before={before} after={after}");
+                return;
+            }
 
             SetText(page, "New reading", "7.4");
             await Task.Delay(800);

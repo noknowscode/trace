@@ -95,8 +95,8 @@ internal sealed class TestHarness : IDisposable
     /// </summary>
     public async Task<AssetModel> OpenAssetAsync(
         string assetId = "P-204",
-        INavigator? navigator = null,
-        ITraceStore? store = null)
+        ITraceStore? store = null,
+        NavigationOrigin? origin = null)
     {
         store ??= Store;
         var assets = new AssetRepository(store);
@@ -111,7 +111,8 @@ internal sealed class TestHarness : IDisposable
             new SimulatedCameraService(NullLogger<SimulatedCameraService>.Instance),
             Evidence,
             Network,
-            navigator ?? new RecordingNavigator(),
+            new NullNavigator(),
+            origin ?? new NavigationOrigin(),
             new FeedRecovery());
     }
 
@@ -157,20 +158,14 @@ internal sealed class TestTimeProvider : TimeProvider
     public void Advance(TimeSpan by) => _now = _now.Add(by);
 }
 
-/// <summary>Takes navigation requests without navigating, so a test can see where a command went.</summary>
-internal sealed class RecordingNavigator : INavigator
+/// <summary>A navigator that goes nowhere: the model tests drive commands that do not navigate.</summary>
+internal sealed class NullNavigator : INavigator
 {
-    public List<NavigationRequest> Requests { get; } = [];
-
     public Route? Route => null;
 
-    public Task<bool> CanNavigate(Route route) => Task.FromResult(true);
+    public Task<bool> CanNavigate(Route route) => Task.FromResult(false);
 
-    public Task<NavigationResponse?> NavigateAsync(NavigationRequest request)
-    {
-        Requests.Add(request);
-        return Task.FromResult<NavigationResponse?>(null);
-    }
+    public Task<NavigationResponse?> NavigateAsync(NavigationRequest request) => Task.FromResult<NavigationResponse?>(null);
 }
 
 /// <summary>Writes nothing from <paramref name="fatalKey"/> on, as if the process died there.</summary>

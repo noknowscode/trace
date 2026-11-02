@@ -32,6 +32,7 @@ public partial record AssetModel
     private readonly ILocalEvidenceStore _evidence;
     private readonly INetworkStatusService _network;
     private readonly INavigator _navigator;
+    private readonly NavigationOrigin _origin;
     private readonly FeedRecovery _recovery;
 
     public AssetModel(
@@ -44,6 +45,7 @@ public partial record AssetModel
         ILocalEvidenceStore evidence,
         INetworkStatusService network,
         INavigator navigator,
+        NavigationOrigin origin,
         FeedRecovery recovery)
     {
         _summary = summary;
@@ -55,6 +57,7 @@ public partial record AssetModel
         _evidence = evidence;
         _network = network;
         _navigator = navigator;
+        _origin = origin;
         _recovery = recovery;
 
         // Each editor folds straight into the draft, and the draft is persisted on every
@@ -436,7 +439,11 @@ public partial record AssetModel
             ct);
     }
 
-    public async ValueTask Back(CancellationToken ct) => await _navigator.NavigateRouteAsync(this, "../Today", cancellation: ct);
+    /// <summary>Where Back goes: the destination the asset was opened from (Today, Assets, Scan or Findings).</summary>
+    public string BackRoute => $"../{_origin.Route}";
+
+    public async ValueTask Back(CancellationToken ct) =>
+        await _navigator.NavigateRouteAsync(this, BackRoute, cancellation: ct);
 
     // ---- Editor plumbing ---------------------------------------------------------------
 

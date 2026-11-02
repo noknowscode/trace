@@ -59,8 +59,8 @@
                 <Button Style="{StaticResource IconButtonStyle}"
                         VerticalAlignment="Center"
                         Command="{Binding Back}"
-                        AutomationProperties.Name="Back to today"
-                        ToolTipService.ToolTip="Back to today">
+                        AutomationProperties.Name="Back"
+                        ToolTipService.ToolTip="Back">
                     <Viewbox Width="{StaticResource IconSizeM}" Height="{StaticResource IconSizeM}">
                         <PathIcon Data="{StaticResource IconBack}" />
                     </Viewbox>
