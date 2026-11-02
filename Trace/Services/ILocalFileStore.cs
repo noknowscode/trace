@@ -10,7 +10,7 @@ public interface ILocalFileStore
 
     ValueTask WriteTextAsync(string key, string content, CancellationToken ct);
 
-    /// <summary>Writes binary content and returns a URI that can be resolved by an Image source.</summary>
+    /// <summary>Writes binary content and returns a URI an Image source resolves on every head.</summary>
     ValueTask<string> WriteBytesAsync(string key, byte[] content, CancellationToken ct);
 
     ValueTask DeleteAsync(string key, CancellationToken ct);

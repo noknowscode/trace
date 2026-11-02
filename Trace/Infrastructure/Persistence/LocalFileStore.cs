@@ -10,6 +10,7 @@ namespace Trace.Infrastructure.Persistence;
 public sealed class LocalFileStore : ILocalFileStore
 {
     private readonly Func<ValueTask<string>> _openRoot;
+    private readonly string? _appDataUri;
     private readonly SemaphoreSlim _gate = new(1, 1);
     private string? _root;
 
@@ -24,7 +25,19 @@ public sealed class LocalFileStore : ILocalFileStore
     /// storage asynchronously and only a StorageFolder call waits for that, so a plain
     /// System.IO read at startup could find the folder still empty.
     /// </summary>
-    public LocalFileStore(Func<ValueTask<string>> openRoot) => _openRoot = openRoot;
+    /// <param name="openRoot">Opens the root folder.</param>
+    /// <param name="appDataUri">
+    /// The root as an <c>ms-appdata:///</c> URI, for the URIs <see cref="WriteBytesAsync"/>
+    /// hands back. A file:// URI holds the absolute path, which a browser cannot load and
+    /// which iOS invalidates when an update moves the app's container; an app-data URI names
+    /// the file relative to the app and resolves on every head. Without one (tests over a
+    /// temp folder), file URIs are returned.
+    /// </param>
+    public LocalFileStore(Func<ValueTask<string>> openRoot, string? appDataUri = null)
+    {
+        _openRoot = openRoot;
+        _appDataUri = appDataUri;
+    }
 
     public async ValueTask<string?> ReadTextAsync(string key, CancellationToken ct)
     {
@@ -71,7 +84,7 @@ public sealed class LocalFileStore : ILocalFileStore
             _gate.Release();
         }
 
-        return new Uri(path).AbsoluteUri;
+        return _appDataUri is null ? new Uri(path).AbsoluteUri : _appDataUri + key;
     }
 
     public async ValueTask DeleteAsync(string key, CancellationToken ct)

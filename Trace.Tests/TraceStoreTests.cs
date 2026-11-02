@@ -222,4 +222,26 @@ public class TraceStoreTests
         (await sync.IsSettled).Should().BeFalse();
         (await sync.SetAsideWarning).Should().Contain(aside);
     }
+
+    [Test]
+    public async Task Evidence_written_by_the_app_is_referenced_relative_to_its_data_folder()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "trace-tests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            var files = new Trace.Infrastructure.Persistence.LocalFileStore(
+                () => ValueTask.FromResult(root), "ms-appdata:///local/trace/");
+
+            var uri = await files.WriteBytesAsync("evidence/P-204-seal/ev-1.png", [1, 2, 3], default);
+
+            // A file:// URI holds the absolute path: a browser cannot load it, and iOS moves the
+            // app's container on update.
+            uri.Should().Be("ms-appdata:///local/trace/evidence/P-204-seal/ev-1.png");
+            File.Exists(Path.Combine(root, "evidence", "P-204-seal", "ev-1.png")).Should().BeTrue();
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
 }

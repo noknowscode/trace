@@ -77,9 +77,9 @@ public partial class App : Application
                     // on first use), so nothing below this line has to know about platform storage
                     // paths.
 #if DEBUG
-                    services.AddSingleton(_ => WithVerificationFaults(new LocalFileStore(OpenStoreRootAsync)));
+                    services.AddSingleton(_ => WithVerificationFaults(new LocalFileStore(OpenStoreRootAsync, StoreAppDataUri)));
 #else
-                    services.AddSingleton<ILocalFileStore>(_ => new LocalFileStore(OpenStoreRootAsync));
+                    services.AddSingleton<ILocalFileStore>(_ => new LocalFileStore(OpenStoreRootAsync, StoreAppDataUri));
 #endif
                     services.AddSingleton<ITraceStore, TraceStore>();
 
@@ -144,13 +144,18 @@ public partial class App : Application
 #endif
     }
 
+    /// <summary>The store's folder under the app's local data.</summary>
+    private const string StoreFolder = "trace";
+
+    /// <summary>The same folder as an app-data URI, which evidence photos are referenced by.</summary>
+    private const string StoreAppDataUri = $"ms-appdata:///local/{StoreFolder}/";
+
     /// <summary>
-    /// The store's folder under the app's local data, opened through StorageFolder before any
-    /// file access: on WebAssembly that call is what waits for the browser-backed local folder
-    /// to be restored.
+    /// The store's folder, opened through StorageFolder before any file access: on WebAssembly
+    /// that call is what waits for the browser-backed local folder to be restored.
     /// </summary>
     private static async ValueTask<string> OpenStoreRootAsync() =>
-        (await ApplicationData.Current.LocalFolder.CreateFolderAsync("trace", CreationCollisionOption.OpenIfExists)).Path;
+        (await ApplicationData.Current.LocalFolder.CreateFolderAsync(StoreFolder, CreationCollisionOption.OpenIfExists)).Path;
 
     private static void RegisterRoutes(IViewRegistry views, IRouteRegistry routes)
     {

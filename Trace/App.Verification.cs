@@ -20,7 +20,7 @@ namespace Trace;
 /// <c>Action</c> fails that point with a note and raises the corrective action sheet;
 /// <c>Again</c> completes the seal housing as Pass, enters a new reading and completes it again,
 /// and prints how many events the point gained; <c>Discard</c> enters the reading and asks to
-/// discard it, for the confirmation.</item>
+/// discard it, for the confirmation; <c>Photo</c> attaches a photo and prints its URI.</item>
 /// <item><c>--trace-from=Assets|Scan|Sync|Findings</c> opens that destination first and the asset
 /// from there; <c>--trace-back=1</c> then presses the asset's Back and prints where it landed.</item>
 /// <item><c>--trace-seed=empty</c> clears the round, the corrective actions and the queue after the
@@ -195,7 +195,7 @@ public partial class App
                 return;
             }
 
-            if (route is not ("Point" or "Action" or "Again" or "Discard"))
+            if (route is not ("Point" or "Action" or "Again" or "Discard" or "Photo"))
             {
                 return;
             }
@@ -235,6 +235,15 @@ public partial class App
             SetText(page, "New reading", "7.4");
             await Task.Delay(800);
             Console.Error.WriteLine($"VERIFY point opened={chip is not null}");
+
+            if (route is "Photo")
+            {
+                Invoke(page, "Add photo evidence");
+                await Task.Delay(2000);
+                var draft = (await Host.Services.GetRequiredService<ITraceStore>().GetAsync(CancellationToken.None)).FindDraft("P-204-seal");
+                Console.Error.WriteLine($"VERIFY photo uri={draft?.Evidence.LastOrDefault()?.LocalUri}");
+                return;
+            }
 
             if (route is "Discard")
             {
