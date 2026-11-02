@@ -251,6 +251,12 @@
                 </StackPanel>
             </Border>
 
+            <!-- A completion that wrote nothing: the device could not write, or the point has gone. -->
+            <TextBlock Text="{Binding CompletionError}"
+                       Style="{StaticResource ErrorText}"
+                       AutomationProperties.LiveSetting="Assertive"
+                       Visibility="{Binding CompletionError, Converter={StaticResource StringToVisibility}}" />
+
             <Button Style="{StaticResource FilledButtonStyle}"
                     HorizontalAlignment="Stretch"
                     MinHeight="{StaticResource TouchTargetSize}"

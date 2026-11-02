@@ -118,4 +118,33 @@ public class AssetModelTests
         await model.CreateAction(default);
         (await ActionsAsync()).Should().HaveCount(before.Count);
     }
+
+    [Test]
+    public async Task A_completion_the_device_cannot_write_is_reported_in_the_inspector()
+    {
+        await _harness.Store.GetAsync(default);
+        var model = await _harness.OpenAssetAsync(store: _harness.StoreThatDiesWriting("commit.json"));
+        await model.SelectPoint(await _harness.PointAsync("P-204-seal"), default);
+        await EnterAsync(model, "1.6", Disposition.Pass);
+
+        // The store's IOException used to escape the command, and the inspector showed nothing.
+        await model.CompletePoint(default);
+
+        (await model.CompletionError).Should().Contain("could not be saved");
+        (await model.Confirmation).Should().BeNullOrEmpty();
+        (await model.Draft)!.ReadingText.Should().Be("1.6", "the reading stays for another try");
+    }
+
+    [Test]
+    public async Task A_completion_for_an_asset_that_has_gone_says_why_nothing_was_recorded()
+    {
+        var model = await OpenAtAsync("P-204-seal");
+        await EnterAsync(model, "1.6", Disposition.Pass);
+
+        await _harness.Store.MutateAsync(s => s with { Assets = s.Assets.RemoveAll(a => a.Id == "P-204") }, default);
+        await model.CompletePoint(default);
+
+        (await model.CompletionError).Should().Contain("no longer available");
+        (await model.Confirmation).Should().BeNullOrEmpty();
+    }
 }

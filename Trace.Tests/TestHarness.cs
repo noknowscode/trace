@@ -93,17 +93,21 @@ internal sealed class TestHarness : IDisposable
     /// Opens the asset workspace for an asset the way navigation does: with the row that was
     /// tapped, over this harness's store.
     /// </summary>
-    public async Task<AssetModel> OpenAssetAsync(string assetId = "P-204", INavigator? navigator = null)
+    public async Task<AssetModel> OpenAssetAsync(
+        string assetId = "P-204",
+        INavigator? navigator = null,
+        ITraceStore? store = null)
     {
-        var assets = new AssetRepository(Store);
+        store ??= Store;
+        var assets = new AssetRepository(store);
         var summary = (await FirstAsync(assets.WatchSummaries(default))).Single(s => s.AssetId == assetId);
 
         return new AssetModel(
             summary,
             assets,
-            new InspectionRepository(Store),
-            new CorrectiveActionRepository(Store),
-            Workflow,
+            new InspectionRepository(store),
+            new CorrectiveActionRepository(store),
+            ReferenceEquals(store, Store) ? Workflow : WorkflowOver(store),
             new SimulatedCameraService(NullLogger<SimulatedCameraService>.Instance),
             Evidence,
             Network,

@@ -172,6 +172,9 @@ public partial record AssetModel
 
     public IFeed<bool> HasConfirmation => Confirmation.Select(text => !string.IsNullOrEmpty(text));
 
+    /// <summary>Why the last Complete point recorded nothing, when the inspector does not already say.</summary>
+    public IState<string> CompletionError => State<string>.Empty(this);
+
     public ValueTask DismissConfirmation(CancellationToken ct) =>
         Confirmation.UpdateAsync(_ => string.Empty, ct);
 
@@ -194,6 +197,7 @@ public partial record AssetModel
         await SelectedPointId.UpdateAsync(_ => point.Id, ct);
         await LoadDraftAsync(draft, ct);
         await Confirmation.UpdateAsync(_ => string.Empty, ct);
+        await CompletionError.UpdateAsync(_ => string.Empty, ct);
 
         // What was recorded at the previous point stays with that point: corrective work
         // raised from here must come from an inspection of this point.
@@ -226,13 +230,30 @@ public partial record AssetModel
             return;
         }
 
-        var outcome = await _workflow.CompleteAsync(draft, ct);
+        CompletionOutcome outcome;
+        try
+        {
+            outcome = await _workflow.CompleteAsync(draft, ct);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // The device could not write. The reading stays in the editor, and a second try
+            // either records it or finds it already recorded: the token makes that safe.
+            await CompletionError.UpdateAsync(
+                _ => "This inspection could not be saved on the device. Try Complete point again; if it keeps failing, restart TRACE.",
+                ct);
+            return;
+        }
 
         if (!outcome.Succeeded)
         {
-            // The blocker is already on screen through Validation; nothing was written.
+            // Nothing was written. A blocker in the reading is usually on screen already, but
+            // the point or asset may have gone, and then this is the only place it is said.
+            await CompletionError.UpdateAsync(_ => outcome.Error ?? outcome.Validation.Message, ct);
             return;
         }
+
+        await CompletionError.UpdateAsync(_ => string.Empty, ct);
 
         // The draft is finished work now, and the store has already dropped it. The editor
         // moves on to a fresh draft for the point: left holding the completed one, the next
