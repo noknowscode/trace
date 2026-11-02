@@ -6,7 +6,9 @@ using Trace.Infrastructure.Persistence;
 using Trace.Infrastructure.Platform;
 using Trace.Infrastructure.Repositories;
 using Trace.Models;
+using Trace.Presentation;
 using Trace.Services;
+using Uno.Extensions.Navigation;
 
 namespace Trace.Tests;
 
@@ -74,6 +76,37 @@ internal sealed class TestHarness : IDisposable
         throw new InvalidOperationException("The stream completed without emitting a value.");
     }
 
+    /// <summary>
+    /// Opens the asset workspace for an asset the way navigation does: with the row that was
+    /// tapped, over this harness's store.
+    /// </summary>
+    public async Task<AssetModel> OpenAssetAsync(string assetId = "P-204", INavigator? navigator = null)
+    {
+        var assets = new AssetRepository(Store);
+        var summary = (await FirstAsync(assets.WatchSummaries(default))).Single(s => s.AssetId == assetId);
+
+        return new AssetModel(
+            summary,
+            assets,
+            new InspectionRepository(Store),
+            new CorrectiveActionRepository(Store),
+            Workflow,
+            new SimulatedCameraService(NullLogger<SimulatedCameraService>.Instance),
+            Evidence,
+            Network,
+            navigator ?? new RecordingNavigator(),
+            new FeedRecovery());
+    }
+
+    /// <summary>Polls <paramref name="condition"/> until it holds, for up to 5 s.</summary>
+    public static async Task UntilAsync(Func<Task<bool>> condition)
+    {
+        for (var i = 0; i < 100 && !await condition(); i++)
+        {
+            await Task.Delay(50);
+        }
+    }
+
     public async Task<InspectionPoint> PointAsync(string pointId) =>
         (await PumpAsync()).FindPoint(pointId)
         ?? throw new InvalidOperationException($"Seed point {pointId} is missing.");
@@ -105,4 +138,20 @@ internal sealed class TestTimeProvider : TimeProvider
     public override TimeZoneInfo LocalTimeZone => TimeZoneInfo.Utc;
 
     public void Advance(TimeSpan by) => _now = _now.Add(by);
+}
+
+/// <summary>Takes navigation requests without navigating, so a test can see where a command went.</summary>
+internal sealed class RecordingNavigator : INavigator
+{
+    public List<NavigationRequest> Requests { get; } = [];
+
+    public Route? Route => null;
+
+    public Task<bool> CanNavigate(Route route) => Task.FromResult(true);
+
+    public Task<NavigationResponse?> NavigateAsync(NavigationRequest request)
+    {
+        Requests.Add(request);
+        return Task.FromResult<NavigationResponse?>(null);
+    }
 }

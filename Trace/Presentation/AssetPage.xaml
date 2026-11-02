@@ -514,7 +514,7 @@
                                 <TextBlock Style="{StaticResource PanelTitleText}"
                                            TextWrapping="Wrap">
                                     <Run Text="Raise work from" />
-                                    <Run Text="{Binding SelectedPoint.Label}" />
+                                    <Run Text="{Binding RecordedEvent.PointLabel}" />
                                 </TextBlock>
                                 <TextBlock Style="{StaticResource SupportingText}"
                                            Text="The asset, the point and the inspection that failed are carried across automatically." />

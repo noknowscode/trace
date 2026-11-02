@@ -197,6 +197,12 @@ public partial record AssetModel
         await NoteText.UpdateAsync(_ => draft.Notes, ct);
         await ChosenDisposition.UpdateAsync(_ => draft.Disposition, ct);
         await Confirmation.UpdateAsync(_ => string.Empty, ct);
+
+        // What was recorded at the previous point stays with that point: corrective work
+        // raised from here must come from an inspection of this point.
+        await RecordedEvent.UpdateAsync(_ => null!, ct);
+        await ActionSummary.UpdateAsync(_ => string.Empty, ct);
+        await ActionError.UpdateAsync(_ => string.Empty, ct);
         await IsActionSheetOpen.UpdateAsync(_ => false, ct);
         await IsInspectorOpen.UpdateAsync(_ => true, ct);
         await TabIndex.UpdateAsync(_ => (int)AssetTab.Inspect, ct);
@@ -231,23 +237,20 @@ public partial record AssetModel
             return;
         }
 
-        await LastEventId.UpdateAsync(_ => outcome.Event!.Id, ct);
+        await RecordedEvent.UpdateAsync(_ => outcome.Event!, ct);
         await Confirmation.UpdateAsync(
             _ => outcome.WasDuplicate
                 ? "Already recorded. This inspection was saved once."
                 : $"{outcome.Event!.PointLabel} recorded as {outcome.Event.Disposition}. Saved on this device and queued to sync.",
             ct);
 
-        if (outcome.Event!.Disposition == Disposition.Fail)
-        {
-            var asset = await Asset;
-            var point = await SelectedPoint;
-            if (asset is not null && point is not null)
-            {
-                await ActionSummary.UpdateAsync(
-                    _ => InspectionRules.SuggestActionSummary(asset, point), ct);
-            }
-        }
+        var asset = await Asset;
+        var point = asset?.FindPoint(outcome.Event!.PointId);
+        await ActionSummary.UpdateAsync(
+            _ => outcome.Event!.Disposition == Disposition.Fail && asset is not null && point is not null
+                ? InspectionRules.SuggestActionSummary(asset, point)
+                : string.Empty,
+            ct);
     }
 
     // ---- Evidence ---------------------------------------------------------------------
@@ -313,7 +316,11 @@ public partial record AssetModel
 
     // ---- Corrective action ------------------------------------------------------------
 
-    public IState<string> LastEventId => State.Value(this, () => string.Empty);
+    /// <summary>
+    /// The inspection just recorded at the open point. Corrective work is raised from this
+    /// event, never from the editor, which has moved on to the next reading by then.
+    /// </summary>
+    public IState<InspectionEvent> RecordedEvent => State<InspectionEvent>.Empty(this);
 
     public IState<bool> IsActionSheetOpen => State.Value(this, () => false);
 
@@ -343,10 +350,12 @@ public partial record AssetModel
             nameof(CorrectivePriority.Medium),
             nameof(CorrectivePriority.Low))));
 
-    /// <summary>Corrective work can only be raised from an inspection that actually failed.</summary>
+    /// <summary>
+    /// Corrective work can only be raised from an inspection that was recorded as failed:
+    /// the call on the recorded event, not whatever the editor shows now.
+    /// </summary>
     public IFeed<bool> CanRaiseAction =>
-        Feed.Combine(LastEventId, ChosenDisposition)
-            .Select(pair => !string.IsNullOrEmpty(pair.Item1) && pair.Item2 == Disposition.Fail);
+        RecordedEvent.Select(recorded => recorded?.Disposition == Disposition.Fail);
 
     public async ValueTask OpenActionSheet(CancellationToken ct)
     {
@@ -358,10 +367,9 @@ public partial record AssetModel
 
     public async ValueTask CreateAction(CancellationToken ct)
     {
-        var point = await SelectedPoint;
-        var eventId = await LastEventId;
+        var recorded = await RecordedEvent;
 
-        if (point is null || string.IsNullOrEmpty(eventId))
+        if (recorded is null || recorded.Disposition != Disposition.Fail)
         {
             return;
         }
@@ -373,8 +381,8 @@ public partial record AssetModel
         var outcome = await _workflow.RaiseCorrectiveActionAsync(
             new CorrectiveActionRequest(
                 AssetId: _summary.AssetId,
-                PointId: point.Id,
-                SourceInspectionEventId: eventId,
+                PointId: recorded.PointId,
+                SourceInspectionEventId: recorded.Id,
                 Summary: await ActionSummary ?? string.Empty,
                 Priority: priority,
                 Assignee: await ActionAssignee ?? "Mechanical Team"),

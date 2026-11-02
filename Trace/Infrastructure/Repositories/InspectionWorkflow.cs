@@ -210,6 +210,20 @@ public sealed class InspectionWorkflow : IInspectionWorkflow
                 "The originating inspection is no longer available on the device.");
         }
 
+        // The action inherits its asset, point and source event, so all three must be the
+        // same inspection: work raised at one point must not carry another point's event.
+        if (source.AssetId != asset.Id || source.PointId != point.Id)
+        {
+            return CorrectiveActionOutcome.Rejected(
+                "That inspection was recorded at another point. Raise the action from the point that failed.");
+        }
+
+        if (source.Disposition != Disposition.Fail)
+        {
+            return CorrectiveActionOutcome.Rejected(
+                "Corrective work can only be raised from an inspection recorded as Fail.");
+        }
+
         var now = _time.GetLocalNow();
         var action = InspectionRules.CreateCorrectiveAction(
             asset,

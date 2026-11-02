@@ -1,0 +1,101 @@
+using Trace.Presentation;
+using Uno.Extensions.Reactive;
+
+namespace Trace.Tests;
+
+/// <summary>
+/// The asset workspace's commands over a real store: what the technician does at a point and
+/// what ends up recorded. MVUX folds the editors into the draft in the background, so a test
+/// waits for the draft to show an edit before it acts on it.
+/// </summary>
+public class AssetModelTests
+{
+    private TestHarness _harness = null!;
+
+    [SetUp]
+    public void SetUp() => _harness = TestHarness.Create();
+
+    [TearDown]
+    public void TearDown() => _harness.Dispose();
+
+    private async Task<AssetModel> OpenAtAsync(string pointId)
+    {
+        var model = await _harness.OpenAssetAsync();
+        await model.SelectPoint(await _harness.PointAsync(pointId), default);
+        return model;
+    }
+
+    /// <summary>Types a reading and a note and makes a call, as the inspector's fields do.</summary>
+    private static async Task EnterAsync(AssetModel model, string reading, Disposition disposition, string notes = "")
+    {
+        await model.ReadingText.UpdateAsync(_ => reading, default);
+        await model.NoteText.UpdateAsync(_ => notes, default);
+        await model.ChosenDisposition.UpdateAsync(_ => disposition, default);
+
+        await TestHarness.UntilAsync(async () => await model.Draft is { } draft
+            && draft.ReadingText == reading
+            && draft.Notes == notes
+            && draft.Disposition == disposition);
+    }
+
+    private async Task<IImmutableList<CorrectiveAction>> ActionsAsync() =>
+        (await _harness.Store.GetAsync(default)).Actions;
+
+    [Test]
+    public async Task Corrective_work_is_offered_only_from_an_inspection_recorded_as_fail()
+    {
+        var model = await OpenAtAsync("P-204-seal");
+        await EnterAsync(model, "1.6", Disposition.Pass);
+        await model.CompletePoint(default);
+
+        // Tapping Fail after a Pass was recorded used to offer corrective work raised from the
+        // passed event.
+        await model.ChosenDisposition.UpdateAsync(_ => Disposition.Fail, default);
+        await TestHarness.UntilAsync(async () => (await model.Draft)?.Disposition == Disposition.Fail);
+
+        (await model.CanRaiseAction).Should().BeFalse();
+
+        var before = await ActionsAsync();
+        await model.ActionSummary.UpdateAsync(_ => "Replace seal", default);
+        await model.CreateAction(default);
+        (await ActionsAsync()).Should().HaveCount(before.Count);
+    }
+
+    [Test]
+    public async Task A_failed_point_raises_work_against_its_own_event()
+    {
+        var model = await OpenAtAsync("P-204-seal");
+        await EnterAsync(model, "7.4", Disposition.Fail, "Seal weeping at the gland.");
+        await model.CompletePoint(default);
+
+        (await model.CanRaiseAction).Should().BeTrue();
+        var recorded = (await model.RecordedEvent)!;
+
+        await model.CreateAction(default);
+
+        var action = (await ActionsAsync()).Should().ContainSingle(a => a.SourceInspectionEventId == recorded.Id).Subject;
+        action.PointId.Should().Be("P-204-seal");
+        action.Summary.Should().Be("Inspect seal housing on P-204", "the summary is suggested from the failed point");
+    }
+
+    [Test]
+    public async Task Choosing_another_point_forgets_the_failure_recorded_at_the_last_one()
+    {
+        var model = await OpenAtAsync("P-204-seal");
+        await EnterAsync(model, "7.4", Disposition.Fail, "Seal weeping at the gland.");
+        await model.CompletePoint(default);
+        (await model.CanRaiseAction).Should().BeTrue();
+
+        // Opening the coupling used to keep the seal's event, so an action raised there
+        // carried the coupling's name and the seal's inspection.
+        await model.SelectPoint(await _harness.PointAsync("P-204-coupling"), default);
+
+        (await model.CanRaiseAction).Should().BeFalse();
+        (await model.RecordedEvent).Should().BeNull();
+
+        var before = await ActionsAsync();
+        await model.ActionSummary.UpdateAsync(_ => "Replace coupling", default);
+        await model.CreateAction(default);
+        (await ActionsAsync()).Should().HaveCount(before.Count);
+    }
+}

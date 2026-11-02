@@ -184,6 +184,40 @@ public class InspectionWorkflowTests
     }
 
     [Test]
+    public async Task A_corrective_action_cannot_carry_another_points_inspection()
+    {
+        var draft = await DraftForSealAsync("7.4", Disposition.Fail, "Seal weeping.");
+        var completed = await _harness.Workflow.CompleteAsync(draft, default);
+
+        var outcome = await _harness.Workflow.RaiseCorrectiveActionAsync(
+            new CorrectiveActionRequest(
+                "P-204", "P-204-coupling", completed.Event!.Id, "Realign coupling",
+                CorrectivePriority.High, "Mechanical Team"),
+            default);
+
+        outcome.Succeeded.Should().BeFalse();
+        outcome.Error.Should().Contain("another point");
+        (await _harness.Store.GetAsync(default)).Actions.Should().NotContain(a => a.PointId == "P-204-coupling");
+    }
+
+    [Test]
+    public async Task A_corrective_action_cannot_be_raised_from_a_passed_inspection()
+    {
+        var draft = await DraftForSealAsync("1.6", Disposition.Pass);
+        var completed = await _harness.Workflow.CompleteAsync(draft, default);
+
+        var outcome = await _harness.Workflow.RaiseCorrectiveActionAsync(
+            new CorrectiveActionRequest(
+                "P-204", "P-204-seal", completed.Event!.Id, "Replace pump seal",
+                CorrectivePriority.High, "Mechanical Team"),
+            default);
+
+        outcome.Succeeded.Should().BeFalse();
+        outcome.Error.Should().Contain("Fail");
+        (await _harness.Store.GetAsync(default)).Actions.Should().NotContain(a => a.SourceInspectionEventId == completed.Event.Id);
+    }
+
+    [Test]
     public async Task An_inspection_appends_to_the_asset_history_newest_first()
     {
         var draft = await DraftForSealAsync("1.6", Disposition.Pass);
