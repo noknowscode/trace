@@ -9,7 +9,8 @@ set -u
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK=${1:?work dir}; shift
 ROUTES=("$@")
-[ ${#ROUTES[@]} -eq 0 ] && ROUTES=(Today Assets Scan Asset Point Action Asset:History Sync Findings)
+# Empty and Error are Today with an empty round, and with store reads failing (the Try again state).
+[ ${#ROUTES[@]} -eq 0 ] && ROUTES=(Today Assets Scan Asset Point Action Asset:History Sync Findings Empty Error)
 WIDTHS="360 599 600 800 1080 1920"
 SHEETS="$ROOT/docs/evidence"
 mkdir -p "$WORK" "$SHEETS"
@@ -18,7 +19,12 @@ for theme in dark light; do
   for route in "${ROUTES[@]}"; do
     name="$(echo "$route" | tr ':' '-' | tr 'A-Z' 'a-z')-$theme"
     args=(--trace-theme=$theme)
-    [ "$route" != Today ] && args+=(--trace-route=$route)
+    case "$route" in
+      Today) ;;
+      Empty) args+=(--trace-seed=empty) ;;
+      Error) args+=(--trace-fault=load) ;;
+      *) args+=(--trace-route=$route) ;;
+    esac
     "$ROOT/tools/matrix.sh" "$WORK" "$name" "$WIDTHS" 640 16 -- "${args[@]}" \
       || "$ROOT/tools/matrix.sh" "$WORK" "$name" "$WIDTHS" 640 16 -- "${args[@]}"
     grep VERIFY "$WORK/$name.log" | sed "s/^/  $name: /"

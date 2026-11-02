@@ -2,7 +2,10 @@
 
 Verified by running the desktop head under `tools/run-desktop.sh`, which drives the real
 app in Xvfb with real pointer and keyboard input and captures the frame. Captures live in
-`artifacts/`. Domain rules are additionally covered by `Trace.Tests` (36 tests).
+`artifacts/`. The responsive and theme matrix (`tools/evidence.sh`: every route at
+360/599/600/800/1080/1920 in Dark and Light) is kept as contact sheets in `docs/evidence/`.
+Domain rules, the store, the workflows, the renderer and the feed retry are covered by
+`Trace.Tests`.
 
 Boxes are ticked only where the behaviour was observed at runtime or is covered by a test.
 Items that cannot be checked in this container are listed under "Not verified here".
@@ -60,6 +63,9 @@ Items that cannot be checked in this container are listed under "Not verified he
 
 ## States and edge cases
 - [x] Loading state exists.
+- [x] Error state exists, with a Try again that reads the store again.
+      (`error-dark.jpg`; `--trace-fault=load`, then Try again shows the round. Covered by
+      `FeedRecoveryTests`.)
 - [x] Empty assignments state exists.
       (`check-empty-today.png`, with a route back out through Scan or Assets.)
 - [x] Populated state exists.
@@ -74,17 +80,26 @@ Items that cannot be checked in this container are listed under "Not verified he
 - [x] Touch targets are at least approximately 44px.
 - [x] Primary tasks are usable with touch.
 - [x] Keyboard activation works for buttons.
+- [x] Every inspection point is reachable by keyboard: each marker and each point chip is a
+      tab stop (a focus walk with `--trace-focus=log` reaches rail, back, tabs, markers 1–4,
+      Reset view and the chips).
 - [x] Focus is visible.
 - [x] Status is never communicated through color alone.
       (Every status chip and marker carries a glyph and a word.)
 - [x] Text maintains usable contrast in dark and light themes.
+      (Every text role pair in the palette is at least 5.4:1 in Light and 6.0:1 in Dark.)
 
 ## Responsive/adaptive
 - [x] 360–430px phone widths remain fully usable.
-      (`phone360-asset.png` at 360, `phone-asset.png` at 400.)
+      (`docs/evidence/*-dark.jpg` and `*-light.jpg` at 360 and 599: Complete point stays on
+      screen at 360 × 640, and no tab label is clipped.)
 - [x] Tablet width exposes wider asset workspace without stretched controls.
+      (From 800 the point inspector docks beside the machine.)
 - [x] Desktop width provides denser supervisor-friendly layout.
-      (At and above 1000px the point inspector docks as a panel instead of a sheet.)
+      (At 1080 and up Findings shows corrective work and at-risk assets side by side;
+      lists stop at 960 and centre.)
+- [x] Resizing or rotating keeps the asset and a half-entered reading on screen.
+      (Live resize 360 → 599 → 600 → 800 → 360 → 1080 with a reading in progress.)
 - [x] No horizontal scrolling is required for core task flow.
       (The point chip strip scrolls sideways by design; nothing else does.)
 

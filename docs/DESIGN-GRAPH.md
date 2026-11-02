@@ -24,9 +24,10 @@ graph TD
   Asset --> Documents[Documents tab]
 ```
 
-The shell is a single `TabBar` that changes orientation with width: a left rail at
-workstation width, a bottom bar on a handheld. All five destinations are direct — there is
-no "More" overflow.
+The shell has two `TabBar`s over one content region, and the width category picks one: a
+bottom bar on a phone (Narrow, below 600) and a left rail from Normal (600) up. Both are
+laid out once at launch, so crossing 600 (a phone turned to landscape) never navigates away
+from the asset on screen. All five destinations are direct — there is no "More" overflow.
 
 ## Inspection flow
 
@@ -53,7 +54,7 @@ graph TD
 ```
 
 The inspector is one control, `PointInspector`, presented two ways: docked as a right-hand
-panel at workstation width, and as a bottom sheet below it. Reading entry, the three
+panel from Wide (800; 360 wide, 400 from Widest at 1080), and as a bottom sheet below it. Reading entry, the three
 dispositions, the validation message and Complete point live in a pinned footer so the
 decision is never below the fold.
 
@@ -84,19 +85,39 @@ The Inspect tab draws a real 3D model of the asset, not an illustration:
 
 ## Core design tokens
 
-- Base spacing: 4 / 8 / 12 / 16 / 24 / 32
+- Base spacing: 4 / 8 / 12 / 16 / 24 / 32 (and 2 between an overline and its title)
+- Page sides: 16px on a phone, 24px from Normal; sheets 16px / 24px
+- Content columns: 960px for lists and records, 1280px for Findings at Widest, 1600px for
+  the asset workspace, 640px for the Scan form, 520px for the corrective-action sheet
 - Field body: 15px
 - Labels: 12–13px
 - Display asset title: 22–28px
-- Corner radius: 10px controls, 14px sheets, 18px cards
+- Corner radius: 8px thumbnails and plates, 10px controls, 14px sheets, 18px cards
 - Status roles: neutral / success / watch / failure / syncing
 - Surface hierarchy: canvas → raised pane → interactive tile → transient sheet
 - Minimum touch target: 44px
 
-Colour comes from the Material theme with a DSP palette override. Both themes are
-first-class; dark is the default for field use. Text roles carry their colour through Style
-setters rather than local `ThemeResource` assignments, which do not re-resolve on a theme
-change.
+All of these live in `Trace/Themes/Tokens.xaml`; pages and controls reference keys, never
+literal values.
+
+Colour comes from the Material theme with a DSP palette override, plus `Themes/Brushes.xaml`
+for the scrim and the 3D view's ground shadow and fill light. Both themes are first-class;
+dark is the default for field use (an owner decision: TRACE does not follow the system theme).
+Text roles carry their colour through Style setters rather than local `ThemeResource`
+assignments, which do not re-resolve on a theme change. The equipment's own paint (cast
+iron, steel, the yellow coupling guard) is data in the model, not a theme colour.
+
+## Width categories
+
+`utu:Responsive` on the Toolkit's default breakpoints; each page states its layouts at its top.
+
+| | Narrow (< 600) | Normal (600–800) | Wide (800–1080) | Widest (≥ 1080) |
+|---|---|---|---|---|
+| Shell | bottom bar | rail | rail | rail |
+| Today, Assets, Sync | one column, 16px sides | one column, 24px sides | same | column capped at 960, centred |
+| Findings | two lists stacked | stacked | stacked | side by side, 1280 column |
+| Scan | full-width form | 640 form, left | same | 640 form, centred |
+| Asset | back row + full-width tabs; inspector as sheet | one header row; sheet | inspector docked at 360 | docked at 400; workspace capped at 1600 |
 
 ## Reusable patterns
 
