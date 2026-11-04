@@ -56,6 +56,9 @@ public sealed partial class AssetSceneView : Grid, IAnchorProjector
         nameof(ModelSource), typeof(string), typeof(AssetSceneView),
         new PropertyMetadata(string.Empty, OnModelSourceChanged));
 
+    public static readonly DependencyProperty ResetViewCommandProperty = DependencyProperty.Register(
+        nameof(ResetViewCommand), typeof(ICommand), typeof(AssetSceneView), new PropertyMetadata(null));
+
     private readonly SceneRenderer _renderer = new();
     private readonly SceneCamera _camera = new();
     private readonly ISceneSurface _surface;
@@ -99,6 +102,8 @@ public sealed partial class AssetSceneView : Grid, IAnchorProjector
 #endif
 
         ActualThemeChanged += (_, _) => Invalidate();
+
+        SetValue(ResetViewCommandProperty, new ViewCommand(ResetView));
 
         this.Log().LogInformation("Equipment view is drawing through {Surface}.", _surface.GetType().Name);
     }
@@ -150,6 +155,12 @@ public sealed partial class AssetSceneView : Grid, IAnchorProjector
         get => (string)GetValue(ModelSourceProperty);
         set => SetValue(ModelSourceProperty, value);
     }
+
+    /// <summary>
+    /// <see cref="ResetView"/> as a command, for a button beside the view. The camera is the
+    /// view's own state, so the page binds this by element name rather than through its model.
+    /// </summary>
+    public ICommand ResetViewCommand => (ICommand)GetValue(ResetViewCommandProperty);
 
     public bool TryGetAnchor(string id, out AnchorProjection projection) =>
         _renderer.Anchors.TryGetValue(id, out projection);
@@ -291,6 +302,19 @@ public sealed partial class AssetSceneView : Grid, IAnchorProjector
     private interface ISceneSurface
     {
         void Invalidate();
+    }
+
+    private sealed class ViewCommand(Action execute) : ICommand
+    {
+        public event EventHandler? CanExecuteChanged
+        {
+            add { }
+            remove { }
+        }
+
+        public bool CanExecute(object? parameter) => true;
+
+        public void Execute(object? parameter) => execute();
     }
 
     /// <summary>

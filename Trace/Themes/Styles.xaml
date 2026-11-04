@@ -110,7 +110,9 @@
     <!--
         A whole card that is one target. Written as a Button rather than a tapped Border so
         it reaches keyboard activation, focus visuals and the disabled state for free — all
-        four are explicit requirements of the definition of done.
+        four are explicit requirements of the definition of done. Templated rather than BasedOn
+        a Material button: the press scale is not a lightweight key of the Material button
+        templates.
     -->
     <Style x:Key="CardButtonStyle" TargetType="Button">
         <Setter Property="Background" Value="{ThemeResource SurfaceBrush}" />

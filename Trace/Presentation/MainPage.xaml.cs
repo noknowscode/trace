@@ -29,6 +29,7 @@ public sealed partial class MainPage : Page
     /// </remarks>
     private void OnAssetRegionVisibilityChanged(DependencyObject sender, DependencyProperty property)
     {
+        // xaml-lint: allow codebehind - reads the region's state; the navigator owns the asset's model and offers no hook when it hides it.
         if (AssetRegion.Visibility == Visibility.Visible)
         {
             DisposeClosedAsset();
@@ -61,12 +62,15 @@ public sealed partial class MainPage : Page
     /// technician off the asset they were inspecting back to Today. Laid out at launch, while
     /// Today is the destination anyway, the announcement goes nowhere.
     /// </remarks>
+    // WORKAROUND(TabBar navigates when first laid out): a bar first laid out after launch navigates to its selected item; see docs/UNO-AUDIT.md.
+    // xaml-lint: allow codebehind - see WORKAROUND
     private void RealizeBothNavigationBars(object sender, RoutedEventArgs e)
     {
         Loaded -= RealizeBothNavigationBars;
 
         foreach (var bar in new FrameworkElement[] { RailHost, BottomNavigation })
         {
+            // xaml-lint: allow codebehind - see WORKAROUND
             if (bar.Visibility == Visibility.Visible)
             {
                 continue;
@@ -74,6 +78,7 @@ public sealed partial class MainPage : Page
 
             // Shown for one synchronous layout pass, never rendered: the responsive value is
             // restored before this handler returns.
+            // xaml-lint: allow codebehind - see WORKAROUND
             bar.Visibility = Visibility.Visible;
             bar.UpdateLayout();
             bar.Visibility = Visibility.Collapsed;

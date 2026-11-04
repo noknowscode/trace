@@ -3,7 +3,7 @@
 
     <!--
         TRACE layout tokens. Colour lives in the Material palette (Styles/ColorPaletteOverride)
-        and in Themes/Brushes.xaml, type comes from the Material type scale, and this file
+        and in Themes/ColorTokens.xaml, type comes from the Material type scale, and this file
         carries the geometry and timing the design graph fixes. Pages and controls reference
         these keys rather than literal spacing, insets, sizes or radii.
 

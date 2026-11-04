@@ -26,9 +26,11 @@ public sealed partial class AssetPage : Page
     /// infinity; with it, the page fills the window exactly and scrolls only by what an
     /// on-screen keyboard covers.
     /// </summary>
+    // xaml-lint: allow codebehind - measured layout: the SafeArea's rendered height has no XAML binding that updates.
     private void OnKeyboardAreaResized(object sender, SizeChangedEventArgs e) =>
         PageFrame.Height = e.NewSize.Height;
 
+    // xaml-lint: allow codebehind - measured layout: the inspector cap and the scene height come from the workspace's rendered size.
     private void OnWorkspaceResized(object sender, SizeChangedEventArgs e) => ApplyWorkspaceLayout();
 
     /// <summary>
@@ -72,6 +74,4 @@ public sealed partial class AssetPage : Page
         SceneRow.Height = GridLength.Auto;
         SceneCard.Height = Math.Max(SceneCard.MinHeight, Math.Min(width * SceneAspectLimit, room));
     }
-
-    private void OnResetView(object sender, RoutedEventArgs e) => Scene.ResetView();
 }

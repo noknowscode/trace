@@ -206,16 +206,13 @@
                                         <TextBlock Style="{StaticResource SupportingText}"
                                                    Text="Drag to turn the machine" />
                                     </Border>
-                                    <!-- On a plate of its own, like the hint: over the machine the bare label was hard to read. -->
-                                    <Border Grid.Column="1"
-                                            Background="{ThemeResource SurfaceBrush}"
-                                            CornerRadius="{StaticResource ControlRadius}">
-                                        <Button Style="{StaticResource TextButtonStyle}"
-                                                MinHeight="{StaticResource TouchTargetSize}"
-                                                Click="OnResetView"
-                                                Content="Reset view"
-                                                AutomationProperties.Name="Reset view" />
-                                    </Border>
+                                    <!-- An elevated button brings its own surface, like the hint's plate: over the machine a bare label was hard to read. -->
+                                    <Button Grid.Column="1"
+                                            Style="{StaticResource ElevatedButtonStyle}"
+                                            MinHeight="{StaticResource TouchTargetSize}"
+                                            Command="{Binding ResetViewCommand, ElementName=Scene}"
+                                            Content="Reset view"
+                                            AutomationProperties.Name="Reset view" />
                                 </Grid>
                             </Grid>
                         </Border>
@@ -269,6 +266,7 @@
 
                     <!-- The inspector: a bottom sheet below Wide, a docked pane from Wide up. Its height
                          cap comes from the measured workspace (code-behind). -->
+                    <!-- xaml-lint: allow card - one element moved between a sheet and a docked pane, so a half-entered reading survives a resize: a "!" flyout route would rebuild it per open, and a CardContentControl adds pointer-state overlays over a form full of inputs. SheetSurface paints it; only its radius and padding follow the width. -->
                     <Border x:Name="InspectorHost"
                             Style="{StaticResource SheetSurface}"
                             Grid.Column="{utu:Responsive Narrow=0, Wide=1}"

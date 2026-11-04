@@ -100,7 +100,7 @@ The Inspect tab draws a real 3D model of the asset, not an illustration:
 All of these live in `Trace/Themes/Tokens.xaml`; pages and controls reference keys, never
 literal values.
 
-Colour comes from the Material theme with a DSP palette override, plus `Themes/Brushes.xaml`
+Colour comes from the Material theme with a DSP palette override, plus `Themes/ColorTokens.xaml`
 for the scrim and the 3D view's ground shadow and fill light. Both themes are first-class;
 dark is the default for field use (an owner decision: TRACE does not follow the system theme).
 Text roles carry their colour through Style setters rather than local `ThemeResource`

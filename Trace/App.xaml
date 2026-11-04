@@ -18,7 +18,7 @@
 
         <!-- TRACE tokens and shared surfaces. Merged after Material so they can build on it. -->
         <ResourceDictionary Source="ms-appx:///Themes/Tokens.xaml" />
-        <ResourceDictionary Source="ms-appx:///Themes/Brushes.xaml" />
+        <ResourceDictionary Source="ms-appx:///Themes/ColorTokens.xaml" />
         <ResourceDictionary Source="ms-appx:///Themes/Icons.xaml" />
         <ResourceDictionary Source="ms-appx:///Themes/Converters.xaml" />
         <ResourceDictionary Source="ms-appx:///Themes/Styles.xaml" />

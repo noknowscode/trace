@@ -12,6 +12,7 @@
         state setters re-resolve ThemeResource on a light/dark switch, and the geometry stays
         in XAML where the string-to-Geometry conversion is free.
     -->
+    <!-- xaml-lint: allow card - a status pill, not a card: utu:Chip is a toggle button that takes focus and announces as one, and the severity states repaint this shell. -->
     <Border x:Name="Shell"
             CornerRadius="{StaticResource ChipRadius}"
             Padding="{StaticResource ChipPadding}"

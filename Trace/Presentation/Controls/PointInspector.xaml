@@ -190,6 +190,7 @@
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
+                                        <!-- xaml-lint: allow card - image clip with a placeholder fill -->
                                         <Border Width="{StaticResource EvidenceThumbSize}"
                                                 Height="{StaticResource EvidenceThumbSize}"
                                                 CornerRadius="{StaticResource SmallRadius}"
