@@ -78,10 +78,18 @@ public partial record SyncModel
         var message = result switch
         {
             { WasOffline: true } => "Still offline. Your work stays on the device until there is a connection.",
-            { Succeeded: 0, Failed: 0 } => "Nothing was waiting to sync.",
+            { Succeeded: 0, Failed: 0, Held: 0 } => "Nothing was waiting to sync.",
             { Failed: 0 } => $"{result.Succeeded} change{(result.Succeeded == 1 ? "" : "s")} synchronized.",
             { Succeeded: 0 } => $"{result.Failed} upload{(result.Failed == 1 ? "" : "s")} failed. They can be retried.",
             _ => $"{result.Succeeded} synchronized, {result.Failed} failed and can be retried.",
+        };
+
+        // Corrective work never reaches the server ahead of the inspection it came from.
+        message += result.Held switch
+        {
+            0 => string.Empty,
+            1 => " 1 corrective action change waits until the inspection it came from has synced.",
+            _ => $" {result.Held} corrective action changes wait until the inspections they came from have synced.",
         };
 
         await LastResult.UpdateAsync(_ => message, ct);

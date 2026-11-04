@@ -16,10 +16,17 @@ public interface ISyncQueue
     /// </summary>
     IAsyncEnumerable<IImmutableList<string>> WatchSetAside(CancellationToken ct);
 
-    /// <summary>Attempts every pending and failed operation. Returns the number that succeeded.</summary>
+    /// <summary>
+    /// Attempts every pending and failed operation whose earlier work has synced, and says how
+    /// many went, failed, and waited for their inspection.
+    /// </summary>
     ValueTask<SyncResult> SyncAsync(CancellationToken ct);
 
+    /// <summary>Moves every failed operation back to pending, with its inspection, for the next pass.</summary>
     ValueTask RetryAllFailedAsync(CancellationToken ct);
 }
 
-public sealed record SyncResult(int Succeeded, int Failed, bool WasOffline);
+/// <param name="Held">
+/// Corrective work left pending because the inspection it came from has not synced yet.
+/// </param>
+public sealed record SyncResult(int Succeeded, int Failed, bool WasOffline, int Held = 0);

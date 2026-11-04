@@ -14,7 +14,7 @@ public class SyncQueueTests
     [TearDown]
     public void TearDown() => _harness.Dispose();
 
-    private async Task<InspectionEvent> CompleteSealAsync(bool withPhoto)
+    private async Task<InspectionEvent> CompleteSealAsync(bool withPhoto, Disposition disposition = Disposition.Pass)
     {
         var point = await _harness.PointAsync("P-204-seal");
         var draft = await _harness.Workflow.StartOrResumeDraftAsync(point, default);
@@ -28,7 +28,8 @@ public class SyncQueueTests
             draft with
             {
                 ReadingText = "1.6",
-                Disposition = Disposition.Pass,
+                Disposition = disposition,
+                Notes = disposition == Disposition.Fail ? "Weeping at the gland." : string.Empty,
                 Evidence = evidence,
             },
             default);
@@ -111,4 +112,67 @@ public class SyncQueueTests
         relaunched.PendingSyncCount.Should().Be(1);
         relaunched.Queue.Should().Contain(o => o.EntityId == completed.Id);
     }
+
+    [Test]
+    public async Task A_failed_upload_marks_its_inspection_failed_until_it_goes()
+    {
+        var completed = await CompleteSealAsync(withPhoto: true);
+
+        await _harness.Queue.SyncAsync(default);
+        StateOf(await _harness.Store.GetAsync(default), completed.Id).Should().Be(
+            SyncState.Failed, "History shows the upload failed; it used to stay Pending");
+
+        await _harness.Queue.RetryAllFailedAsync(default);
+        StateOf(await _harness.Store.GetAsync(default), completed.Id).Should().Be(SyncState.Pending, "it is queued again");
+
+        await _harness.Queue.SyncAsync(default);
+        StateOf(await _harness.Store.GetAsync(default), completed.Id).Should().Be(SyncState.Synced);
+    }
+
+    [Test]
+    public async Task Corrective_work_waits_for_the_inspection_it_came_from()
+    {
+        var failedInspection = await CompleteSealAsync(withPhoto: true, Disposition.Fail);
+        var action = await RaiseFromAsync(failedInspection);
+        await _harness.Dispatch.AdvanceAsync(action.Id, ActionStatus.Open, default);
+
+        // The inspection's upload fails, so neither the action nor its status update may go.
+        var first = await _harness.Queue.SyncAsync(default);
+
+        first.Should().Be(new SyncResult(Succeeded: 0, Failed: 1, WasOffline: false, Held: 2));
+        var afterFirst = await _harness.Store.GetAsync(default);
+        afterFirst.Queue.Where(o => o.EntityId == action.Id).Should().OnlyContain(
+            o => o.Status == SyncState.Pending && o.AttemptCount == 0, "work that waits is not attempted");
+
+        // The next pass sends the inspection first, then the work raised from it, in order.
+        var second = await _harness.Queue.SyncAsync(default);
+
+        second.Should().Be(new SyncResult(Succeeded: 3, Failed: 0, WasOffline: false, Held: 0));
+        var afterSecond = await _harness.Store.GetAsync(default);
+        afterSecond.PendingSyncCount.Should().Be(0);
+        StateOf(afterSecond, failedInspection.Id).Should().Be(SyncState.Synced);
+    }
+
+    [Test]
+    public async Task Corrective_work_from_an_inspection_that_synced_goes_at_once()
+    {
+        var failedInspection = await CompleteSealAsync(withPhoto: false, Disposition.Fail);
+        await RaiseFromAsync(failedInspection);
+
+        var result = await _harness.Queue.SyncAsync(default);
+
+        result.Should().Be(new SyncResult(Succeeded: 2, Failed: 0, WasOffline: false, Held: 0));
+    }
+
+    private async Task<CorrectiveAction> RaiseFromAsync(InspectionEvent failed)
+    {
+        var outcome = await _harness.Workflow.RaiseCorrectiveActionAsync(
+            new CorrectiveActionRequest(failed.AssetId, failed.PointId, failed.Id, "Replace the seal", CorrectivePriority.High, "Mechanical Team"),
+            default);
+        outcome.Succeeded.Should().BeTrue();
+        return outcome.Action!;
+    }
+
+    private static SyncState StateOf(Infrastructure.Persistence.TraceSnapshot snapshot, string eventId) =>
+        snapshot.Events.Single(e => e.Id == eventId).SyncState;
 }

@@ -50,4 +50,29 @@ public class SyncModelTests
         await model.SyncNow(default);
         (await model.LastResult).Should().Contain("synchronized");
     }
+
+    [Test]
+    public async Task Sync_says_when_corrective_work_waits_for_its_inspection()
+    {
+        var point = await _harness.PointAsync("P-204-seal");
+        var draft = await _harness.Workflow.StartOrResumeDraftAsync(point, default);
+        var photo = await _harness.Evidence.SavePhotoAsync(point.Id, [1, 2, 3], ".png", "Seal face", default);
+        var failed = (await _harness.Workflow.CompleteAsync(
+                draft with { ReadingText = "7.6", Disposition = Disposition.Fail, Evidence = [photo] },
+                default))
+            .Event!;
+        (await _harness.Workflow.RaiseCorrectiveActionAsync(
+                new CorrectiveActionRequest(failed.AssetId, failed.PointId, failed.Id, "Replace the seal", CorrectivePriority.High, "Mechanical Team"),
+                default))
+            .Succeeded.Should().BeTrue();
+        var model = new SyncModel(_harness.Queue, _harness.Network, new FeedRecovery());
+
+        await model.SyncNow(default);
+
+        (await model.LastResult).Should().Be(
+            "1 upload failed. They can be retried. 1 corrective action change waits until the inspection it came from has synced.");
+
+        await model.SyncNow(default);
+        (await model.LastResult).Should().Be("2 changes synchronized.");
+    }
 }
