@@ -7,11 +7,12 @@
 //   NODE_PATH=<dir holding playwright> node tools/wasm-check.js http://127.0.0.1:8765/ <out dir>
 //
 // The workflow: open P-204 from Today, open the seal housing point from the strip under the
-// machine, enter 7.6 mm/s with a note, call Fail, Complete point, then open History. The page
-// is drawn on a canvas, so the steps press at window coordinates of the 1280 x 800 layout, the
-// same layout the desktop head draws at that size. The note field is reached by keyboard first:
-// in the browser, pressing it while it is mostly scrolled out of the inspector's middle closed
-// the inspector (see docs/COMPLETENESS.md).
+// machine, enter 7.6 mm/s, call Fail, press the Notes field and write a note, Complete point,
+// then open History. The page is drawn on a canvas, so the steps press at window coordinates of
+// the 1280 x 800 layout, the same layout the desktop head draws at that size. After Fail the
+// Notes field is mostly scrolled out of the inspector's middle, and it is pressed there on
+// purpose: an earlier build once closed the inspector on that press (docs/COMPLETENESS.md), so
+// 04-notes must show the inspector open with the field in view.
 const { chromium } = require('playwright');
 const path = require('path');
 
@@ -26,12 +27,11 @@ const steps = [
   { click: [1055, 505] },
   { key: 'End' }, { key: 'Backspace' }, { key: 'Backspace' }, { key: 'Backspace' },
   { type: '7.6' },
-  { key: 'Shift+Tab' }, { key: 'Shift+Tab', wait: 1200 },
-  { click: [1053, 330] },
-  { type: 'Seal weeping at the gland, drive end vibration up.' },
-  { click: [1175, 566], wait: 2000, shot: '04-ready' },
-  { click: [1055, 729], wait: 3000, shot: '05-completed' },
-  { click: [481, 48], wait: 3000, shot: '06-history' },
+  { click: [1175, 566], wait: 2000 },
+  { click: [1053, 430], wait: 2500, shot: '04-notes' },
+  { type: 'Seal weeping at the gland, drive end vibration up.', shot: '05-ready' },
+  { click: [1055, 729], wait: 3000, shot: '06-completed' },
+  { click: [481, 48], wait: 3000, shot: '07-history' },
 ];
 
 (async () => {
