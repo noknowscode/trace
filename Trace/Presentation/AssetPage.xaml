@@ -2,13 +2,36 @@
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:controls="using:Trace.Presentation.Controls"
-      xmlns:mvux="using:Uno.Extensions.Reactive.UI"
       xmlns:utu="using:Uno.Toolkit.UI"
       NavigationCacheMode="Required"
       Background="{ThemeResource BackgroundBrush}">
 
-    <utu:SafeArea Insets="VisibleBounds,SoftInput">
-        <Grid x:Name="PageRoot" Padding="{StaticResource PagePadding}" RowSpacing="12">
+    <!--
+        System bars come off as attached insets. The on-screen keyboard is handled by a SafeArea
+        control with only SoftInput, which wraps the page in its own ScrollViewer so a focused
+        reading field can be scrolled above the keyboard. A ScrollViewer measures its content at
+        infinite height, though, which left the workspace's star row unbounded: the machine and
+        the inspector ran off the bottom of the window. The page frame is therefore pinned to the
+        keyboard area's height in code-behind, so the rows below divide the window, not infinity.
+
+        Layout per width category (utu:Responsive, Toolkit default breakpoints):
+        * Narrow (a phone, below 600): back on its own row and the four tabs full width beneath
+          it, so "Documents" is never clipped; the inspector is a bottom sheet over the machine.
+        * Normal (600-800): back and tabs share one row; the inspector is still a sheet.
+        * Wide (800-1080): the inspector docks beside the machine at 360, the tablet's
+          "canvas + pinned inspector".
+        * Widest (1080 and up): docked at 400, and the workspace stops at WorkspaceMaxWidth and
+          centres.
+        The inspector is one element at every size. Moving the same element rather than swapping
+        two copies keeps a half-entered reading alive across a resize; re-parenting would unload it.
+    -->
+    <Grid utu:SafeArea.Insets="VisibleBounds">
+    <utu:SafeArea x:Name="KeyboardArea" Insets="SoftInput" IsTabStop="False" SizeChanged="OnKeyboardAreaResized">
+    <Grid x:Name="PageFrame">
+        <Grid x:Name="PageRoot"
+              Padding="{utu:Responsive Narrow={StaticResource PagePadding}, Normal={StaticResource PagePaddingWide}}"
+              MaxWidth="{StaticResource WorkspaceMaxWidth}"
+              RowSpacing="{StaticResource SpaceM}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -16,68 +39,41 @@
             </Grid.RowDefinitions>
 
             <!--
-                The inspector is one element at every size. On a phone it sits over the
-                machine as a bottom sheet; on a workstation it docks beside it. Moving the
-                same element rather than swapping two copies keeps a half-entered reading
-                alive across a resize — re-parenting would unload it.
+                Back and the tabs share one row from Normal up, so the asset identity can move onto
+                the equipment view, where it labels the machine instead of sitting in a band above
+                it. Connection state stays here because it is true of every tab.
             -->
-            <VisualStateManager.VisualStateGroups>
-                <VisualStateGroup x:Name="WorkspaceStates">
-                    <VisualState x:Name="Handheld">
-                        <VisualState.StateTriggers>
-                            <AdaptiveTrigger MinWindowWidth="0" />
-                        </VisualState.StateTriggers>
-                        <VisualState.Setters>
-                            <Setter Target="InspectorHost.(Grid.Column)" Value="0" />
-                            <Setter Target="InspectorHost.(Grid.ColumnSpan)" Value="2" />
-                            <Setter Target="InspectorHost.VerticalAlignment" Value="Bottom" />
-                            <Setter Target="InspectorHost.Width" Value="NaN" />
-                            <Setter Target="InspectorHost.CornerRadius" Value="14" />
-                        </VisualState.Setters>
-                    </VisualState>
-                    <VisualState x:Name="Workstation">
-                        <VisualState.StateTriggers>
-                            <AdaptiveTrigger MinWindowWidth="1000" />
-                        </VisualState.StateTriggers>
-                        <VisualState.Setters>
-                            <Setter Target="InspectorHost.(Grid.Column)" Value="1" />
-                            <Setter Target="InspectorHost.(Grid.ColumnSpan)" Value="1" />
-                            <Setter Target="InspectorHost.VerticalAlignment" Value="Stretch" />
-                            <Setter Target="InspectorHost.Width" Value="400" />
-                            <Setter Target="InspectorHost.CornerRadius" Value="18" />
-                        </VisualState.Setters>
-                    </VisualState>
-                </VisualStateGroup>
-            </VisualStateManager.VisualStateGroups>
-
-            <!--
-                Back and the tabs share one row so the asset identity can move onto the
-                equipment view, where it labels the machine instead of sitting in a band
-                above it. Connection state stays here because it is true of every tab.
-            -->
-            <Grid ColumnSpacing="8">
+            <Grid ColumnSpacing="{StaticResource SpaceS}"
+                  RowSpacing="{utu:Responsive Narrow={StaticResource SpaceXS}, Normal=0}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-                <Button Style="{StaticResource TextButtonStyle}"
-                        Width="44"
-                        Height="44"
-                        Padding="0"
+                <Button Style="{StaticResource IconButtonStyle}"
                         VerticalAlignment="Center"
                         Command="{Binding Back}"
-                        AutomationProperties.Name="Back to today">
-                    <Viewbox Width="18" Height="18">
+                        AutomationProperties.Name="Back"
+                        ToolTipService.ToolTip="Back">
+                    <Viewbox Width="{StaticResource IconSizeM}" Height="{StaticResource IconSizeM}">
                         <PathIcon Data="{StaticResource IconBack}" />
                     </Viewbox>
                 </Button>
 
-                <utu:TabBar Grid.Column="1"
+                <utu:TabBar Grid.Row="{utu:Responsive Narrow=1, Normal=0}"
+                            Grid.Column="{utu:Responsive Narrow=0, Normal=1}"
+                            Grid.ColumnSpan="{utu:Responsive Narrow=3, Normal=1}"
+                            MaxWidth="{StaticResource AssetTabsMaxWidth}"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Center"
                             Style="{StaticResource MaterialTopTabBarStyle}"
+                            IsTabStop="False"
+                            AutomationProperties.Name="Asset sections"
                             SelectedIndex="{Binding TabIndex, Mode=TwoWay}">
                     <utu:TabBarItem Content="Overview" AutomationProperties.Name="Overview" Style="{StaticResource MaterialTopTabBarItemStyle}" />
                     <utu:TabBarItem Content="Inspect" AutomationProperties.Name="Inspect" Style="{StaticResource MaterialTopTabBarItemStyle}" />
@@ -95,446 +91,76 @@
             <!--
                 The tabs without an equipment view still have to say which machine they are
                 about — recording against the wrong asset is the failure this app exists to
-                prevent — so identity appears here whenever the canvas is not carrying it.
+                prevent — so identity appears here whenever the canvas is not carrying it,
+                including on Inspect while the machine is loading or could not be read.
             -->
             <controls:PageHeader Grid.Row="1"
                                  Eyebrow="{Binding Designation}"
                                  Title="{Binding AssetName}"
                                  Supporting="{Binding Location}"
-                                 Visibility="{Binding IsInspect, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
+                                 Visibility="{Binding ShowsMachine, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}" />
 
-            <Grid x:Name="WorkspaceHost" Grid.Row="2" SizeChanged="OnWorkspaceResized">
+            <Grid x:Name="WorkspaceHost" Grid.Row="2">
+                <!-- Each face of the asset is its own control over the workspace's model. Inspect is
+                     always present (it measures the workspace); its parts show on Inspect only. -->
+                <controls:AssetInspectTab x:Name="InspectTab" />
 
-                <!-- ============================ INSPECT ============================ -->
-                <Grid Visibility="{Binding IsInspect, Converter={StaticResource BoolToVisibility}}"
-                      ColumnSpacing="12">
+                <!--
+                    Overview, History and Documents read as one column under the header: the full
+                    workspace width until it reaches ContentMaxWidth, then no wider, still aligned
+                    with the header on the left.
+                -->
+                <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition x:Name="InspectorColumn" Width="Auto" />
+                        <ColumnDefinition Width="*" MaxWidth="{StaticResource ContentMaxWidth}" />
                     </Grid.ColumnDefinitions>
 
-                    <Grid RowSpacing="12">
-                        <Grid.RowDefinitions>
-                            <RowDefinition x:Name="SceneRow" Height="*" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-
-                        <!-- The machine, with its points pinned to it. The scene takes all the
-                             height it is given: the camera frames the model to whatever
-                             aspect the workspace has. -->
-                        <Border x:Name="SceneCard" Style="{StaticResource CardSurface}" Padding="12" MinHeight="260">
-                            <Grid>
-                                <controls:AssetSceneView x:Name="Scene"
-                                                         Style="{StaticResource AssetSceneViewStyle}"
-                                                         Kind="{Binding SchematicKind}"
-                                                         ModelSource="{Binding ModelUri}" />
-                                <ItemsRepeater x:Name="MarkerLayer" ItemsSource="{Binding Markers}">
-                                    <ItemsRepeater.Layout>
-                                        <controls:SpatialMarkerLayout x:Name="MarkerLayout" />
-                                    </ItemsRepeater.Layout>
-                                    <ItemsRepeater.ItemTemplate>
-                                        <DataTemplate>
-                                            <controls:InspectionPointMarker
-                                                Style="{StaticResource InspectionPointMarkerStyle}"
-                                                Sequence="{Binding Point.Sequence}"
-                                                Disposition="{Binding Point.Disposition}"
-                                                IsSelected="{Binding IsSelected}"
-                                                controls:SpatialMarkers.AnchorId="{Binding Point.Id}"
-                                                Command="{Binding DataContext.SelectMarker, ElementName=PageRoot}"
-                                                CommandParameter="{Binding}"
-                                                AutomationProperties.Name="{Binding Point.Label}"
-                                                ToolTipService.ToolTip="{Binding Point.Label}" />
-                                        </DataTemplate>
-                                    </ItemsRepeater.ItemTemplate>
-                                </ItemsRepeater>
-                                <!--
-                                    The machine's nameplate, on the machine. The plate is the
-                                    same brush the scene paints its background with, so it is
-                                    invisible over empty canvas and only resolves into a plate
-                                    where the model would otherwise sit behind the text. It
-                                    takes no pointer input: a drag that starts on it still
-                                    turns the machine.
-                                -->
-                                <Border HorizontalAlignment="Left"
-                                        VerticalAlignment="Top"
-                                        Margin="0,0,100,0"
-                                        Padding="10,6"
-                                        CornerRadius="10"
-                                        Background="{ThemeResource SurfaceBrush}"
-                                        IsHitTestVisible="False">
-                                    <controls:PageHeader Eyebrow="{Binding Designation}"
-                                                         Title="{Binding AssetName}"
-                                                         Supporting="{Binding Location}" />
-                                </Border>
-
-                                <Button Style="{StaticResource TextButtonStyle}"
-                                        HorizontalAlignment="Right"
-                                        VerticalAlignment="Top"
-                                        MinHeight="{StaticResource TouchTargetSize}"
-                                        Click="OnResetView"
-                                        Content="Reset view"
-                                        AutomationProperties.Name="Reset the equipment view" />
-                                <Border HorizontalAlignment="Left"
-                                        VerticalAlignment="Bottom"
-                                        Padding="8,4"
-                                        CornerRadius="8"
-                                        Background="{ThemeResource SurfaceBrush}"
-                                        IsHitTestVisible="False">
-                                    <TextBlock Style="{StaticResource SupportingText}"
-                                               Text="Drag to turn the machine" />
-                                </Border>
-                            </Grid>
-                        </Border>
-
-                        <!-- Every point also reachable as a list: a marker on a machine is
-                             not a usable target for a screen reader or a keyboard. -->
-                        <StackPanel x:Name="PointListPanel" Grid.Row="1" Spacing="8">
-                            <TextBlock Text="Inspection points" Style="{StaticResource FieldLabelText}" />
-                            <!-- A strip rather than a wrap: on a phone four points do not
-                                 fit across, and a scrolling strip keeps the machine above it
-                                 at full size instead of losing rows to a second line. -->
-                            <ScrollViewer HorizontalScrollBarVisibility="Auto"
-                                          VerticalScrollBarVisibility="Disabled"
-                                          HorizontalScrollMode="Auto"
-                                          VerticalScrollMode="Disabled">
-                                <ItemsRepeater ItemsSource="{Binding Markers}">
-                                    <ItemsRepeater.Layout>
-                                        <StackLayout Orientation="Horizontal" Spacing="8" />
-                                    </ItemsRepeater.Layout>
-                                    <ItemsRepeater.ItemTemplate>
-                                        <DataTemplate>
-                                            <Button Style="{StaticResource CardButtonStyle}"
-                                                    Padding="12,8"
-                                                    HorizontalAlignment="Left"
-                                                    Command="{Binding DataContext.SelectMarker, ElementName=PageRoot}"
-                                                    CommandParameter="{Binding}"
-                                                    AutomationProperties.Name="{Binding Point.Label}">
-                                                <StackPanel Spacing="4">
-                                                    <TextBlock Text="{Binding Point.Label}"
-                                                               Style="{StaticResource CardTitleText}" />
-                                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                                        <TextBlock Style="{StaticResource SupportingText}">
-                                                            <Run Text="{Binding Point.LatestReadingText}" />
-                                                            <Run Text="{Binding Point.Unit}" />
-                                                        </TextBlock>
-                                                        <controls:StatusChip
-                                                            Severity="{Binding Point.Disposition, Converter={StaticResource ToSeverity}}"
-                                                            Text="{Binding Point.Disposition}" />
-                                                    </StackPanel>
-                                                </StackPanel>
-                                            </Button>
-                                        </DataTemplate>
-                                    </ItemsRepeater.ItemTemplate>
-                                </ItemsRepeater>
-                            </ScrollViewer>
-                        </StackPanel>
-                    </Grid>
-
-                    <!-- The inspector: a sheet on a phone, a docked pane on a workstation. -->
-                    <Border x:Name="InspectorHost"
-                            Grid.Column="0"
-                            Grid.ColumnSpan="2"
-                            VerticalAlignment="Bottom"
-                            MaxHeight="520"
-                            Background="{ThemeResource SurfaceBrush}"
-                            BorderBrush="{ThemeResource OutlineBrush}"
-                            BorderThickness="1"
-                            CornerRadius="14"
-                            Padding="{StaticResource SheetPadding}"
-                            Visibility="{Binding IsInspectorOpen, Converter={StaticResource BoolToVisibility}}">
-                        <controls:PointInspector />
-                    </Border>
+                    <controls:AssetOverviewTab Visibility="{Binding IsOverview, Converter={StaticResource BoolToVisibility}}" />
+                    <controls:AssetHistoryTab Visibility="{Binding IsHistory, Converter={StaticResource BoolToVisibility}}" />
+                    <controls:AssetDocumentsTab Visibility="{Binding IsDocuments, Converter={StaticResource BoolToVisibility}}" />
                 </Grid>
-
-                <!-- ============================ OVERVIEW ============================ -->
-                <ScrollViewer Visibility="{Binding IsOverview, Converter={StaticResource BoolToVisibility}}">
-                    <StackPanel Spacing="12">
-                        <mvux:FeedView Source="{Binding Asset}">
-                            <mvux:FeedView.ValueTemplate>
-                                <DataTemplate>
-                                    <Border Style="{StaticResource CardSurface}">
-                                        <StackPanel Spacing="10">
-                                            <TextBlock Text="Condition" Style="{StaticResource SectionHeaderText}" />
-                                            <controls:WrapPanel HorizontalSpacing="8" VerticalSpacing="8">
-                                                <controls:StatusChip
-                                                    Severity="{Binding Data.Condition, Converter={StaticResource ToSeverity}}"
-                                                    Text="{Binding Data.Condition}" />
-                                                <Border Style="{StaticResource TileSurface}" Padding="10,5">
-                                                    <TextBlock Style="{StaticResource ChipValueText}">
-                                                        <Run Text="{Binding Data.InspectedPointCount}" />
-                                                        <Run Text="of" />
-                                                        <Run Text="{Binding Data.PointCount}" />
-                                                        <Run Text="points inspected" />
-                                                    </TextBlock>
-                                                </Border>
-                                            </controls:WrapPanel>
-                                        </StackPanel>
-                                    </Border>
-                                </DataTemplate>
-                            </mvux:FeedView.ValueTemplate>
-                            <mvux:FeedView.NoneTemplate>
-                                <DataTemplate>
-                                    <Border Style="{StaticResource CardSurface}">
-                                        <StackPanel Spacing="8">
-                                            <controls:StatusChip Severity="Critical" Text="Asset unavailable" />
-                                            <TextBlock Style="{StaticResource SupportingText}"
-                                                       Text="This asset is no longer on the device. It may have been reassigned since your last sync." />
-                                        </StackPanel>
-                                    </Border>
-                                </DataTemplate>
-                            </mvux:FeedView.NoneTemplate>
-                        </mvux:FeedView>
-
-                        <TextBlock Text="Open findings" Style="{StaticResource SectionHeaderText}" />
-                        <mvux:FeedView Source="{Binding Findings}">
-                            <mvux:FeedView.ValueTemplate>
-                                <DataTemplate>
-                                    <ItemsRepeater ItemsSource="{Binding Data}">
-                                        <ItemsRepeater.Layout>
-                                            <StackLayout Spacing="8" />
-                                        </ItemsRepeater.Layout>
-                                        <ItemsRepeater.ItemTemplate>
-                                            <DataTemplate>
-                                                <Border Style="{StaticResource TileSurface}">
-                                                    <StackPanel Spacing="4">
-                                                        <TextBlock Text="{Binding PointLabel}"
-                                                                   Style="{StaticResource EyebrowText}" />
-                                                        <TextBlock Text="{Binding Summary}"
-                                                                   Style="{StaticResource BodyText}"
-                                                                   TextWrapping="Wrap" />
-                                                        <controls:WrapPanel HorizontalSpacing="8" VerticalSpacing="6">
-                                                            <controls:StatusChip
-                                                                Severity="{Binding Priority, Converter={StaticResource ToSeverity}}"
-                                                                Text="{Binding Priority}" />
-                                                            <controls:StatusChip Severity="Neutral"
-                                                                                 Text="{Binding Assignee}" />
-                                                        </controls:WrapPanel>
-                                                    </StackPanel>
-                                                </Border>
-                                            </DataTemplate>
-                                        </ItemsRepeater.ItemTemplate>
-                                    </ItemsRepeater>
-                                </DataTemplate>
-                            </mvux:FeedView.ValueTemplate>
-                            <mvux:FeedView.NoneTemplate>
-                                <DataTemplate>
-                                    <Border Style="{StaticResource TileSurface}">
-                                        <TextBlock Style="{StaticResource SupportingText}"
-                                                   Text="No corrective work is open on this asset." />
-                                    </Border>
-                                </DataTemplate>
-                            </mvux:FeedView.NoneTemplate>
-                        </mvux:FeedView>
-                    </StackPanel>
-                </ScrollViewer>
-
-                <!-- ============================ HISTORY ============================ -->
-                <mvux:FeedView Source="{Binding History}"
-                               Visibility="{Binding IsHistory, Converter={StaticResource BoolToVisibility}}">
-                    <mvux:FeedView.ValueTemplate>
-                        <DataTemplate>
-                            <ScrollViewer>
-                                <ItemsRepeater ItemsSource="{Binding Data}">
-                                    <ItemsRepeater.Layout>
-                                        <StackLayout Spacing="8" />
-                                    </ItemsRepeater.Layout>
-                                    <ItemsRepeater.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Style="{StaticResource CardSurface}" Padding="14">
-                                                <Grid ColumnSpacing="12">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="Auto" />
-                                                        <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="Auto" />
-                                                    </Grid.ColumnDefinitions>
-
-                                                    <!-- Timeline spine -->
-                                                    <Border Width="4"
-                                                            CornerRadius="2"
-                                                            Background="{ThemeResource OutlineBrush}" />
-
-                                                    <StackPanel Grid.Column="1" Spacing="4">
-                                                        <TextBlock Text="{Binding PointLabel}"
-                                                                   Style="{StaticResource EyebrowText}" />
-                                                        <TextBlock Text="{Binding ReadingText}"
-                                                                   Style="{StaticResource CardTitleText}" />
-                                                        <TextBlock Text="{Binding Notes}"
-                                                                   Style="{StaticResource SupportingText}"
-                                                                   Visibility="{Binding Notes, Converter={StaticResource StringToVisibility}}" />
-                                                        <controls:WrapPanel HorizontalSpacing="8" VerticalSpacing="6">
-                                                            <controls:StatusChip
-                                                                Severity="{Binding Disposition, Converter={StaticResource ToSeverity}}"
-                                                                Text="{Binding Disposition}" />
-                                                            <controls:StatusChip
-                                                                Severity="{Binding SyncState, Converter={StaticResource ToSeverity}}"
-                                                                Text="{Binding SyncState}" />
-                                                            <Border Style="{StaticResource TileSurface}" Padding="10,5">
-                                                                <TextBlock Style="{StaticResource ChipValueText}"
-                                                                           Text="{Binding Technician}" />
-                                                            </Border>
-                                                        </controls:WrapPanel>
-                                                    </StackPanel>
-
-                                                    <TextBlock Grid.Column="2"
-                                                               VerticalAlignment="Top"
-                                                               Style="{StaticResource SupportingText}"
-                                                               Text="{Binding Timestamp, Converter={StaticResource RelativeTime}}" />
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsRepeater.ItemTemplate>
-                                </ItemsRepeater>
-                            </ScrollViewer>
-                        </DataTemplate>
-                    </mvux:FeedView.ValueTemplate>
-                    <mvux:FeedView.NoneTemplate>
-                        <DataTemplate>
-                            <Border Style="{StaticResource CardSurface}" VerticalAlignment="Top">
-                                <StackPanel Spacing="8">
-                                    <TextBlock Text="No inspections recorded"
-                                               Style="{StaticResource SectionHeaderText}" />
-                                    <TextBlock Style="{StaticResource SupportingText}"
-                                               Text="Completed points appear here, newest first, with the reading and who recorded it." />
-                                </StackPanel>
-                            </Border>
-                        </DataTemplate>
-                    </mvux:FeedView.NoneTemplate>
-                </mvux:FeedView>
-
-                <!-- ============================ DOCUMENTS ============================ -->
-                <ScrollViewer Visibility="{Binding IsDocuments, Converter={StaticResource BoolToVisibility}}">
-                    <mvux:FeedView Source="{Binding Asset}">
-                        <mvux:FeedView.ValueTemplate>
-                            <DataTemplate>
-                                <StackPanel Spacing="12">
-                                    <Border Style="{StaticResource CardSurface}">
-                                        <StackPanel Spacing="10">
-                                            <TextBlock Text="Nameplate" Style="{StaticResource SectionHeaderText}" />
-                                            <Grid ColumnSpacing="16" RowSpacing="8">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="*" />
-                                                </Grid.ColumnDefinitions>
-                                                <Grid.RowDefinitions>
-                                                    <RowDefinition Height="Auto" />
-                                                    <RowDefinition Height="Auto" />
-                                                    <RowDefinition Height="Auto" />
-                                                    <RowDefinition Height="Auto" />
-                                                </Grid.RowDefinitions>
-
-                                                <TextBlock Text="Manufacturer" Style="{StaticResource FieldLabelText}" />
-                                                <TextBlock Grid.Column="1" Text="{Binding Data.Manufacturer}"
-                                                           Style="{StaticResource BodyText}" />
-
-                                                <TextBlock Grid.Row="1" Text="Model" Style="{StaticResource FieldLabelText}" />
-                                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Data.Model}"
-                                                           Style="{StaticResource BodyText}" />
-
-                                                <TextBlock Grid.Row="2" Text="Serial" Style="{StaticResource FieldLabelText}" />
-                                                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Data.SerialNumber}"
-                                                           Style="{StaticResource BodyText}" />
-
-                                                <TextBlock Grid.Row="3" Text="Installed" Style="{StaticResource FieldLabelText}" />
-                                                <TextBlock Grid.Row="3" Grid.Column="1"
-                                                           Text="{Binding Data.InstalledOn, Converter={StaticResource RelativeTime}}"
-                                                           Style="{StaticResource BodyText}" />
-                                            </Grid>
-                                        </StackPanel>
-                                    </Border>
-
-                                    <Border Style="{StaticResource TileSurface}">
-                                        <StackPanel Spacing="6">
-                                            <TextBlock Text="No documents on this device"
-                                                       Style="{StaticResource SectionHeaderText}" />
-                                            <TextBlock Style="{StaticResource SupportingText}"
-                                                       Text="Manuals and drawings sync with the asset record. Nothing has been downloaded for offline use yet." />
-                                        </StackPanel>
-                                    </Border>
-                                </StackPanel>
-                            </DataTemplate>
-                        </mvux:FeedView.ValueTemplate>
-                    </mvux:FeedView>
-                </ScrollViewer>
             </Grid>
 
-            <!-- Corrective action, raised from the point that failed. -->
-            <Grid Grid.RowSpan="3"
-                  Background="#99000000"
-                  Visibility="{Binding IsActionSheetOpen, Converter={StaticResource BoolToVisibility}}">
-                <Border Style="{StaticResource SheetSurface}"
-                        MaxWidth="520"
-                        VerticalAlignment="Center"
-                        HorizontalAlignment="Center"
-                        Margin="16">
-                    <ScrollViewer>
-                        <StackPanel Spacing="14">
-                            <StackPanel Spacing="2">
-                                <TextBlock Text="CORRECTIVE ACTION" Style="{StaticResource EyebrowText}" />
-                                <TextBlock Style="{StaticResource PanelTitleText}"
-                                           TextWrapping="Wrap">
-                                    <Run Text="Raise work from" />
-                                    <Run Text="{Binding SelectedPoint.Label}" />
-                                </TextBlock>
-                                <TextBlock Style="{StaticResource SupportingText}"
-                                           Text="The asset, the point and the inspection that failed are carried across automatically." />
-                            </StackPanel>
-
-                            <StackPanel Spacing="6">
-                                <TextBlock Text="Summary" Style="{StaticResource FieldLabelText}" />
-                                <TextBox Text="{Binding ActionSummary, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                         MinHeight="{StaticResource TouchTargetSize}"
-                                         TextWrapping="Wrap"
-                                         AcceptsReturn="True"
-                                         AutomationProperties.Name="Corrective action summary" />
-                            </StackPanel>
-
-                            <Grid ColumnSpacing="12">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Spacing="6">
-                                    <TextBlock Text="Priority" Style="{StaticResource FieldLabelText}" />
-                                    <ComboBox ItemsSource="{Binding Priorities}"
-                                              SelectedItem="{Binding ActionPriority, Mode=TwoWay}"
-                                              HorizontalAlignment="Stretch"
-                                              AutomationProperties.Name="Priority" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="1" Spacing="6">
-                                    <TextBlock Text="Assignee" Style="{StaticResource FieldLabelText}" />
-                                    <ComboBox ItemsSource="{Binding Assignees}"
-                                              SelectedItem="{Binding ActionAssignee, Mode=TwoWay}"
-                                              HorizontalAlignment="Stretch"
-                                              AutomationProperties.Name="Assignee" />
-                                </StackPanel>
-                            </Grid>
-
-                            <TextBlock Text="{Binding ActionError}"
-                                       Style="{StaticResource ErrorText}"
-                                       Visibility="{Binding ActionError, Converter={StaticResource StringToVisibility}}" />
-
-                            <Grid ColumnSpacing="8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <Button Style="{StaticResource OutlinedButtonStyle}"
-                                        HorizontalAlignment="Stretch"
-                                        MinHeight="{StaticResource TouchTargetSize}"
-                                        Command="{Binding CancelAction}"
-                                        Content="Cancel" />
-                                <Button Grid.Column="1"
-                                        Style="{StaticResource FilledButtonStyle}"
-                                        HorizontalAlignment="Stretch"
-                                        MinHeight="{StaticResource TouchTargetSize}"
-                                        Command="{Binding CreateAction}"
-                                        IsEnabled="{Binding CanCreateAction}"
-                                        Content="Create action" />
-                            </Grid>
-                        </StackPanel>
-                    </ScrollViewer>
-                </Border>
-            </Grid>
         </Grid>
+
+        <!--
+            Corrective action, raised from the point that failed. A modal sheet over the whole
+            page: centred at DialogMaxWidth from Normal up, the full width less a margin on a phone.
+        -->
+        <Grid x:Name="ActionSheetLayer"
+              DataContext="{Binding ActionSheet}"
+              Background="{ThemeResource SheetScrimBrush}"
+              Visibility="{Binding IsOpen, Converter={StaticResource BoolToVisibility}}">
+            <Border Style="{StaticResource SheetSurface}"
+                    TabFocusNavigation="Cycle"
+                    MaxWidth="{StaticResource DialogMaxWidth}"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                    Margin="{StaticResource InsetL}"
+                    Padding="{utu:Responsive Narrow={StaticResource SheetPadding}, Normal={StaticResource SheetPaddingWide}}">
+                <controls:CorrectiveActionSheet x:Name="ActionSheetForm" />
+            </Border>
+        </Grid>
+
+        <!--
+            A recorded photo, full size, opened from History or from the point. Centred at
+            ViewerMaxWidth over a scrim.
+        -->
+        <Grid x:Name="ViewerLayer"
+              DataContext="{Binding Viewer}"
+              Background="{ThemeResource SheetScrimBrush}"
+              Visibility="{Binding IsOpen, Converter={StaticResource BoolToVisibility}}">
+            <Border Style="{StaticResource SheetSurface}"
+                    TabFocusNavigation="Cycle"
+                    MaxWidth="{StaticResource ViewerMaxWidth}"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                    Margin="{StaticResource InsetL}"
+                    Padding="{utu:Responsive Narrow={StaticResource SheetPadding}, Normal={StaticResource SheetPaddingWide}}">
+                <controls:EvidenceViewer x:Name="ViewerForm" />
+            </Border>
+        </Grid>
+    </Grid>
     </utu:SafeArea>
+    </Grid>
 </Page>

@@ -1,5 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
+using Trace.Infrastructure;
 using Trace.Infrastructure.Persistence;
 using Trace.Infrastructure.Platform;
 using Trace.Infrastructure.Repositories;
@@ -10,10 +10,6 @@ namespace Trace;
 
 public partial class App : Application
 {
-    /// <summary>
-    /// Initializes the singleton application object. This is the first line of authored code
-    /// executed, and as such is the logical equivalent of main() or WinMain().
-    /// </summary>
     public App()
     {
         this.InitializeComponent();
@@ -22,69 +18,61 @@ public partial class App : Application
     protected Window? MainWindow { get; private set; }
     protected IHost? Host { get; private set; }
 
-    [SuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "Uno.Extensions APIs are used in a way that is safe for trimming in this template context.")]
-    protected async override void OnLaunched(LaunchActivatedEventArgs args)
+    protected override async void OnLaunched(LaunchActivatedEventArgs args)
     {
+        CrashReporter.Attach(this);
+        try
+        {
+            CrashReporter.LogPath = Path.Combine(ApplicationData.Current.LocalFolder.Path, CrashLog);
+            await LaunchAsync(args);
+        }
+        catch (Exception ex)
+        {
+            // async void: a launch failure would vanish unrecorded (Uno's dispatcher swallows it on
+            // desktop; WinAppSDK ends the process). Reported here, then rethrown unchanged.
+            CrashReporter.Report(nameof(OnLaunched), ex);
+            throw;
+        }
+    }
+
+    [SuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "Uno.Extensions APIs are used in a way that is safe for trimming in this template context.")]
+    private async Task LaunchAsync(LaunchActivatedEventArgs args)
+    {
+#if DEBUG
+        ThrowWhenAskedAtLaunch();
+#endif
         var builder = this.CreateBuilder(args)
-            // Add navigation support for toolkit controls such as TabBar and NavigationView
             .UseToolkitNavigation()
             .Configure(host => host
 #if DEBUG
-                // Switch to Development environment when running in DEBUG
                 .UseEnvironment(Environments.Development)
 #endif
                 .UseLogging(configure: (context, logBuilder) =>
-                {
-                    // Configure log levels for different categories of logging
                     logBuilder
                         .SetMinimumLevel(
                             context.HostingEnvironment.IsDevelopment() ?
                                 LogLevel.Information :
                                 LogLevel.Warning)
-
-                        // Default filters for core Uno Platform namespaces
-                        .CoreLogLevel(LogLevel.Warning);
-
-                    // Uno Platform namespace filter groups
-                    // Uncomment individual methods to see more detailed logging
-                    //// Generic Xaml events
-                    //logBuilder.XamlLogLevel(LogLevel.Debug);
-                    //// Layout specific messages
-                    //logBuilder.XamlLayoutLogLevel(LogLevel.Debug);
-                    //// Storage messages
-                    //logBuilder.StorageLogLevel(LogLevel.Debug);
-                    //// Binding related messages
-                    //logBuilder.XamlBindingLogLevel(LogLevel.Debug);
-                    //// Binder memory references tracking
-                    //logBuilder.BinderMemoryReferenceLogLevel(LogLevel.Debug);
-                    //// DevServer and HotReload related
-                    //logBuilder.HotReloadCoreLogLevel(LogLevel.Information);
-                    //// Debug JS interop
-                    //logBuilder.WebAssemblyLogLevel(LogLevel.Debug);
-
-                }, enableUnoLogging: true)
+                        .CoreLogLevel(LogLevel.Warning),
+                    enableUnoLogging: true)
                 .UseConfiguration(configure: configBuilder =>
                     configBuilder
                         .EmbeddedSource<App>()
                         .Section<AppConfig>()
                 )
-                // Enable localization (see appsettings.json for supported languages)
                 .UseLocalization()
-                .UseHttp((context, services) => {
-#if DEBUG
-                // DelegatingHandler will be automatically injected
-                services.AddTransient<DelegatingHandler, DebugHttpHandler>();
-#endif
-
-})
                 .ConfigureServices((context, services) =>
                 {
                     services.AddSingleton(TimeProvider.System);
 
-                    // Persistence. The store root is resolved here, at composition time, so
-                    // nothing below this line has to know about platform storage paths.
-                    services.AddSingleton<ILocalFileStore>(_ => new LocalFileStore(
-                        Path.Combine(ApplicationData.Current.LocalFolder.Path, "trace")));
+                    // Persistence. The store root is chosen here, at composition time (and opened
+                    // on first use), so nothing below this line has to know about platform storage
+                    // paths.
+#if DEBUG
+                    services.AddSingleton(_ => WithVerificationFaults(new LocalFileStore(OpenStoreRootAsync, StoreAppDataUri)));
+#else
+                    services.AddSingleton<ILocalFileStore>(_ => new LocalFileStore(OpenStoreRootAsync, StoreAppDataUri));
+#endif
                     services.AddSingleton<ITraceStore, TraceStore>();
 
                     // Repositories over the shared snapshot stream.
@@ -94,6 +82,17 @@ public partial class App : Application
                     services.AddSingleton<ICorrectiveActionRepository, CorrectiveActionRepository>();
                     services.AddSingleton<ISyncQueue, SyncQueue>();
                     services.AddSingleton<IInspectionWorkflow, InspectionWorkflow>();
+                    services.AddSingleton<IActionDispatch, ActionDispatch>();
+
+                    // One retry for every screen that failed to read the store.
+                    services.AddSingleton<FeedRecovery>();
+
+                    // Where an asset was opened from, for its Back.
+                    services.AddSingleton<NavigationOrigin>();
+
+                    // The asset workspace's parts (inspector, action sheet, photo viewer), built
+                    // over the services above for each asset that opens.
+                    services.AddSingleton<AssetWorkspaceParts>();
 
                     // Platform capabilities. Each is a deterministic stand-in for hardware
                     // TRACE does not own; swapping in a device implementation is a one-line
@@ -110,7 +109,7 @@ public partial class App : Application
             );
         MainWindow = builder.Window;
 
-#if DEBUG
+#if DEBUG && !NO_UNO_STUDIO
         // UseStudio blocks the window from ever being created when no DevServer is
         // reachable, which makes headless verification runs hang with no visible error.
         // TRACE_NO_HOTDESIGN=1 opts a run out of it.
@@ -122,14 +121,46 @@ public partial class App : Application
         MainWindow.SetWindowIcon();
 
         Host = await MainWindow.InitializeNavigationAsync(
-            () => Task.FromResult(builder.Build()),
+            () =>
+            {
+                var host = builder.Build();
+                CrashReporter.Logger = host.Services.GetRequiredService<ILogger<App>>();
+                return Task.FromResult(host);
+            },
             initialRoute: "Main"
         );
 
-        // Restores the theme the technician last chose. The service resolves the root itself,
-        // so this has to run after the navigation root exists.
-        await Host.Services.GetRequiredService<IThemeService>().InitializeAsync();
+        // The destinations share one region, which keeps no back stack: record each one as it
+        // is shown, so an asset's Back returns to the destination it was opened from. The
+        // route after a navigation reads Main/<destination>, so the segment under Main is it.
+        var origin = Host.Services.GetRequiredService<NavigationOrigin>();
+        Host.Services.GetRequiredService<IRouteNotifier>().RouteChanged +=
+            (_, e) => origin.Shown(e.Route?.Next()?.Base);
+
+        // The theme the technician last chose is restored by the theme service itself: it is
+        // scoped to the navigation, and the instance the round's model takes applies the saved
+        // choice as soon as it is created. Asking the root provider for one here would create a
+        // second instance on a root that is never loaded, and awaiting it would stop OnLaunched.
+#if DEBUG
+        await ApplyVerificationAsync();
+#endif
     }
+
+    /// <summary>Where <see cref="CrashReporter"/> writes, in the app's local data.</summary>
+    private const string CrashLog = "crash.log";
+
+    /// <summary>The store's folder under the app's local data.</summary>
+    private const string StoreFolder = "trace";
+
+    /// <summary>The same folder as an app-data URI, which evidence photos are referenced by.</summary>
+    private const string StoreAppDataUri = $"ms-appdata:///local/{StoreFolder}/";
+
+    /// <summary>
+    /// The store's folder, opened through StorageFolder before any file access: on WebAssembly
+    /// that call is what waits for the browser-backed local folder to be restored.
+    /// </summary>
+    private static async ValueTask<string> OpenStoreRootAsync() =>
+        (await ApplicationData.Current.LocalFolder.CreateFolderAsync(StoreFolder, CreationCollisionOption.OpenIfExists)).Path;
 
     private static void RegisterRoutes(IViewRegistry views, IRouteRegistry routes)
     {

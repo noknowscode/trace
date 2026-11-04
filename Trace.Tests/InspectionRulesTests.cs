@@ -1,5 +1,4 @@
 using System.Globalization;
-using Trace.Domain.Rules;
 
 namespace Trace.Tests;
 
@@ -180,5 +179,25 @@ public class InspectionRulesTests
 
         point.Evaluate(point.NormalMin).Should().Be(RangeStatus.Within);
         point.Evaluate(point.NormalMax).Should().Be(RangeStatus.Within);
+    }
+
+    [Test]
+    public void The_latest_failure_at_a_point_owes_an_action_until_one_is_raised()
+    {
+        var at = DateTimeOffset.UnixEpoch;
+        InspectionEvent Event(string id, int minutes, Disposition disposition) => new(
+            id, id, "P-204", "seal", "Seal housing", at.AddMinutes(minutes), "Tech", 7, "mm/s", RangeStatus.Above, disposition, "n",
+            ImmutableList<Evidence>.Empty, SyncState.Pending);
+        CorrectiveAction RaisedFrom(string eventId) => new(
+            "ca", eventId, "P-204", "Pump", "seal", "Seal housing", CorrectivePriority.High, "s", "a", ActionStatus.Open, at);
+
+        var failed = Event("failed", 2, Disposition.Fail);
+        var events = new[] { Event("older", 1, Disposition.Fail), failed, Event("other point", 3, Disposition.Fail) with { PointId = "motor" } };
+
+        InspectionRules.FailureAwaitingAction(events, [], "seal").Should().Be(failed);
+        InspectionRules.FailureAwaitingAction(events, [RaisedFrom("failed")], "seal").Should().BeNull("its action is raised");
+        InspectionRules.FailureAwaitingAction(events.Append(Event("passed", 4, Disposition.Pass)), [], "seal")
+            .Should().BeNull("a later pass supersedes the failure");
+        InspectionRules.FailureAwaitingAction(events, [], "coupling").Should().BeNull();
     }
 }

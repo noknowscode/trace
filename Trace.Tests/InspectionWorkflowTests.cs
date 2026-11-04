@@ -135,6 +135,38 @@ public class InspectionWorkflowTests
     }
 
     [Test]
+    public async Task A_completed_draft_saved_again_does_not_come_back()
+    {
+        var draft = await DraftForSealAsync("1.6", Disposition.Pass);
+        await _harness.Workflow.CompleteAsync(draft, default);
+
+        // An editor still holding the completed draft saves it on the next keystroke.
+        await _harness.Workflow.SaveDraftAsync(draft with { ReadingText = "1.9" }, default);
+
+        (await _harness.Store.GetAsync(default)).FindDraft("P-204-seal").Should().BeNull();
+
+        var next = await _harness.Workflow.StartOrResumeDraftAsync(await _harness.PointAsync("P-204-seal"), default);
+        next.ClientToken.Should().NotBe(draft.ClientToken);
+        next.ReadingText.Should().Be("1.6", "a new draft starts from the reading just recorded");
+    }
+
+    [Test]
+    public async Task A_duplicate_completion_clears_a_draft_left_holding_its_token()
+    {
+        var draft = await DraftForSealAsync("1.6", Disposition.Pass);
+        await _harness.Workflow.CompleteAsync(draft, default);
+
+        // A store written before drafts with a completed token were refused can still hold one.
+        await _harness.Store.MutateAsync(s => s with { Drafts = s.Drafts.Add(draft) }, default);
+
+        var again = await _harness.Workflow.CompleteAsync(draft, default);
+
+        again.WasDuplicate.Should().BeTrue();
+        (await _harness.Store.GetAsync(default)).FindDraft("P-204-seal").Should().BeNull(
+            "the point must take a fresh draft, or every later completion there is this duplicate");
+    }
+
+    [Test]
     public async Task A_corrective_action_inherits_its_asset_point_and_source_event()
     {
         var draft = await DraftForSealAsync("7.4", Disposition.Fail, "Seal weeping under load.");
@@ -167,6 +199,30 @@ public class InspectionWorkflowTests
     }
 
     [Test]
+    public async Task Raising_work_twice_from_one_inspection_keeps_one_action()
+    {
+        var draft = await DraftForSealAsync("7.4", Disposition.Fail, "Seal weeping.");
+        var completed = await _harness.Workflow.CompleteAsync(draft, default);
+        var request = new CorrectiveActionRequest(
+            "P-204", "P-204-seal", completed.Event!.Id, "Replace pump seal",
+            CorrectivePriority.High, "Mechanical Team");
+
+        var first = await _harness.Workflow.RaiseCorrectiveActionAsync(request, default);
+        var second = await _harness.Workflow.RaiseCorrectiveActionAsync(
+            request with { Summary = "Replace pump seal again", Priority = CorrectivePriority.Low }, default);
+
+        first.WasDuplicate.Should().BeFalse();
+        second.Succeeded.Should().BeTrue();
+        second.WasDuplicate.Should().BeTrue();
+        second.Action!.Id.Should().Be(first.Action!.Id, "the second request resolves to the action already raised");
+        second.Action.Summary.Should().Be("Replace pump seal");
+
+        var snapshot = await _harness.Store.GetAsync(default);
+        snapshot.Actions.Should().ContainSingle(a => a.SourceInspectionEventId == completed.Event.Id);
+        snapshot.Queue.Should().ContainSingle(o => o.EntityType == nameof(CorrectiveAction) && o.EntityId == first.Action.Id);
+    }
+
+    [Test]
     public async Task A_corrective_action_needs_a_summary()
     {
         var draft = await DraftForSealAsync("7.4", Disposition.Fail, "Seal weeping.");
@@ -184,6 +240,40 @@ public class InspectionWorkflowTests
     }
 
     [Test]
+    public async Task A_corrective_action_cannot_carry_another_points_inspection()
+    {
+        var draft = await DraftForSealAsync("7.4", Disposition.Fail, "Seal weeping.");
+        var completed = await _harness.Workflow.CompleteAsync(draft, default);
+
+        var outcome = await _harness.Workflow.RaiseCorrectiveActionAsync(
+            new CorrectiveActionRequest(
+                "P-204", "P-204-coupling", completed.Event!.Id, "Realign coupling",
+                CorrectivePriority.High, "Mechanical Team"),
+            default);
+
+        outcome.Succeeded.Should().BeFalse();
+        outcome.Error.Should().Contain("another point");
+        (await _harness.Store.GetAsync(default)).Actions.Should().NotContain(a => a.PointId == "P-204-coupling");
+    }
+
+    [Test]
+    public async Task A_corrective_action_cannot_be_raised_from_a_passed_inspection()
+    {
+        var draft = await DraftForSealAsync("1.6", Disposition.Pass);
+        var completed = await _harness.Workflow.CompleteAsync(draft, default);
+
+        var outcome = await _harness.Workflow.RaiseCorrectiveActionAsync(
+            new CorrectiveActionRequest(
+                "P-204", "P-204-seal", completed.Event!.Id, "Replace pump seal",
+                CorrectivePriority.High, "Mechanical Team"),
+            default);
+
+        outcome.Succeeded.Should().BeFalse();
+        outcome.Error.Should().Contain("Fail");
+        (await _harness.Store.GetAsync(default)).Actions.Should().NotContain(a => a.SourceInspectionEventId == completed.Event.Id);
+    }
+
+    [Test]
     public async Task An_inspection_appends_to_the_asset_history_newest_first()
     {
         var draft = await DraftForSealAsync("1.6", Disposition.Pass);
@@ -191,7 +281,7 @@ public class InspectionWorkflowTests
 
         var outcome = await _harness.Workflow.CompleteAsync(draft, default);
 
-        var history = await new InspectionRepository(_harness.Store).GetHistoryAsync("P-204", default);
+        var history = await TestHarness.FirstAsync(new InspectionRepository(_harness.Store).WatchHistory("P-204", default));
 
         history.First().Id.Should().Be(outcome.Event!.Id);
         history.Should().BeInDescendingOrder(e => e.Timestamp);

@@ -1,5 +1,3 @@
-using Trace.Services;
-
 namespace Trace.Presentation;
 
 /// <summary>
@@ -10,14 +8,16 @@ public partial record MainModel
 {
     private readonly ISyncQueue _sync;
     private readonly INetworkStatusService _network;
+    private readonly FeedRecovery _recovery;
 
-    public MainModel(ISyncQueue sync, INetworkStatusService network)
+    public MainModel(ISyncQueue sync, INetworkStatusService network, FeedRecovery recovery)
     {
         _sync = sync;
         _network = network;
+        _recovery = recovery;
     }
 
-    public IFeed<int> PendingCount => Feed.AsyncEnumerable(_sync.WatchPendingCount);
+    public IFeed<int> PendingCount => _recovery.Watch(_sync.WatchPendingCount);
 
     public IFeed<bool> HasPending => PendingCount.Select(count => count > 0);
 

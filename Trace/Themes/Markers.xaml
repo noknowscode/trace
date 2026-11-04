@@ -9,6 +9,9 @@
         Disposition is carried three ways at once: the fill colour, the mark in the badge,
         and the point's own number — colour alone would fail in sun, in a dark plant room,
         and for a technician with a colour-vision deficiency.
+
+        Templated: no Material or Toolkit style draws a numbered disc with a selection halo
+        and a status badge.
     -->
     <Style x:Key="InspectionPointMarkerStyle" TargetType="controls:InspectionPointMarker">
         <!-- The control box is wider than the 44 disc so the selection halo and the status
@@ -180,6 +183,9 @@
         the condition is the decision the app exists for, and hiding two of them behind a
         picker would cost a press for no gain. Kind and chosen state resolve to one state
         name because visual state groups cannot see each other.
+
+        Templated: a Material button style takes one colour set from its lightweight keys, and
+        this one changes fill and mark with its kind and chosen state.
     -->
     <Style x:Key="DispositionButtonStyle" TargetType="controls:DispositionButton">
         <Setter Property="MinHeight" Value="{StaticResource TouchTargetSize}" />

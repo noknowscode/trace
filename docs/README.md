@@ -4,7 +4,7 @@ This is a self-contained handoff package for building TRACE as a .NET Uno Platfo
 
 Start with `PROJECT-BRIEF.md`, then follow the source-of-truth order defined there.
 
-`prototype.html` is a runnable interaction reference. It is intentionally not the architecture to copy.
+`prototype/prototype.html` is a runnable interaction reference. It is intentionally not the architecture to copy.
 
 Package contents:
 - PROJECT-BRIEF.md
@@ -14,4 +14,4 @@ Package contents:
 - DESIGN-GRAPH.md
 - PROTOTYPE-VERIFICATION.md
 - BUILD-PROMPT.md
-- prototype.html
+- ../prototype/prototype.html

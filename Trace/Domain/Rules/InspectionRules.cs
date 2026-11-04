@@ -1,6 +1,4 @@
 using System.Globalization;
-using Trace.Domain.Enums;
-using Trace.Domain.Models;
 
 namespace Trace.Domain.Rules;
 
@@ -127,7 +125,40 @@ public static class InspectionRules
             Status: ActionStatus.Open,
             CreatedAt: createdAt);
 
-    /// <summary>The default summary offered when raising work from a failed point.</summary>
-    public static string SuggestActionSummary(Asset asset, InspectionPoint point) =>
-        $"Inspect {point.Label.ToLowerInvariant()} on {asset.Id}";
+    /// <summary>
+    /// The one step corrective work can take from <paramref name="status"/>: an open action is
+    /// dispatched, a dispatched one is closed, and a closed one goes nowhere.
+    /// </summary>
+    public static ActionStatus? NextStatus(ActionStatus status) => status switch
+    {
+        ActionStatus.Open => ActionStatus.Dispatched,
+        ActionStatus.Dispatched => ActionStatus.Closed,
+        _ => null,
+    };
+
+    /// <summary>
+    /// The latest inspection at <paramref name="pointId"/> when it failed and no corrective action
+    /// was raised from it: work the point still owes. A later inspection that passed supersedes
+    /// the failure.
+    /// </summary>
+    public static InspectionEvent? FailureAwaitingAction(
+        IEnumerable<InspectionEvent> events,
+        IEnumerable<CorrectiveAction> actions,
+        string pointId) =>
+        events
+            .Where(e => e.PointId == pointId)
+            .OrderByDescending(e => e.Timestamp)
+            .FirstOrDefault() is { Disposition: Disposition.Fail } latest
+            && !actions.Any(a => a.SourceInspectionEventId == latest.Id)
+                ? latest
+                : null;
+
+    /// <summary>The newest inspection at <paramref name="pointId"/> that recorded a photo, if any.</summary>
+    public static InspectionEvent? LatestWithPhotos(IEnumerable<InspectionEvent>? events, string? pointId) =>
+        string.IsNullOrEmpty(pointId) || events is null
+            ? null
+            : events
+                .Where(e => e.PointId == pointId && e.Evidence.Any(item => item.Type == EvidenceType.Photo))
+                .OrderByDescending(e => e.Timestamp)
+                .FirstOrDefault();
 }

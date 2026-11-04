@@ -1,5 +1,3 @@
-using Trace.Domain.Enums;
-
 namespace Trace.Domain.Models;
 
 /// <summary>
@@ -23,8 +21,6 @@ public partial record InspectionEvent(
     IImmutableList<Evidence> Evidence,
     SyncState SyncState)
 {
-    public bool HasNotes => !string.IsNullOrWhiteSpace(Notes);
-
     public bool HasEvidence => Evidence.Count > 0;
 
     public string ReadingText => $"{(Reading == Math.Floor(Reading) ? Reading.ToString("0") : Reading.ToString("0.##"))} {Unit}";

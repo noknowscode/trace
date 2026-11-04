@@ -3,7 +3,15 @@ using SkiaSharp;
 namespace Trace.Presentation.Scene3D;
 
 /// <summary>The colours the scene is lit and grounded with, taken from the app theme.</summary>
-public readonly record struct ScenePalette(SKColor Background, SKColor Ground, SKColor KeyLight, SKColor FillLight);
+public readonly record struct ScenePalette(SKColor Background, SKColor Ground, SKColor KeyLight, SKColor FillLight)
+{
+    /// <summary>
+    /// A theme colour as the renderer needs it, with the brush's own opacity folded into the
+    /// alpha, so a resource can say "black at 35 %" once.
+    /// </summary>
+    public static SKColor FromColor(byte alpha, byte red, byte green, byte blue, double opacity) =>
+        new(red, green, blue, (byte)Math.Round(alpha * Math.Clamp(opacity, 0d, 1d)));
+}
 
 /// <summary>
 /// Rasterises a <see cref="SceneModel"/>.
@@ -28,7 +36,7 @@ public sealed class SceneRenderer : IDisposable
     private Face[] _faces = new Face[1024];
 
     // Native Skia objects live across frames. The offscreen surface alone is the whole
-    // viewport at twice the size — recreating it per frame was the single largest cost of
+    // viewport at twice the size — recreating it per frame is the single largest cost of
     // an orbit, and a mask filter left to the finaliser is native memory the GC cannot see.
     private SKSurface? _surface;
     private int _surfaceWidth;
@@ -36,7 +44,7 @@ public sealed class SceneRenderer : IDisposable
     private SKPaint? _meshPaint;
     private SKPaint? _blitPaint;
     private SKPaint? _shadowPaint;
-    private SKPath? _shadowPath;
+    private SKPathBuilder? _shadowBuilder;
     private SKMaskFilter? _shadowBlur;
     private float _shadowSigma = -1f;
 
@@ -66,8 +74,6 @@ public sealed class SceneRenderer : IDisposable
             return;
         }
 
-        EnsureResources();
-
         var density = Supersample * MathF.Max(pixelScale, 0.5f);
         var scaledWidth = (int)MathF.Ceiling(bounds.Width * density);
         var scaledHeight = (int)MathF.Ceiling(bounds.Height * density);
@@ -91,7 +97,7 @@ public sealed class SceneRenderer : IDisposable
             image,
             new SKRect(0, 0, bounds.Width, bounds.Height),
             new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.None),
-            _blitPaint!);
+            BlitPaint);
     }
 
     /// <summary>
@@ -116,23 +122,20 @@ public sealed class SceneRenderer : IDisposable
         _meshPaint?.Dispose();
         _blitPaint?.Dispose();
         _shadowPaint?.Dispose();
-        _shadowPath?.Dispose();
+        _shadowBuilder?.Dispose();
         _meshPaint = _blitPaint = _shadowPaint = null;
-        _shadowPath = null;
+        _shadowBuilder = null;
     }
 
-    /// <summary>
-    /// The small native objects are created on first use and again after a
-    /// <see cref="Dispose"/>, so releasing them on Unloaded never leaves a later frame
-    /// drawing with a freed paint.
-    /// </summary>
-    private void EnsureResources()
-    {
-        _meshPaint ??= new SKPaint { IsAntialias = false, Color = SKColors.White };
-        _blitPaint ??= new SKPaint { IsAntialias = true };
-        _shadowPaint ??= new SKPaint { IsAntialias = true };
-        _shadowPath ??= new SKPath();
-    }
+    // The small native objects are created on first use and again after a Dispose, so releasing
+    // them on Unloaded never leaves a later frame drawing with a freed paint.
+    private SKPaint MeshPaint => _meshPaint ??= new SKPaint { IsAntialias = false, Color = SKColors.White };
+
+    private SKPaint BlitPaint => _blitPaint ??= new SKPaint { IsAntialias = true };
+
+    private SKPaint ShadowPaint => _shadowPaint ??= new SKPaint { IsAntialias = true };
+
+    private SKPathBuilder ShadowBuilder => _shadowBuilder ??= new SKPathBuilder();
 
     private SKSurface? EnsureSurface(int width, int height, GRRecordingContext? context)
     {
@@ -244,7 +247,7 @@ public sealed class SceneRenderer : IDisposable
             }
 
             // SKVertices only takes whole arrays, and copying the used prefix out every frame
-            // defeated the pooling. Instead the tail past the last face is collapsed onto one
+            // would defeat the pooling. Instead the tail past the last face is collapsed onto one
             // point: a triangle with three identical corners covers no pixels, so the whole
             // pooled buffer can be handed over as-is.
             var last = _positions[used - 1];
@@ -257,7 +260,7 @@ public sealed class SceneRenderer : IDisposable
             // modulating against white passes them through untouched. Leaving the paint at
             // its default black draws the whole machine as a silhouette.
             using var mesh = SKVertices.CreateCopy(SKVertexMode.Triangles, _positions, _colors);
-            canvas.DrawVertices(mesh, SKBlendMode.Modulate, _meshPaint!);
+            canvas.DrawVertices(mesh, SKBlendMode.Modulate, MeshPaint);
         }
 
         // Anchors are refreshed even when nothing was drawn, or the markers would stay
@@ -319,17 +322,19 @@ public sealed class SceneRenderer : IDisposable
             ellipse[i] = new SKPoint(projected.X, projected.Y);
         }
 
-        var path = _shadowPath!;
-        var paint = _shadowPaint!;
+        // One builder reused across frames; Detach hands over the path and leaves the
+        // builder empty for the next frame.
+        var builder = ShadowBuilder;
+        var paint = ShadowPaint;
 
-        path.Reset();
-        path.MoveTo(ellipse[0]);
+        builder.MoveTo(ellipse[0]);
         for (var i = 1; i < ellipse.Length; i++)
         {
-            path.LineTo(ellipse[i]);
+            builder.LineTo(ellipse[i]);
         }
 
-        path.Close();
+        builder.Close();
+        using var path = builder.Detach();
 
         // The blur is the most expensive operation in the frame and its radius only changes
         // with the supersample factor, so the filter is rebuilt when that changes and not

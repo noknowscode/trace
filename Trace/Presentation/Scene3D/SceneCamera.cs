@@ -41,8 +41,8 @@ public sealed class SceneCamera
         // A 0.34 rad (19.5 degree) half-angle keeps perspective honest without the wide-lens
         // distortion that makes equipment look like a toy. Distance sets how strong that
         // perspective is and is deliberately independent of Zoom: the fit below cancels any
-        // distance change, so scaling distance by Zoom moved the camera and changed nothing
-        // on screen.
+        // distance change, so scaling distance by Zoom would move the camera and change
+        // nothing on screen.
         const float HalfFieldOfView = 0.34f;
         var distance = model.Radius / MathF.Tan(HalfFieldOfView) * 1.12f;
         var eye = model.Centre + (forward * distance);

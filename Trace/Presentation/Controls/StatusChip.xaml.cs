@@ -1,4 +1,6 @@
-namespace Trace.Presentation.Controls;
+using Microsoft.UI.Xaml.Automation;
+
+﻿namespace Trace.Presentation.Controls;
 
 public sealed partial class StatusChip : UserControl
 {
@@ -12,7 +14,7 @@ public sealed partial class StatusChip : UserControl
         nameof(Text),
         typeof(string),
         typeof(StatusChip),
-        new PropertyMetadata(string.Empty));
+        new PropertyMetadata(string.Empty, OnTextChanged));
 
     public StatusChip()
     {
@@ -42,6 +44,10 @@ public sealed partial class StatusChip : UserControl
 
     private static void OnSeverityChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
         ((StatusChip)d).Apply();
+
+    /// <summary>A screen reader reads the chip as its word: the glyph and colour carry nothing for it.</summary>
+    private static void OnTextChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
+        AutomationProperties.SetName(d, e.NewValue as string ?? string.Empty);
 
     private void Apply() => VisualStateManager.GoToState(this, Severity.ToString(), false);
 }

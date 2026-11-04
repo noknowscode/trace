@@ -1,0 +1,200 @@
+﻿<UserControl x:Class="Trace.Presentation.Controls.AssetInspectTab"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:Trace.Presentation.Controls"
+             xmlns:mvux="using:Uno.Extensions.Reactive.UI"
+             xmlns:utu="using:Uno.Toolkit.UI"
+             IsTabStop="False">
+
+    <!--
+        The asset's Inspect tab, bound to the workspace (AssetModel): the machine with its points
+        pinned to it, the points as a strip, and the point inspector. Always present, so it measures
+        the whole workspace; its parts show only while Inspect is the tab.
+
+        Layout per width category (utu:Responsive, Toolkit default breakpoints): below Wide the
+        inspector is a bottom sheet over the machine; from Wide it docks beside it at 360, and at
+        400 from Widest. The inspector is one element at every size, so a half-entered reading
+        survives a resize. Its height cap and the machine's height come from the measured tab
+        (code-behind).
+    -->
+    <Grid x:Name="InspectRoot" SizeChanged="OnWorkspaceResized">
+
+        <!--
+            The asset's loading, error and unavailable states. It sits under the machine and
+            shows nothing once the asset is read, when the machine below covers it.
+        -->
+        <mvux:FeedView IsTabStop="False" Source="{Binding Asset}"
+                       ProgressTemplate="{StaticResource FeedProgressTemplate}"
+                       ErrorTemplate="{StaticResource FeedErrorTemplate}"
+                       Visibility="{Binding IsInspect, Converter={StaticResource BoolToVisibility}}">
+            <mvux:FeedView.ValueTemplate>
+                <DataTemplate>
+                    <Grid />
+                </DataTemplate>
+            </mvux:FeedView.ValueTemplate>
+            <mvux:FeedView.NoneTemplate>
+                <DataTemplate>
+                    <Border Style="{StaticResource CardSurface}" VerticalAlignment="Top">
+                        <StackPanel Spacing="{StaticResource SpaceS}">
+                            <controls:StatusChip Severity="Critical" Text="Asset unavailable" />
+                            <TextBlock Style="{StaticResource SupportingText}"
+                                       Text="This asset is no longer on the device, so its inspection points are not either. It may have been reassigned since your last sync." />
+                        </StackPanel>
+                    </Border>
+                </DataTemplate>
+            </mvux:FeedView.NoneTemplate>
+        </mvux:FeedView>
+
+        <!-- The gap opens only when the inspector docks: a sheet spans both columns, and an
+             empty column must not shave the machine. -->
+        <Grid Visibility="{Binding ShowsMachine, Converter={StaticResource BoolToVisibility}}"
+              ColumnSpacing="{utu:Responsive Narrow=0, Wide={StaticResource SpaceM}}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition x:Name="InspectorColumn" Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <Grid x:Name="SceneStack" RowSpacing="{StaticResource SpaceM}">
+                <Grid.RowDefinitions>
+                    <RowDefinition x:Name="SceneRow" Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- The machine, with its points pinned to it. The scene takes all the
+                     height it is given: the camera frames the model to whatever
+                     aspect the workspace has. -->
+                <Border x:Name="SceneCard"
+                        Style="{StaticResource CardSurface}"
+                        Padding="{StaticResource TilePadding}"
+                        MinHeight="{StaticResource SceneMinHeight}">
+                    <Grid>
+                        <controls:AssetSceneView x:Name="Scene"
+                                                 Style="{StaticResource AssetSceneViewStyle}"
+                                                 AutomationProperties.Name="Equipment view. Drag to turn the machine."
+                                                 Kind="{Binding SchematicKind}"
+                                                 ModelSource="{Binding ModelUri}" />
+                        <!-- Each marker, and below each chip, is its own tab stop: ItemsRepeater otherwise
+                             takes Tab once, and the points after the first are out of a keyboard's reach. -->
+                        <ItemsRepeater x:Name="MarkerLayer" ItemsSource="{Binding Markers}" TabFocusNavigation="Local">
+                            <ItemsRepeater.Layout>
+                                <controls:SpatialMarkerLayout x:Name="MarkerLayout" />
+                            </ItemsRepeater.Layout>
+                            <ItemsRepeater.ItemTemplate>
+                                <DataTemplate>
+                                    <controls:InspectionPointMarker
+                                        Style="{StaticResource InspectionPointMarkerStyle}"
+                                        Sequence="{Binding Point.Sequence}"
+                                        Disposition="{Binding Point.Disposition}"
+                                        IsSelected="{Binding IsSelected}"
+                                        controls:SpatialMarkers.AnchorId="{Binding Point.Id}"
+                                        Command="{Binding DataContext.SelectMarker, ElementName=InspectRoot}"
+                                        CommandParameter="{Binding}"
+                                        AutomationProperties.Name="{Binding Point.Label}"
+                                        ToolTipService.ToolTip="{Binding Point.Label}" />
+                                </DataTemplate>
+                            </ItemsRepeater.ItemTemplate>
+                        </ItemsRepeater>
+                        <!--
+                            The machine's nameplate, on the machine, across the top. The
+                            plate is the same brush the scene paints its background with,
+                            so it is invisible over empty canvas and only resolves into a
+                            plate where the model would otherwise sit behind the text. It
+                            takes no pointer input: a drag that starts on it still turns
+                            the machine.
+                        -->
+                        <Border Style="{StaticResource ScenePlate}"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Top">
+                            <controls:PageHeader Eyebrow="{Binding Designation}"
+                                                 Title="{Binding AssetName}"
+                                                 Supporting="{Binding Location}" />
+                        </Border>
+
+                        <!-- How to turn the machine and how to put it back, together along the bottom. -->
+                        <Grid VerticalAlignment="Bottom" ColumnSpacing="{StaticResource SpaceS}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Border Style="{StaticResource ScenePlate}"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Center"
+                                    Padding="{StaticResource ChipPadding}">
+                                <TextBlock Style="{StaticResource SupportingText}"
+                                           Text="Drag to turn the machine" />
+                            </Border>
+                            <!-- An elevated button brings its own surface, like the hint's plate: over the machine a bare label is hard to read. -->
+                            <Button Grid.Column="1"
+                                    Style="{StaticResource ElevatedButtonStyle}"
+                                    MinHeight="{StaticResource TouchTargetSize}"
+                                    Command="{Binding ResetViewCommand, ElementName=Scene}"
+                                    Content="Reset view"
+                                    AutomationProperties.Name="Reset view" />
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <!-- Every point also reachable as a list: a marker on a machine is
+                     not a usable target for a screen reader or a keyboard. -->
+                <StackPanel x:Name="PointListPanel"
+                            Grid.Row="1"
+                            Spacing="{StaticResource SpaceS}"
+                            SizeChanged="OnWorkspaceResized">
+                    <TextBlock Text="Inspection points" Style="{StaticResource FieldLabelText}" />
+                    <!-- A strip rather than a wrap: on a phone four points do not
+                         fit across, and a scrolling strip keeps the machine above it
+                         at full size instead of losing rows to a second line. -->
+                    <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                                  VerticalScrollBarVisibility="Disabled"
+                                  HorizontalScrollMode="Auto"
+                                  VerticalScrollMode="Disabled">
+                        <ItemsRepeater ItemsSource="{Binding Markers}" TabFocusNavigation="Local">
+                            <ItemsRepeater.Layout>
+                                <StackLayout Orientation="Horizontal" Spacing="{StaticResource SpaceS}" />
+                            </ItemsRepeater.Layout>
+                            <ItemsRepeater.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Style="{StaticResource CardButtonStyle}"
+                                            Padding="{StaticResource CompactCardPadding}"
+                                            HorizontalAlignment="Left"
+                                            Command="{Binding DataContext.SelectMarker, ElementName=InspectRoot}"
+                                            CommandParameter="{Binding}"
+                                            AutomationProperties.Name="{Binding Point.Label}">
+                                        <StackPanel Spacing="{StaticResource SpaceXS}">
+                                            <TextBlock Text="{Binding Point.Label}"
+                                                       Style="{StaticResource CardTitleText}" />
+                                            <StackPanel Orientation="Horizontal" Spacing="{StaticResource SpaceS}">
+                                                <TextBlock Style="{StaticResource SupportingText}">
+                                                    <Run Text="{Binding Point.LatestReadingText}" />
+                                                    <Run Text="{Binding Point.Unit}" />
+                                                </TextBlock>
+                                                <controls:StatusChip
+                                                    Severity="{Binding Point.Disposition, Converter={StaticResource ToSeverity}}"
+                                                    Text="{Binding Point.Disposition}" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsRepeater.ItemTemplate>
+                        </ItemsRepeater>
+                    </ScrollViewer>
+                </StackPanel>
+            </Grid>
+
+            <!-- The inspector: a bottom sheet below Wide, a docked pane from Wide up. Its height
+                 cap comes from the measured workspace (code-behind). -->
+            <!-- xaml-lint: allow card - one element moved between a sheet and a docked pane, so a half-entered reading survives a resize: a "!" flyout route would rebuild it per open, and a CardContentControl adds pointer-state overlays over a form full of inputs. SheetSurface paints it; only its radius and padding follow the width. -->
+            <Border x:Name="InspectorHost"
+                    Style="{StaticResource SheetSurface}"
+                    Grid.Column="{utu:Responsive Narrow=0, Wide=1}"
+                    Grid.ColumnSpan="{utu:Responsive Narrow=2, Wide=1}"
+                    VerticalAlignment="{utu:Responsive Narrow=Bottom, Wide=Stretch}"
+                    Width="{utu:Responsive Narrow=NaN, Wide={StaticResource InspectorWidthWide}, Widest={StaticResource InspectorWidthWidest}}"
+                    CornerRadius="{utu:Responsive Narrow={StaticResource SheetRadius}, Wide={StaticResource CardRadius}}"
+                    Padding="{utu:Responsive Narrow={StaticResource SheetPadding}, Normal={StaticResource SheetPaddingWide}}"
+                    Visibility="{Binding Inspector.IsOpen, Converter={StaticResource BoolToVisibility}}">
+                <controls:PointInspector DataContext="{Binding Inspector}" />
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

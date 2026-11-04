@@ -1,6 +1,3 @@
-using System.IO;
-using Trace.Services;
-
 namespace Trace.Infrastructure.Persistence;
 
 /// <summary>
@@ -9,18 +6,40 @@ namespace Trace.Infrastructure.Persistence;
 /// </summary>
 public sealed class LocalFileStore : ILocalFileStore
 {
-    private readonly string _root;
+    private readonly Func<ValueTask<string>> _openRoot;
+    private readonly string? _appDataUri;
     private readonly SemaphoreSlim _gate = new(1, 1);
+    private string? _root;
 
-    public LocalFileStore(string root)
+    /// <summary>A store over a folder that already exists: the tests' seam, over a temp folder.</summary>
+    internal LocalFileStore(string root)
+        : this(() => ValueTask.FromResult(root))
     {
-        _root = root;
-        Directory.CreateDirectory(_root);
+    }
+
+    /// <summary>
+    /// A store whose root is opened on first use rather than at construction. The app opens
+    /// it through StorageFolder: on WebAssembly the local folder is restored from browser
+    /// storage asynchronously and only a StorageFolder call waits for that, so a plain
+    /// System.IO read at startup could find the folder still empty.
+    /// </summary>
+    /// <param name="openRoot">Opens the root folder.</param>
+    /// <param name="appDataUri">
+    /// The root as an <c>ms-appdata:///</c> URI, for the URIs <see cref="WriteBytesAsync"/>
+    /// hands back. A file:// URI holds the absolute path, which a browser cannot load and
+    /// which iOS invalidates when an update moves the app's container; an app-data URI names
+    /// the file relative to the app and resolves on every head. Without one (tests over a
+    /// temp folder), file URIs are returned.
+    /// </param>
+    public LocalFileStore(Func<ValueTask<string>> openRoot, string? appDataUri = null)
+    {
+        _openRoot = openRoot;
+        _appDataUri = appDataUri;
     }
 
     public async ValueTask<string?> ReadTextAsync(string key, CancellationToken ct)
     {
-        var path = PathFor(key);
+        var path = await PathForAsync(key);
         await _gate.WaitAsync(ct);
         try
         {
@@ -34,7 +53,7 @@ public sealed class LocalFileStore : ILocalFileStore
 
     public async ValueTask WriteTextAsync(string key, string content, CancellationToken ct)
     {
-        var path = PathFor(key);
+        var path = await PathForAsync(key);
         await _gate.WaitAsync(ct);
         try
         {
@@ -52,7 +71,7 @@ public sealed class LocalFileStore : ILocalFileStore
 
     public async ValueTask<string> WriteBytesAsync(string key, byte[] content, CancellationToken ct)
     {
-        var path = PathFor(key);
+        var path = await PathForAsync(key);
         await _gate.WaitAsync(ct);
         try
         {
@@ -63,22 +82,39 @@ public sealed class LocalFileStore : ILocalFileStore
             _gate.Release();
         }
 
-        return new Uri(path).AbsoluteUri;
+        return _appDataUri is null ? new Uri(path).AbsoluteUri : _appDataUri + key;
     }
 
-    public ValueTask DeleteAsync(string key, CancellationToken ct)
+    public async ValueTask DeleteAsync(string key, CancellationToken ct)
     {
-        var path = PathFor(key);
+        var path = await PathForAsync(key);
         if (File.Exists(path))
         {
             File.Delete(path);
         }
-
-        return ValueTask.CompletedTask;
     }
 
-    private string PathFor(string key)
+    public async ValueTask MoveAsync(string key, string newKey, CancellationToken ct)
     {
+        var from = await PathForAsync(key);
+        var to = await PathForAsync(newKey);
+        await _gate.WaitAsync(ct);
+        try
+        {
+            if (File.Exists(from))
+            {
+                File.Move(from, to, overwrite: true);
+            }
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    private async ValueTask<string> PathForAsync(string key)
+    {
+        _root ??= await _openRoot();
         var full = Path.Combine(_root, key);
         var directory = Path.GetDirectoryName(full);
         if (!string.IsNullOrEmpty(directory))

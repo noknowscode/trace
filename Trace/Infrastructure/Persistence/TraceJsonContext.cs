@@ -1,5 +1,4 @@
 using System.Text.Json.Serialization;
-using Trace.Domain.Models;
 
 namespace Trace.Infrastructure.Persistence;
 
@@ -10,11 +9,13 @@ namespace Trace.Infrastructure.Persistence;
 [JsonSourceGenerationOptions(
     WriteIndented = true,
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
-    UseStringEnumConverter = true)]
+    UseStringEnumConverter = true,
+    Converters = [typeof(ActionStatusJsonConverter)])]
 [JsonSerializable(typeof(ImmutableList<Asset>))]
 [JsonSerializable(typeof(ImmutableList<Assignment>))]
 [JsonSerializable(typeof(ImmutableList<InspectionEvent>))]
 [JsonSerializable(typeof(ImmutableList<CorrectiveAction>))]
 [JsonSerializable(typeof(ImmutableList<SyncOperation>))]
 [JsonSerializable(typeof(ImmutableList<InspectionDraft>))]
+[JsonSerializable(typeof(StoreCommit))]
 internal sealed partial class TraceJsonContext : JsonSerializerContext;
