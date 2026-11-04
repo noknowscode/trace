@@ -43,8 +43,6 @@ public partial record PointInspectorModel
     /// <summary>The photos and the camera at the open point (bound through <see cref="PointInspectorViewModel.Evidence"/>).</summary>
     internal PointEvidenceModel EvidenceModel { get; }
 
-    // ---- The point that is open --------------------------------------------------------
-
     public IState<string> SelectedPointId => State.Value(this, () => string.Empty);
 
     /// <summary>The open point as the asset stores it, or None while no point is open or it has gone.</summary>
@@ -75,8 +73,8 @@ public partial record PointInspectorModel
 
         // What was recorded at the previous point stays with that point: corrective work
         // raised from here must come from an inspection of this point. Its latest inspection,
-        // when it failed and no work was raised from it, still offers Create corrective action:
-        // closing the inspector before Create used to lose the offer for good.
+        // when it failed and no work was raised from it, still offers Create corrective action,
+        // so closing the inspector before Create does not lose the offer.
         var awaitingAction = await FailureAwaitingActionAsync(point, ct);
         await RecordedEvent.UpdateAsync(_ => awaitingAction, ct);
         await _actionSheet.ResetAsync(ct);
@@ -90,8 +88,6 @@ public partial record PointInspectorModel
         await IsDiscardPending.UpdateAsync(_ => false, ct);
         await SelectedPointId.UpdateAsync(_ => string.Empty, ct);
     }
-
-    // ---- The reading, the call and the note --------------------------------------------
 
     public IState<InspectionDraft> Draft => State<InspectionDraft>.Empty(this);
 
@@ -126,8 +122,6 @@ public partial record PointInspectorModel
     public ValueTask SetWatch(CancellationToken ct) => ChosenDisposition.UpdateAsync(_ => Disposition.Watch, ct);
 
     public ValueTask SetFail(CancellationToken ct) => ChosenDisposition.UpdateAsync(_ => Disposition.Fail, ct);
-
-    // ---- Completing the point ----------------------------------------------------------
 
     /// <summary>Set after a completion so the technician sees what was recorded.</summary>
     public IState<string> Confirmation => State<string>.Empty(this);
@@ -197,7 +191,6 @@ public partial record PointInspectorModel
             ct);
     }
 
-    // ---- Discarding what was entered ---------------------------------------------------
     //
     // Leaving a point or closing the inspector keeps the draft, so nothing is lost and nothing
     // asks. Discard is the one action that throws entered work away, so it is the one that
@@ -244,8 +237,6 @@ public partial record PointInspectorModel
         await CompletionError.UpdateAsync(_ => string.Empty, ct);
     }
 
-    // ---- Corrective work from what was recorded here ------------------------------------
-
     /// <summary>
     /// The inspection just recorded at the open point. Corrective work is raised from this
     /// event, never from the editor, which has moved on to the next reading by then.
@@ -269,8 +260,7 @@ public partial record PointInspectorModel
 
     /// <summary>
     /// The sheet raised work from the inspection recorded here. That inspection has its action
-    /// now, so Create corrective action is no longer offered for it: a second Create used to
-    /// raise a duplicate.
+    /// now, so Create corrective action is not offered for it again.
     /// </summary>
     private async ValueTask OnActionRaised(CorrectiveAction? action, CancellationToken ct)
     {
@@ -286,8 +276,6 @@ public partial record PointInspectorModel
 
         await Confirmation.UpdateAsync(_ => ScreenText.ActionRaised(action), ct);
     }
-
-    // ---- Editor plumbing ---------------------------------------------------------------
 
     /// <summary>Puts a draft in the editor: the draft itself, then each field it feeds.</summary>
     private async ValueTask LoadDraftAsync(InspectionDraft draft, CancellationToken ct)

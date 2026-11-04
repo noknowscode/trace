@@ -78,8 +78,8 @@ public sealed partial class MainPage : Page
     /// <remarks>
     /// A TabBar announces its selected item the first time its items are laid out, and the
     /// navigator takes that announcement as a request to go there. The bar for the other width
-    /// category starts collapsed, so it used to be laid out for the first time when the window
-    /// crossed 600 (a phone turned to landscape, a window dragged wider), and pulled the
+    /// category starts collapsed, so it would be laid out for the first time when the window
+    /// crossed 600 (a phone turned to landscape, a window dragged wider), and pull the
     /// technician off the asset they were inspecting back to Today. Laid out at launch, while
     /// Today is the destination anyway, the announcement goes nowhere.
     /// </remarks>

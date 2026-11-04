@@ -123,7 +123,7 @@
                                 <TextBlock Style="{StaticResource SupportingText}"
                                            Text="Drag to turn the machine" />
                             </Border>
-                            <!-- An elevated button brings its own surface, like the hint's plate: over the machine a bare label was hard to read. -->
+                            <!-- An elevated button brings its own surface, like the hint's plate: over the machine a bare label is hard to read. -->
                             <Button Grid.Column="1"
                                     Style="{StaticResource ElevatedButtonStyle}"
                                     MinHeight="{StaticResource TouchTargetSize}"

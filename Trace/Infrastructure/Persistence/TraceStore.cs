@@ -152,8 +152,8 @@ public sealed class TraceStore : ITraceStore
         var pending = await ReadSectionAsync(CommitKey, TraceJsonContext.Default.StoreCommit, setAside, ct);
 
         // Every section is read before anything is decided. Reading the catalogue first and
-        // returning early on a bad read is how the technician's outbox used to disappear:
-        // an unreadable assets.json looked exactly like a first run.
+        // returning early on a bad read would lose the technician's outbox: an unreadable
+        // assets.json looks exactly like a first run.
         var assets = await ReadAsync(AssetsKey, pending.Value?.Assets, TraceJsonContext.Default.ImmutableListAsset, setAside, ct);
         var assignments = await ReadAsync(AssignmentsKey, pending.Value?.Assignments, TraceJsonContext.Default.ImmutableListAssignment, setAside, ct);
         var events = await ReadAsync(EventsKey, pending.Value?.Events, TraceJsonContext.Default.ImmutableListInspectionEvent, setAside, ct);

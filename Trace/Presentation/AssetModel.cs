@@ -108,8 +108,6 @@ public partial record AssetModel
 
     public IFeed<bool> IsOffline => Feed.AsyncEnumerable(_network.Watch).Select(online => !online);
 
-    // ---- Which face of the asset is showing -------------------------------------------
-
     /// <summary>
     /// Which face of the asset is showing. Held as the tab strip's index so the control can
     /// drive it two-way; Inspect is the landing tab because the machine is the task, not a
@@ -133,8 +131,6 @@ public partial record AssetModel
 
     public IFeed<bool> IsDocuments => TabIndex.Select(index => index == (int)AssetTab.Documents);
 
-    // ---- Choosing a point --------------------------------------------------------------
-
     /// <summary>A marker on the machine or a chip under it was pressed.</summary>
     public ValueTask SelectMarker(PointMarkerView marker, CancellationToken ct) =>
         marker is null ? ValueTask.CompletedTask : SelectPoint(marker.Point, ct);
@@ -151,13 +147,9 @@ public partial record AssetModel
         await TabIndex.UpdateAsync(_ => (int)AssetTab.Inspect, ct);
     }
 
-    // ---- Reviewing a recorded photo ----------------------------------------------------
-
     /// <summary>Opens a photo from History full size, in the workspace's viewer.</summary>
     public ValueTask ViewEvidence(Evidence evidence, CancellationToken ct) =>
         evidence is null ? ValueTask.CompletedTask : ViewerModel.OpenAsync(evidence, ct);
-
-    // ---- Back --------------------------------------------------------------------------
 
     /// <summary>Where Back goes: the destination the asset was opened from (Today, Assets, Scan or Findings).</summary>
     public string BackRoute => $"../{_origin.Route}";

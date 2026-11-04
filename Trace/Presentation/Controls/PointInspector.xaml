@@ -193,7 +193,6 @@
                     </Grid>
                 </Border>
 
-                <!-- Notes -->
                 <StackPanel Spacing="{StaticResource SpaceS}">
                     <TextBlock Text="Notes" Style="{StaticResource FieldLabelText}" />
                     <TextBox Text="{Binding NoteText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
@@ -205,7 +204,6 @@
                              AutomationProperties.Name="Inspection notes" />
                 </StackPanel>
 
-                <!-- Evidence -->
                 <StackPanel x:Name="EvidenceSection" DataContext="{Binding Evidence}" Spacing="{StaticResource SpaceS}">
                     <Grid>
                         <Grid.RowDefinitions>

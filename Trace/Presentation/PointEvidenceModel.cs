@@ -49,8 +49,6 @@ public partial record PointEvidenceModel
             .Select(pair => new LastPhotographed(InspectionRules.LatestWithPhotos(pair.Item2, pair.Item1)));
     }
 
-    // ---- The photos on the draft --------------------------------------------------------
-
     /// <summary>The photos attached to the draft, in the order they were taken.</summary>
     public IListFeed<Evidence> Photos => _draft.Select(draft => draft.Evidence).AsListFeed();
 
@@ -123,8 +121,6 @@ public partial record PointEvidenceModel
         }, ct);
     }
 
-    // ---- The photos recorded here before ------------------------------------------------
-
     /// <summary>
     /// The latest recorded inspection at the open point that carried photos: what the point
     /// looked like the last time someone photographed it, to judge today's reading against.
@@ -142,8 +138,6 @@ public partial record PointEvidenceModel
     /// <summary>Opens one of the photos last recorded here full size, in the workspace's viewer.</summary>
     public ValueTask ViewEvidence(Evidence evidence, CancellationToken ct) =>
         evidence is null ? ValueTask.CompletedTask : _viewer.OpenAsync(evidence, ct);
-
-    // ---- The camera ---------------------------------------------------------------------
 
     public IFeed<CameraPermission> CameraPermission => Feed.AsyncEnumerable(_camera.WatchPermission);
 

@@ -12,7 +12,7 @@ internal class Program
             .App(() => new App())
 #if DEBUG
             // Screenshot runs under Xvfb (tools/matrix.sh): TRACE_X11_RENDERER=software forces Skia's CPU
-            // backend instead of Mesa's llvmpipe OpenGL, which left parts of the window unpainted after a
+            // backend instead of Mesa's llvmpipe OpenGL, which leaves parts of the window unpainted after a
             // launch or a resize: whole cards missing from the round, the rail absent at a new width.
             .UseX11(x11 =>
             {

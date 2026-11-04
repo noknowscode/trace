@@ -139,8 +139,8 @@ public partial class App : Application
 
         // The theme the technician last chose is restored by the theme service itself: it is
         // scoped to the navigation, and the instance the round's model takes applies the saved
-        // choice as soon as it is created. Asking the root provider for one here created a second
-        // instance on a root that is never loaded, and awaiting it stopped OnLaunched for good.
+        // choice as soon as it is created. Asking the root provider for one here would create a
+        // second instance on a root that is never loaded, and awaiting it would stop OnLaunched.
 #if DEBUG
         await ApplyVerificationAsync();
 #endif

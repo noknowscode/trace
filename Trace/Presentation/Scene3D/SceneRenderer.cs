@@ -36,7 +36,7 @@ public sealed class SceneRenderer : IDisposable
     private Face[] _faces = new Face[1024];
 
     // Native Skia objects live across frames. The offscreen surface alone is the whole
-    // viewport at twice the size — recreating it per frame was the single largest cost of
+    // viewport at twice the size — recreating it per frame is the single largest cost of
     // an orbit, and a mask filter left to the finaliser is native memory the GC cannot see.
     private SKSurface? _surface;
     private int _surfaceWidth;
@@ -247,7 +247,7 @@ public sealed class SceneRenderer : IDisposable
             }
 
             // SKVertices only takes whole arrays, and copying the used prefix out every frame
-            // defeated the pooling. Instead the tail past the last face is collapsed onto one
+            // would defeat the pooling. Instead the tail past the last face is collapsed onto one
             // point: a triangle with three identical corners covers no pixels, so the whole
             // pooled buffer can be handed over as-is.
             var last = _positions[used - 1];

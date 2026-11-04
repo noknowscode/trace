@@ -18,7 +18,7 @@
             <SolidColorBrush x:Key="SheetScrimBrush" Color="#000000" Opacity="0.6" />
             <!-- The contact shadow under the machine. The renderer takes colour and opacity from the brush. -->
             <SolidColorBrush x:Key="SceneGroundShadowBrush" Color="#000000" Opacity="0.35" />
-            <!-- A cool neutral bounce rather than the brand colour: tinting the fill with Primary turned every machine mint green. -->
+            <!-- A cool neutral bounce rather than the brand colour: tinting the fill with Primary would turn every machine mint green. -->
             <SolidColorBrush x:Key="SceneFillLightBrush" Color="#7E8C99" />
         </ResourceDictionary>
         <ResourceDictionary x:Key="Light">
