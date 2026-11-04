@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using Trace.Infrastructure;
 using Trace.Infrastructure.Persistence;
 using Trace.Infrastructure.Platform;
 using Trace.Infrastructure.Repositories;
@@ -17,9 +18,29 @@ public partial class App : Application
     protected Window? MainWindow { get; private set; }
     protected IHost? Host { get; private set; }
 
-    [SuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "Uno.Extensions APIs are used in a way that is safe for trimming in this template context.")]
-    protected async override void OnLaunched(LaunchActivatedEventArgs args)
+    protected override async void OnLaunched(LaunchActivatedEventArgs args)
     {
+        CrashReporter.Attach(this);
+        try
+        {
+            CrashReporter.LogPath = Path.Combine(ApplicationData.Current.LocalFolder.Path, CrashLog);
+            await LaunchAsync(args);
+        }
+        catch (Exception ex)
+        {
+            // async void: a launch failure would vanish unrecorded (Uno's dispatcher swallows it on
+            // desktop; WinAppSDK ends the process). Reported here, then rethrown unchanged.
+            CrashReporter.Report(nameof(OnLaunched), ex);
+            throw;
+        }
+    }
+
+    [SuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "Uno.Extensions APIs are used in a way that is safe for trimming in this template context.")]
+    private async Task LaunchAsync(LaunchActivatedEventArgs args)
+    {
+#if DEBUG
+        ThrowWhenAskedAtLaunch();
+#endif
         var builder = this.CreateBuilder(args)
             .UseToolkitNavigation()
             .Configure(host => host
@@ -100,7 +121,12 @@ public partial class App : Application
         MainWindow.SetWindowIcon();
 
         Host = await MainWindow.InitializeNavigationAsync(
-            () => Task.FromResult(builder.Build()),
+            () =>
+            {
+                var host = builder.Build();
+                CrashReporter.Logger = host.Services.GetRequiredService<ILogger<App>>();
+                return Task.FromResult(host);
+            },
             initialRoute: "Main"
         );
 
@@ -119,6 +145,9 @@ public partial class App : Application
         await ApplyVerificationAsync();
 #endif
     }
+
+    /// <summary>Where <see cref="CrashReporter"/> writes, in the app's local data.</summary>
+    private const string CrashLog = "crash.log";
 
     /// <summary>The store's folder under the app's local data.</summary>
     private const string StoreFolder = "trace";

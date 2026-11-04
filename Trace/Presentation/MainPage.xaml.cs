@@ -1,3 +1,5 @@
+using Trace.Infrastructure;
+
 namespace Trace.Presentation;
 
 public sealed partial class MainPage : Page
@@ -26,6 +28,9 @@ public sealed partial class MainPage : Page
     /// The closed model is disposed only when the next asset is shown: it is usually hidden by its
     /// own Back command, which is still finishing at that moment, and disposing a model cancels
     /// its commands. Until then it is idle, as the one shared model was before.
+    ///
+    /// Still needed: the navigator's reuse is unchanged in Uno.Extensions 8.0.0-dev.150, the
+    /// version this app builds on, and the <c>--trace-route=Switch</c> hook fails without it.
     /// </remarks>
     private void OnAssetRegionVisibilityChanged(DependencyObject sender, DependencyProperty property)
     {
@@ -47,7 +52,23 @@ public sealed partial class MainPage : Page
         if (_closedAsset is { } closed)
         {
             _closedAsset = null;
-            _ = closed.DisposeAsync().AsTask();
+            _ = DisposeQuietlyAsync(closed);
+        }
+    }
+
+    /// <summary>
+    /// Disposes a closed workspace without holding up the navigation that closed it. Nothing
+    /// awaits this, so a failure is reported here rather than lost with the task.
+    /// </summary>
+    private static async Task DisposeQuietlyAsync(AssetViewModel closed)
+    {
+        try
+        {
+            await closed.DisposeAsync();
+        }
+        catch (Exception ex)
+        {
+            CrashReporter.Report("Disposing a closed asset workspace", ex);
         }
     }
 

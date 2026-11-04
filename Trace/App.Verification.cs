@@ -1,5 +1,6 @@
 #if DEBUG
 using Microsoft.UI.Xaml.Automation;
+using Trace.Infrastructure;
 using Trace.Infrastructure.Persistence;
 using Trace.Presentation.Controls;
 
@@ -32,6 +33,10 @@ namespace Trace;
 /// <item><c>--trace-focus=log</c> prints every element keyboard focus lands on.</item>
 /// <item><c>--trace-fault=load</c> makes every store read fail for the first 20 seconds, for the
 /// error states and their Retry.</item>
+/// <item><c>--trace-crash=launch|task|ui</c> throws where nothing catches it: in the launch
+/// itself, in a task nobody awaits, or on the UI thread, and prints whether
+/// <see cref="CrashReporter"/> wrote it to <c>crash.log</c>. The launch case ends the app, as
+/// any launch failure does.</item>
 /// </list>
 /// Each step prints a <c>VERIFY</c> line to stderr so a run can be checked without the picture.
 /// </remarks>
@@ -40,6 +45,45 @@ public partial class App
     private static string? VerificationArg(string name) => Environment.GetCommandLineArgs()
         .FirstOrDefault(a => a.StartsWith($"--trace-{name}=", StringComparison.OrdinalIgnoreCase))?
         .Split('=', 2)[1];
+
+    /// <summary>A launch that fails, for the launch guard and the crash file.</summary>
+    private static void ThrowWhenAskedAtLaunch()
+    {
+        if (VerificationArg("crash") is "launch")
+        {
+            throw new InvalidOperationException("Verification crash during launch (--trace-crash=launch).");
+        }
+    }
+
+    /// <summary>An exception nothing catches, off the launch path, and whether it reached the crash file.</summary>
+    private async Task CrashWhenAskedAsync()
+    {
+        var kind = VerificationArg("crash");
+        if (kind is not ("task" or "ui"))
+        {
+            return;
+        }
+
+        var marker = $"Verification crash ({kind}) {Guid.NewGuid():N}";
+        if (kind is "task")
+        {
+            // Faulted and dropped: the finalizer raises UnobservedTaskException once it is collected.
+            _ = Task.Run(new Action(() => throw new InvalidOperationException(marker)));
+            await Task.Delay(500);
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+        }
+        else
+        {
+            MainWindow?.DispatcherQueue.TryEnqueue(() => throw new InvalidOperationException(marker));
+        }
+
+        await Task.Delay(1500);
+        var path = CrashReporter.LogPath;
+        var written = path is not null && File.Exists(path) && (await File.ReadAllTextAsync(path)).Contains(marker, StringComparison.Ordinal);
+        Console.Error.WriteLine($"VERIFY crash={kind} reported={written} log={path}");
+    }
 
     /// <summary>Wraps the file store so reads fail for a while after launch, when asked to.</summary>
     private static ILocalFileStore WithVerificationFaults(ILocalFileStore store) =>
@@ -63,6 +107,8 @@ public partial class App
                 Microsoft.UI.Xaml.Input.FocusManager.GotFocus += (_, e) => Console.Error.WriteLine(
                     $"VERIFY focus={e.NewFocusedElement?.GetType().Name} name={(e.NewFocusedElement is DependencyObject d ? AutomationProperties.GetName(d) : string.Empty)}");
             }
+
+            await CrashWhenAskedAsync();
 
             if (VerificationArg("seed") is "empty")
             {
