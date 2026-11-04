@@ -1,4 +1,4 @@
-namespace Trace.Presentation;
+﻿namespace Trace.Presentation;
 
 public sealed partial class AssetPage : Page
 {
@@ -22,6 +22,20 @@ public sealed partial class AssetPage : Page
         // column is responsive in XAML). The workspace does not always change size at that
         // moment, so the sizing below also follows the column.
         InspectorHost.RegisterPropertyChangedCallback(Grid.ColumnProperty, (_, _) => ApplyWorkspaceLayout());
+
+        // A modal layer takes the keyboard when it opens, and Tab cycles inside it (XAML).
+        ActionSheetLayer.RegisterPropertyChangedCallback(VisibilityProperty, (_, _) => FocusWhenShown(ActionSheetLayer, ActionSheetForm.FocusSummary));
+        ViewerLayer.RegisterPropertyChangedCallback(VisibilityProperty, (_, _) => FocusWhenShown(ViewerLayer, () => CloseViewerButton.Focus(FocusState.Programmatic)));
+    }
+
+    // xaml-lint: allow codebehind - focus management: a modal layer that opens takes keyboard focus, which no binding can move.
+    private void FocusWhenShown(UIElement layer, Action focus)
+    {
+        if (layer.Visibility == Visibility.Visible)
+        {
+            // After this layout pass: an element that is not laid out yet cannot take focus.
+            DispatcherQueue.TryEnqueue(() => focus());
+        }
     }
 
     /// <summary>

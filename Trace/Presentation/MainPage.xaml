@@ -48,6 +48,7 @@
               BorderThickness="{StaticResource DividerEnd}">
         <Border Background="{ThemeResource NavigationTabBarTintBrush}" />
         <utu:TabBar x:Name="NavigationRail"
+                    AutomationProperties.Name="Destinations"
                     IsTabStop="False"
                     VerticalAlignment="Top"
                     Margin="{StaticResource GapTopM}"
@@ -132,6 +133,7 @@
 
         <!-- Narrow: a bottom bar within thumb reach. -->
         <utu:TabBar x:Name="BottomNavigation"
+                    AutomationProperties.Name="Destinations"
                     IsTabStop="False"
                     Grid.Row="1"
                     Grid.Column="0"

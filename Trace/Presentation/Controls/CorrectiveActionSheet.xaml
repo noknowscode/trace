@@ -23,7 +23,8 @@
 
             <StackPanel Spacing="{StaticResource SpaceS}">
                 <TextBlock Text="Summary" Style="{StaticResource FieldLabelText}" />
-                <TextBox Text="{Binding Summary, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                <TextBox x:Name="SummaryBox"
+                         Text="{Binding Summary, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                          MinHeight="{StaticResource TouchTargetSize}"
                          TextWrapping="Wrap"
                          AcceptsReturn="True"

@@ -74,6 +74,7 @@
                             VerticalAlignment="Center"
                             Style="{StaticResource MaterialTopTabBarStyle}"
                             IsTabStop="False"
+                            AutomationProperties.Name="Asset sections"
                             SelectedIndex="{Binding TabIndex, Mode=TwoWay}">
                     <utu:TabBarItem Content="Overview" AutomationProperties.Name="Overview" Style="{StaticResource MaterialTopTabBarItemStyle}" />
                     <utu:TabBarItem Content="Inspect" AutomationProperties.Name="Inspect" Style="{StaticResource MaterialTopTabBarItemStyle}" />
@@ -154,6 +155,7 @@
                             <Grid>
                                 <controls:AssetSceneView x:Name="Scene"
                                                          Style="{StaticResource AssetSceneViewStyle}"
+                                                         AutomationProperties.Name="Equipment view. Drag to turn the machine."
                                                          Kind="{Binding SchematicKind}"
                                                          ModelSource="{Binding ModelUri}" />
                                 <!-- Each marker, and below each chip, is its own tab stop: ItemsRepeater otherwise
@@ -573,16 +575,18 @@
             Corrective action, raised from the point that failed. A modal sheet over the whole
             page: centred at DialogMaxWidth from Normal up, the full width less a margin on a phone.
         -->
-        <Grid DataContext="{Binding ActionSheet}"
+        <Grid x:Name="ActionSheetLayer"
+              DataContext="{Binding ActionSheet}"
               Background="{ThemeResource SheetScrimBrush}"
               Visibility="{Binding IsOpen, Converter={StaticResource BoolToVisibility}}">
             <Border Style="{StaticResource SheetSurface}"
+                    TabFocusNavigation="Cycle"
                     MaxWidth="{StaticResource DialogMaxWidth}"
                     VerticalAlignment="Center"
                     HorizontalAlignment="Center"
                     Margin="{StaticResource InsetL}"
                     Padding="{utu:Responsive Narrow={StaticResource SheetPadding}, Normal={StaticResource SheetPaddingWide}}">
-                <controls:CorrectiveActionSheet />
+                <controls:CorrectiveActionSheet x:Name="ActionSheetForm" />
             </Border>
         </Grid>
 
@@ -590,9 +594,11 @@
             A recorded photo, full size, opened from History or from the point. Centred at
             ViewerMaxWidth over a scrim; the picture scales to fit whatever height is left.
         -->
-        <Grid Background="{ThemeResource SheetScrimBrush}"
+        <Grid x:Name="ViewerLayer"
+              Background="{ThemeResource SheetScrimBrush}"
               Visibility="{Binding IsViewingEvidence, Converter={StaticResource BoolToVisibility}}">
             <Border Style="{StaticResource SheetSurface}"
+                    TabFocusNavigation="Cycle"
                     MaxWidth="{StaticResource ViewerMaxWidth}"
                     VerticalAlignment="Center"
                     HorizontalAlignment="Center"
@@ -614,7 +620,8 @@
                             <TextBlock Text="{Binding ViewedEvidence.CreatedAt, Converter={StaticResource RelativeTime}}"
                                        Style="{StaticResource SupportingText}" />
                         </StackPanel>
-                        <Button Grid.Column="1"
+                        <Button x:Name="CloseViewerButton"
+                                Grid.Column="1"
                                 Style="{StaticResource IconButtonStyle}"
                                 VerticalAlignment="Top"
                                 Command="{Binding CloseEvidence}"

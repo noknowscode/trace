@@ -17,7 +17,8 @@ mkdir -p "$OUT"
 rm -rf "$HOME/.local/share/Trace/com.unoplatform.trace/LocalState/trace"
 rm -f "$HOME/.local/share/Trace/com.unoplatform.trace/Settings/Local.dat"
 
-DN=$(( 100 + RANDOM % 800 )); export DISPLAY=:$DN TRACE_X11_RENDERER=software
+# DISPLAY_NUM pins the Xvfb display (as in run-desktop.sh) when other sessions share the machine.
+DN=${DISPLAY_NUM:-$(( 100 + RANDOM % 800 ))}; export DISPLAY=:$DN TRACE_X11_RENDERER=software
 Xvfb :$DN -screen 0 2200x1400x24 -nolisten tcp >/dev/null 2>&1 & XP=$!
 sleep 1
 dotnet "$DLL" "$@" > "$OUT/$NAME.log" 2>&1 & AP=$!
