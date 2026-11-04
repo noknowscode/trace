@@ -519,12 +519,33 @@
                                         </StackPanel>
                                     </Border>
 
-                                    <Border Style="{StaticResource TileSurface}">
-                                        <StackPanel Spacing="{StaticResource SpaceS}">
-                                            <TextBlock Text="No documents on this device"
-                                                       Style="{StaticResource SectionHeaderText}" />
-                                            <TextBlock Style="{StaticResource SupportingText}"
-                                                       Text="Manuals and drawings sync with the asset record. Nothing has been downloaded for offline use yet." />
+                                    <!-- The inspection plan the device holds for this asset: each point,
+                                         what is read there, the band it is judged against and how. -->
+                                    <Border Style="{StaticResource CardSurface}">
+                                        <StackPanel Spacing="{StaticResource SpaceM}">
+                                            <TextBlock Text="Inspection plan" Style="{StaticResource SectionHeaderText}" />
+                                            <ItemsRepeater ItemsSource="{Binding Data.Points}">
+                                                <ItemsRepeater.Layout>
+                                                    <StackLayout Spacing="{StaticResource SpaceM}" />
+                                                </ItemsRepeater.Layout>
+                                                <ItemsRepeater.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Spacing="{StaticResource SpaceXXS}">
+                                                            <TextBlock Style="{StaticResource CardTitleText}">
+                                                                <Run Text="{Binding Sequence}" />
+                                                                <Run Text="·" />
+                                                                <Run Text="{Binding Label}" />
+                                                            </TextBlock>
+                                                            <TextBlock Style="{StaticResource FieldLabelText}">
+                                                                <Run Text="{Binding ReadingType}" />
+                                                                <Run Text="· expected" />
+                                                                <Run Text="{Binding ExpectedRange}" />
+                                                            </TextBlock>
+                                                            <TextBlock Text="{Binding Guidance}" Style="{StaticResource SupportingText}" />
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ItemsRepeater.ItemTemplate>
+                                            </ItemsRepeater>
                                         </StackPanel>
                                     </Border>
                                 </StackPanel>
@@ -536,7 +557,7 @@
                                     <StackPanel Spacing="{StaticResource SpaceS}">
                                         <controls:StatusChip Severity="Critical" Text="Asset unavailable" />
                                         <TextBlock Style="{StaticResource SupportingText}"
-                                                   Text="This asset is no longer on the device, so its nameplate and documents are not either." />
+                                                   Text="This asset is no longer on the device, so its nameplate and inspection plan are not either." />
                                     </StackPanel>
                                 </Border>
                             </DataTemplate>

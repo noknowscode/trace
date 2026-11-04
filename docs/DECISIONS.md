@@ -43,3 +43,20 @@ fresh install.
 
 Applies to: History, the point inspector, the asset page (viewer layer).
 Source: COMPLETENESS.md Major "Evidence review is missing".
+
+### D-003 · 2026-11-04 · The Documents tab shows the records the device holds; manuals are cut (proposed)
+
+Decision: Documents shows the asset's nameplate and its inspection plan (each point, what is
+read there, the expected band and the guidance), all read from the asset record on the
+device. The fixed "No documents on this device / Manuals and drawings sync with the asset
+record" tile is removed.
+
+Reason: the tile was the same string for every asset, and TRACE has no document model or
+document sync (the spec's data models have none). Manuals and drawings would be a large
+feature: a model, storage, a viewer and sync. Build small, cut large: the tab shows what
+exists and promises nothing else.
+
+Tradeoff: no manuals or drawings. The tab keeps its spec name, Documents.
+
+Applies to: the asset's Documents tab.
+Source: COMPLETENESS.md Major "The Documents tab is Simulated".
