@@ -337,6 +337,24 @@ public partial record PointInspectorModel
     }
 
     /// <summary>
+    /// Takes one photo off the draft and keeps the rest of what was entered. The draft is saved
+    /// on change like every other edit; the picture's file stays on the device, as it does for a
+    /// discarded draft.
+    /// </summary>
+    public async ValueTask RemovePhoto(Evidence photo, CancellationToken ct)
+    {
+        if (photo is null)
+        {
+            return;
+        }
+
+        await Draft.UpdateAsync(current => current is null ? null : current with
+        {
+            Evidence = current.Evidence.RemoveAll(item => item.Id == photo.Id),
+        }, ct);
+    }
+
+    /// <summary>
     /// The recovery path from a denied camera. On a device this opens system settings; here
     /// it completes the same round trip so the rest of the flow is exercised end to end.
     /// </summary>

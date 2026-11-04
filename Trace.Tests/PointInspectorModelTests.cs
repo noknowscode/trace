@@ -344,6 +344,27 @@ public class RecordedEvidenceTests
     }
 
     [Test]
+    public async Task One_photo_comes_off_the_draft_and_the_rest_stays()
+    {
+        var model = await _harness.OpenAssetAsync(camera: new FrameCamera());
+        await model.SelectPoint(await _harness.PointAsync("P-204-seal"), default);
+        var inspector = model.InspectorModel;
+        await inspector.AttachPhoto(default);
+        await inspector.AttachPhoto(default);
+        var photos = (await inspector.Draft)!.Evidence;
+        photos.Should().HaveCount(2);
+
+        // Only Discard, which clears the whole entry, used to take a photo off.
+        await inspector.RemovePhoto(photos[0], default);
+
+        (await inspector.Draft)!.Evidence.Should().ContainSingle().Which.Id.Should().Be(photos[1].Id);
+        await TestHarness.UntilAsync(async () =>
+            (await _harness.Store.GetAsync(default)).FindDraft("P-204-seal")?.Evidence.Count == 1);
+        (await _harness.Reopen().GetAsync(default)).FindDraft("P-204-seal")!.Evidence
+            .Should().ContainSingle().Which.Id.Should().Be(photos[1].Id, "the draft is saved without it");
+    }
+
+    [Test]
     public void The_newest_photographed_inspection_wins()
     {
         var now = DateTimeOffset.UnixEpoch;
