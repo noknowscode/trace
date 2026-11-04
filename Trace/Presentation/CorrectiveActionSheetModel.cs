@@ -112,9 +112,9 @@ public partial record CorrectiveActionSheetModel
         catch (Exception ex) when (StoreFailures.IsStorageFailure(ex))
         {
             // The store finishes a half-written commit on its next read, so the action may yet
-            // appear: point the technician at the list before a second try makes a duplicate.
+            // appear. Trying again is safe: an inspection raises one action, never two.
             await Error.UpdateAsync(
-                _ => "The action could not be saved on the device. Check Open findings on Overview before trying again; if it keeps failing, restart TRACE.",
+                _ => "The action could not be saved on the device. Try Create action again; it is never raised twice. If it keeps failing, restart TRACE.",
                 ct);
             return;
         }

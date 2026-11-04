@@ -327,6 +327,11 @@ public partial record PointInspectorModel
         }
     }
 
+    /// <summary>
+    /// The sheet raised work from the inspection recorded here. That inspection has its action
+    /// now, so Create corrective action is no longer offered for it: a second Create used to
+    /// raise a duplicate.
+    /// </summary>
     private async ValueTask OnActionRaised(CorrectiveAction? action, CancellationToken ct)
     {
         if (action is null)
@@ -334,9 +339,12 @@ public partial record PointInspectorModel
             return;
         }
 
-        await Confirmation.UpdateAsync(
-            _ => $"Corrective action raised for {action.PointLabel} and assigned to {action.Assignee}.",
-            ct);
+        if (await RecordedEvent is { } recorded && recorded.Id == action.SourceInspectionEventId)
+        {
+            await RecordedEvent.UpdateAsync(_ => null!, ct);
+        }
+
+        await Confirmation.UpdateAsync(_ => InspectionRules.DescribeRaisedAction(action), ct);
     }
 
     // ---- Editor plumbing ---------------------------------------------------------------

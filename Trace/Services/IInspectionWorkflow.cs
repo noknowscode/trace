@@ -15,6 +15,10 @@ public interface IInspectionWorkflow
 
     ValueTask<CompletionOutcome> CompleteAsync(InspectionDraft draft, CancellationToken ct);
 
+    /// <summary>
+    /// Raises corrective work from a failed inspection. One inspection raises one action: a
+    /// repeated request resolves to the action it already raised and writes nothing.
+    /// </summary>
     ValueTask<CorrectiveActionOutcome> RaiseCorrectiveActionAsync(
         CorrectiveActionRequest request,
         CancellationToken ct);
@@ -40,7 +44,10 @@ public sealed record CorrectiveActionRequest(
     CorrectivePriority Priority,
     string Assignee);
 
-public sealed record CorrectiveActionOutcome(bool Succeeded, CorrectiveAction? Action, string? Error)
+/// <param name="WasDuplicate">
+/// The inspection already had its action: <paramref name="Action"/> is that one, and nothing was written.
+/// </param>
+public sealed record CorrectiveActionOutcome(bool Succeeded, CorrectiveAction? Action, string? Error, bool WasDuplicate = false)
 {
     public static CorrectiveActionOutcome Rejected(string error) => new(false, null, error);
 }

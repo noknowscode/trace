@@ -237,6 +237,13 @@ public sealed class InspectionWorkflow : IInspectionWorkflow
                 "Corrective work can only be raised from an inspection recorded as Fail.");
         }
 
+        // One inspection, one action: a second Create, or a retry after a write that did land,
+        // resolves to the action already raised instead of queuing a duplicate.
+        if (snapshot.Actions.FirstOrDefault(a => a.SourceInspectionEventId == source.Id) is { } raised)
+        {
+            return new CorrectiveActionOutcome(true, raised, null, WasDuplicate: true);
+        }
+
         var now = _time.GetLocalNow();
         var action = InspectionRules.CreateCorrectiveAction(
             asset,
@@ -248,23 +255,32 @@ public sealed class InspectionWorkflow : IInspectionWorkflow
             now,
             $"ca-{Guid.NewGuid():N}");
 
-        await _store.MutateAsync(
-            s => s with
-            {
-                Actions = s.Actions.Add(action),
-                Queue = SyncQueue.Enqueue(
-                    s.Queue,
-                    nameof(CorrectiveAction),
-                    action.Id,
-                    "create",
-                    $"{action.Priority} · {action.Summary}",
-                    hasAttachments: false,
-                    now),
-            },
+        var committed = await _store.MutateAsync(
+            s => s.Actions.Any(a => a.SourceInspectionEventId == source.Id)
+                // Re-checked inside the lock: another request may have landed since the read.
+                ? s
+                : s with
+                {
+                    Actions = s.Actions.Add(action),
+                    Queue = SyncQueue.Enqueue(
+                        s.Queue,
+                        nameof(CorrectiveAction),
+                        action.Id,
+                        "create",
+                        $"{action.Priority} · {action.Summary}",
+                        hasAttachments: false,
+                        now),
+                },
             ct);
 
-        _log.LogInformation("Corrective action {ActionId} raised from {EventId}.", action.Id, source.Id);
+        var stored = committed.Actions.First(a => a.SourceInspectionEventId == source.Id);
+        var duplicate = !ReferenceEquals(stored, action);
 
-        return new CorrectiveActionOutcome(true, action, null);
+        if (!duplicate)
+        {
+            _log.LogInformation("Corrective action {ActionId} raised from {EventId}.", action.Id, source.Id);
+        }
+
+        return new CorrectiveActionOutcome(true, stored, null, duplicate);
     }
 }

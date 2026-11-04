@@ -199,6 +199,30 @@ public class InspectionWorkflowTests
     }
 
     [Test]
+    public async Task Raising_work_twice_from_one_inspection_keeps_one_action()
+    {
+        var draft = await DraftForSealAsync("7.4", Disposition.Fail, "Seal weeping.");
+        var completed = await _harness.Workflow.CompleteAsync(draft, default);
+        var request = new CorrectiveActionRequest(
+            "P-204", "P-204-seal", completed.Event!.Id, "Replace pump seal",
+            CorrectivePriority.High, "Mechanical Team");
+
+        var first = await _harness.Workflow.RaiseCorrectiveActionAsync(request, default);
+        var second = await _harness.Workflow.RaiseCorrectiveActionAsync(
+            request with { Summary = "Replace pump seal again", Priority = CorrectivePriority.Low }, default);
+
+        first.WasDuplicate.Should().BeFalse();
+        second.Succeeded.Should().BeTrue();
+        second.WasDuplicate.Should().BeTrue();
+        second.Action!.Id.Should().Be(first.Action!.Id, "the second request resolves to the action already raised");
+        second.Action.Summary.Should().Be("Replace pump seal");
+
+        var snapshot = await _harness.Store.GetAsync(default);
+        snapshot.Actions.Should().ContainSingle(a => a.SourceInspectionEventId == completed.Event.Id);
+        snapshot.Queue.Should().ContainSingle(o => o.EntityType == nameof(CorrectiveAction) && o.EntityId == first.Action.Id);
+    }
+
+    [Test]
     public async Task A_corrective_action_needs_a_summary()
     {
         var draft = await DraftForSealAsync("7.4", Disposition.Fail, "Seal weeping.");

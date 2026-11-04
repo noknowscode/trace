@@ -87,7 +87,50 @@ public class CorrectiveActionSheetModelTests
         await model.ActionSheetModel.Create(default);
 
         await TestHarness.UntilAsync(async () => (await model.InspectorModel.Confirmation)?.StartsWith("Corrective action") == true);
-        (await model.InspectorModel.Confirmation).Should().StartWith("Corrective action raised for Seal housing");
+        (await model.InspectorModel.Confirmation).Should().Be(
+            "Corrective action raised for Seal housing and assigned to Priya S.",
+            "the assignee's own full stop ends the sentence; it used to read \"Priya S..\"");
+    }
+
+    [Test]
+    public async Task Once_work_is_raised_from_an_inspection_it_is_not_offered_again()
+    {
+        var model = await FailTheSealAsync();
+        var inspector = model.InspectorModel;
+        var sheet = model.ActionSheetModel;
+        var recorded = (await inspector.RecordedEvent)!;
+        await inspector.OpenActionSheet(default);
+        await sheet.Create(default);
+
+        // Create corrective action stayed on offer after success, and a second Create wrote a
+        // second action and a second sync operation for the same failure.
+        await TestHarness.UntilAsync(async () => !await inspector.CanRaiseAction);
+        (await inspector.CanRaiseAction).Should().BeFalse();
+
+        await inspector.OpenActionSheet(default);
+        (await sheet.IsOpen).Should().BeFalse("there is nothing left to raise from that inspection");
+
+        await sheet.Create(default);
+        var snapshot = await _harness.Store.GetAsync(default);
+        snapshot.Actions.Should().ContainSingle(a => a.SourceInspectionEventId == recorded.Id);
+        snapshot.Queue.Count(o => o.EntityType == nameof(CorrectiveAction)).Should().Be(1);
+    }
+
+    [Test]
+    public async Task A_new_failure_at_the_same_point_can_raise_its_own_action()
+    {
+        var model = await FailTheSealAsync();
+        await model.InspectorModel.OpenActionSheet(default);
+        await model.ActionSheetModel.Create(default);
+        await TestHarness.UntilAsync(async () => !await model.InspectorModel.CanRaiseAction);
+
+        await Editing.EnterAsync(model.InspectorModel, "8.1", Disposition.Fail, "Worse than this morning.");
+        await model.InspectorModel.CompletePoint(default);
+
+        (await model.InspectorModel.CanRaiseAction).Should().BeTrue("a new inspection failed");
+        await model.InspectorModel.OpenActionSheet(default);
+        await model.ActionSheetModel.Create(default);
+        (await ActionsAsync()).Count(a => a.PointId == "P-204-seal" && a.Status == ActionStatus.Open).Should().Be(2);
     }
 
     [Test]

@@ -125,6 +125,12 @@ public static class InspectionRules
             Status: ActionStatus.Open,
             CreatedAt: createdAt);
 
+    /// <summary>The confirmation shown once corrective work is raised.</summary>
+    /// <remarks>An assignee written with a closing abbreviation ("Priya S.") ends the sentence itself.</remarks>
+    public static string DescribeRaisedAction(CorrectiveAction action) =>
+        $"Corrective action raised for {action.PointLabel} and assigned to {action.Assignee}"
+        + (action.Assignee.EndsWith('.') ? string.Empty : ".");
+
     /// <summary>The default summary offered when raising work from a failed inspection.</summary>
     public static string SuggestActionSummary(InspectionEvent failed) =>
         $"Inspect {failed.PointLabel.ToLowerInvariant()} on {failed.AssetId}";
