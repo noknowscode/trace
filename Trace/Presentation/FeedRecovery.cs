@@ -23,20 +23,24 @@ public sealed class FeedRecovery
     /// <summary>Restarts every watch that is currently showing an error.</summary>
     public void Retry() => Interlocked.Exchange(ref _retry, NewSignal()).TrySetResult();
 
-    /// <summary>A feed over a live watch, restarted by <see cref="Retry"/> after a failure.</summary>
-    public IFeed<T> Watch<T>(Func<CancellationToken, IAsyncEnumerable<T>> source) =>
+    /// <summary>
+    /// A feed over a live watch, restarted by <see cref="Retry"/> after a failure. A watch may yield
+    /// null for a record that is no longer there: the feed shows that as None, not as an error.
+    /// </summary>
+    public IFeed<T> Watch<T>(Func<CancellationToken, IAsyncEnumerable<T?>> source)
+        where T : notnull =>
         Feed<T>.Create(ct => Messages(source, ct));
 
     /// <summary>A list feed over a live watch, restarted by <see cref="Retry"/> after a failure.</summary>
     public IListFeed<T> WatchList<T>(Func<CancellationToken, IAsyncEnumerable<IImmutableList<T>>> source) =>
-        Watch(source).AsListFeed();
+        Watch<IImmutableList<T>>(source).AsListFeed();
 
     /// <summary>
     /// The messages a recoverable feed publishes: data while the source yields, an error when it
     /// throws, then progress and fresh data once <see cref="Retry"/> is called.
     /// </summary>
     public async IAsyncEnumerable<Message<T>> Messages<T>(
-        Func<CancellationToken, IAsyncEnumerable<T>> source,
+        Func<CancellationToken, IAsyncEnumerable<T?>> source,
         [EnumeratorCancellation] CancellationToken ct)
     {
         var current = Message<T>.Initial;

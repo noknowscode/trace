@@ -21,6 +21,12 @@ public partial record PointInspectorModel
     private readonly ILocalEvidenceStore _evidence;
     private readonly TimeProvider _time;
 
+    /// <summary>
+    /// The latest recorded inspection at the open point that carried photos, looked up once for
+    /// every binding that shows it.
+    /// </summary>
+    private readonly IFeed<LastPhotographed> _lastPhotographed;
+
     /// <param name="asset">The open asset, as the workspace reads it: the point shown is always its stored self.</param>
     /// <param name="history">The asset's recorded inspections, newest first.</param>
     /// <param name="actionSheet">The sheet corrective work is raised on, from what is recorded here.</param>
@@ -44,6 +50,9 @@ public partial record PointInspectorModel
         _evidence = evidence;
         _time = time;
 
+        _lastPhotographed = Feed.Combine(SelectedPointId, _history)
+            .Select(pair => new LastPhotographed(InspectionRules.LatestWithPhotos(pair.Item2, pair.Item1)));
+
         // Each editor folds straight into the draft, and the draft is persisted on every
         // change, so walking away from a half-entered reading never loses it.
         ReadingText.ForEach(OnReadingChanged);
@@ -57,11 +66,12 @@ public partial record PointInspectorModel
 
     public IState<string> SelectedPointId => State.Value(this, () => string.Empty);
 
+    /// <summary>The open point as the asset stores it, or None while no point is open or it has gone.</summary>
     public IFeed<InspectionPoint> SelectedPoint =>
         Feed.Combine(_asset, SelectedPointId)
-            .Select(pair => pair.Item1 is null || string.IsNullOrEmpty(pair.Item2)
-                ? null!
-                : pair.Item1.FindPoint(pair.Item2)!);
+            .SelectOrNone(pair => pair.Item1 is null || string.IsNullOrEmpty(pair.Item2)
+                ? null
+                : pair.Item1.FindPoint(pair.Item2));
 
     public IState<bool> IsOpen => State.Value(this, () => false);
 
@@ -83,7 +93,7 @@ public partial record PointInspectorModel
 
         // What was recorded at the previous point stays with that point: corrective work
         // raised from here must come from an inspection of this point.
-        await RecordedEvent.UpdateAsync(_ => null!, ct);
+        await RecordedEvent.UpdateAsync(_ => null, ct);
         await _actionSheet.ResetAsync(ct);
         await IsOpen.UpdateAsync(_ => true, ct);
     }
@@ -108,8 +118,8 @@ public partial record PointInspectorModel
 
     public IFeed<InspectionValidation> Validation =>
         Feed.Combine(SelectedPoint, Draft)
-            .Select(pair => pair.Item1 is null || pair.Item2 is null
-                ? null!
+            .SelectOrNone(pair => pair.Item1 is null || pair.Item2 is null
+                ? null
                 : InspectionRules.Validate(pair.Item1, pair.Item2));
 
     public IFeed<bool> CanComplete => Validation.Select(v => v?.CanComplete == true);
@@ -174,7 +184,7 @@ public partial record PointInspectorModel
             return;
         }
 
-        if (!outcome.Succeeded)
+        if (!outcome.Succeeded || outcome.Event is not { } recorded)
         {
             // Nothing was written. A blocker in the reading is usually on screen already, but
             // the point or asset may have gone, and then this is the only place it is said.
@@ -194,11 +204,11 @@ public partial record PointInspectorModel
             await IsDiscardPending.UpdateAsync(_ => false, ct);
         }
 
-        await RecordedEvent.UpdateAsync(_ => outcome.Event!, ct);
+        await RecordedEvent.UpdateAsync(_ => recorded, ct);
         await Confirmation.UpdateAsync(
             _ => outcome.WasDuplicate
                 ? "Already recorded. This inspection was saved once."
-                : $"{outcome.Event!.PointLabel} recorded as {outcome.Event.Disposition}. Saved on this device and queued to sync.",
+                : $"{recorded.PointLabel} recorded as {recorded.Disposition}. Saved on this device and queued to sync.",
             ct);
     }
 
@@ -255,24 +265,15 @@ public partial record PointInspectorModel
     /// The latest recorded inspection at the open point that carried photos: what the point
     /// looked like the last time someone photographed it, to judge today's reading against.
     /// </summary>
-    public IFeed<InspectionEvent> LastEvidence =>
-        Feed.Combine(SelectedPointId, _history)
-            .Select(pair => InspectionRules.LatestWithPhotos(pair.Item2, pair.Item1)!);
+    public IFeed<InspectionEvent> LastEvidence => _lastPhotographed.SelectOrNone(last => last.Event);
 
     /// <summary>
     /// The photos of <see cref="LastEvidence"/>, as a list of the records themselves: each opens
     /// the viewer (<see cref="ViewEvidence"/>) with its own <see cref="Evidence"/> as the command parameter.
     /// </summary>
-    public IListFeed<Evidence> LastPhotos =>
-        Feed.Combine(SelectedPointId, _history)
-            .Select(pair => InspectionRules.LatestWithPhotos(pair.Item2, pair.Item1) is { } latest
-                ? latest.Evidence.Where(item => item.Type == EvidenceType.Photo).ToImmutableList() as IImmutableList<Evidence>
-                : ImmutableList<Evidence>.Empty)
-            .AsListFeed();
+    public IListFeed<Evidence> LastPhotos => _lastPhotographed.Select(last => last.Photos).AsListFeed();
 
-    public IFeed<bool> HasLastEvidence =>
-        Feed.Combine(SelectedPointId, _history)
-            .Select(pair => InspectionRules.LatestWithPhotos(pair.Item2, pair.Item1) is not null);
+    public IFeed<bool> HasLastEvidence => _lastPhotographed.Select(last => last.Event is not null);
 
     /// <summary>Opens one of the photos last recorded here full size, in the workspace's viewer.</summary>
     public ValueTask ViewEvidence(Evidence evidence, CancellationToken ct) =>
@@ -325,7 +326,7 @@ public partial record PointInspectorModel
         }
 
         await EvidenceError.UpdateAsync(_ => string.Empty, ct);
-        await Draft.UpdateAsync(current => current is null ? null! : current with
+        await Draft.UpdateAsync(current => current is null ? null : current with
         {
             Evidence = current.Evidence.Add(saved),
         }, ct);
@@ -376,7 +377,7 @@ public partial record PointInspectorModel
 
         if (await RecordedEvent is { } recorded && recorded.Id == action.SourceInspectionEventId)
         {
-            await RecordedEvent.UpdateAsync(_ => null!, ct);
+            await RecordedEvent.UpdateAsync(_ => null, ct);
         }
 
         await Confirmation.UpdateAsync(_ => ScreenText.ActionRaised(action), ct);
@@ -395,17 +396,17 @@ public partial record PointInspectorModel
 
     private async ValueTask OnReadingChanged(string? value, CancellationToken ct) =>
         await Draft.UpdateAsync(
-            current => current is null ? null! : current with { ReadingText = value ?? string.Empty },
+            current => current is null ? null : current with { ReadingText = value ?? string.Empty },
             ct);
 
     private async ValueTask OnNoteChanged(string? value, CancellationToken ct) =>
         await Draft.UpdateAsync(
-            current => current is null ? null! : current with { Notes = value ?? string.Empty },
+            current => current is null ? null : current with { Notes = value ?? string.Empty },
             ct);
 
     private async ValueTask OnDispositionChanged(Disposition value, CancellationToken ct) =>
         await Draft.UpdateAsync(
-            current => current is null ? null! : current with { Disposition = value },
+            current => current is null ? null : current with { Disposition = value },
             ct);
 
     /// <summary>
@@ -451,4 +452,12 @@ public partial record PointInspectorModel
 
     private const string DraftNotSaved =
         "This entry could not be saved on the device, so it would be lost if TRACE closed. Keep going: Complete point tries the device again.";
+
+    /// <summary>The latest inspection at the open point that carried photos, and those photos.</summary>
+    private sealed record LastPhotographed(InspectionEvent? Event)
+    {
+        public IImmutableList<Evidence> Photos { get; } = Event is null
+            ? ImmutableList<Evidence>.Empty
+            : Event.Evidence.Where(item => item.Type == EvidenceType.Photo).ToImmutableList();
+    }
 }

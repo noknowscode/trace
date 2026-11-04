@@ -76,10 +76,10 @@ public partial record CorrectiveActionSheetModel
     internal async ValueTask ResetAsync(CancellationToken ct)
     {
         await IsOpen.UpdateAsync(_ => false, ct);
-        await Source.UpdateAsync(_ => null!, ct);
+        await Source.UpdateAsync(_ => null, ct);
         await Summary.UpdateAsync(_ => string.Empty, ct);
         await Error.UpdateAsync(_ => string.Empty, ct);
-        await Raised.UpdateAsync(_ => null!, ct);
+        await Raised.UpdateAsync(_ => null, ct);
     }
 
     public ValueTask Cancel(CancellationToken ct) => IsOpen.UpdateAsync(_ => false, ct);
@@ -119,7 +119,7 @@ public partial record CorrectiveActionSheetModel
             return;
         }
 
-        if (!outcome.Succeeded)
+        if (!outcome.Succeeded || outcome.Action is not { } raised)
         {
             await Error.UpdateAsync(_ => outcome.Error ?? "The action could not be created.", ct);
             return;
@@ -127,6 +127,6 @@ public partial record CorrectiveActionSheetModel
 
         await IsOpen.UpdateAsync(_ => false, ct);
         await Error.UpdateAsync(_ => string.Empty, ct);
-        await Raised.UpdateAsync(_ => outcome.Action!, ct);
+        await Raised.UpdateAsync(_ => raised, ct);
     }
 }
