@@ -32,62 +32,70 @@
                 needs to know what the device is holding before deciding where to walk next.
             -->
             <Border Grid.Row="1" Style="{StaticResource TileSurface}">
-                <!-- Status beside the controls from Normal; on a phone the controls drop below
-                     the status, so neither squeezes the other's labels. -->
-                <Grid ColumnSpacing="{StaticResource SpaceM}"
-                      RowSpacing="{utu:Responsive Narrow={StaticResource SpaceS}, Normal=0}">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
+                <StackPanel>
+                    <!-- Status beside the controls from Normal; on a phone the controls drop below
+                         the status, so neither squeezes the other's labels. -->
+                    <Grid ColumnSpacing="{StaticResource SpaceM}"
+                          RowSpacing="{utu:Responsive Narrow={StaticResource SpaceS}, Normal=0}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
 
-                    <StackPanel Spacing="{StaticResource SpaceXS}"
-                                VerticalAlignment="Center"
-                                Grid.ColumnSpan="{utu:Responsive Narrow=2, Normal=1}">
-                        <controls:WrapPanel HorizontalSpacing="{StaticResource SpaceS}" VerticalSpacing="{StaticResource SpaceS}">
-                            <controls:StatusChip Severity="Positive"
-                                                 Text="Online"
-                                                 Visibility="{Binding IsOnline, Converter={StaticResource BoolToVisibility}}" />
-                            <controls:StatusChip Severity="Caution"
-                                                 Text="Offline"
-                                                 Visibility="{Binding IsOffline, Converter={StaticResource BoolToVisibility}}" />
-                            <controls:StatusChip Severity="Info"
-                                                 Text="{Binding PendingLabel}"
-                                                 Visibility="{Binding HasPending, Converter={StaticResource BoolToVisibility}}" />
+                        <StackPanel Spacing="{StaticResource SpaceXS}"
+                                    VerticalAlignment="Center"
+                                    Grid.ColumnSpan="{utu:Responsive Narrow=2, Normal=1}">
+                            <controls:WrapPanel HorizontalSpacing="{StaticResource SpaceS}" VerticalSpacing="{StaticResource SpaceS}">
+                                <controls:StatusChip Severity="Positive"
+                                                     Text="Online"
+                                                     Visibility="{Binding IsOnline, Converter={StaticResource BoolToVisibility}}" />
+                                <controls:StatusChip Severity="Caution"
+                                                     Text="Offline"
+                                                     Visibility="{Binding IsOffline, Converter={StaticResource BoolToVisibility}}" />
+                                <controls:StatusChip Severity="Info"
+                                                     Text="{Binding PendingLabel}"
+                                                     Visibility="{Binding HasPending, Converter={StaticResource BoolToVisibility}}" />
+                            </controls:WrapPanel>
+                            <TextBlock Style="{StaticResource SupportingText}"
+                                       Text="Inspections always save on the device first."
+                                       Visibility="{Binding IsOffline, Converter={StaticResource BoolToVisibility}}" />
+                        </StackPanel>
+
+                        <!-- Device controls live together: whether this handset is working
+                             offline, and which theme suits where it is being used. -->
+                        <controls:WrapPanel Grid.Row="{utu:Responsive Narrow=1, Normal=0}"
+                                            Grid.Column="{utu:Responsive Narrow=0, Normal=1}"
+                                            Grid.ColumnSpan="{utu:Responsive Narrow=2, Normal=1}"
+                                            HorizontalSpacing="{StaticResource SpaceS}"
+                                            VerticalSpacing="{StaticResource SpaceS}"
+                                            VerticalAlignment="Center">
+                            <Button Style="{StaticResource OutlinedButtonStyle}"
+                                    MinHeight="{StaticResource TouchTargetSize}"
+                                    Command="{Binding ToggleConnection}"
+                                    AutomationProperties.Name="{Binding ConnectionAction}">
+                                <TextBlock Text="{Binding ConnectionAction}" />
+                            </Button>
+                            <!-- Named by their visible labels ("Go offline", "Light theme"): the label says what a press does. -->
+                            <Button x:Name="ThemeToggle"
+                                    Style="{StaticResource TextButtonStyle}"
+                                    MinHeight="{StaticResource TouchTargetSize}"
+                                    Command="{Binding ToggleTheme}"
+                                    AutomationProperties.Name="{Binding ThemeAction}">
+                                <TextBlock Text="{Binding ThemeAction}" />
+                            </Button>
                         </controls:WrapPanel>
-                        <TextBlock Style="{StaticResource SupportingText}"
-                                   Text="Inspections always save on the device first."
-                                   Visibility="{Binding IsOffline, Converter={StaticResource BoolToVisibility}}" />
-                    </StackPanel>
-
-                    <!-- Device controls live together: whether this handset is working
-                         offline, and which theme suits where it is being used. -->
-                    <controls:WrapPanel Grid.Row="{utu:Responsive Narrow=1, Normal=0}"
-                                        Grid.Column="{utu:Responsive Narrow=0, Normal=1}"
-                                        Grid.ColumnSpan="{utu:Responsive Narrow=2, Normal=1}"
-                                        HorizontalSpacing="{StaticResource SpaceS}"
-                                        VerticalSpacing="{StaticResource SpaceS}"
-                                        VerticalAlignment="Center">
-                        <Button Style="{StaticResource OutlinedButtonStyle}"
-                                MinHeight="{StaticResource TouchTargetSize}"
-                                Command="{Binding ToggleConnection}"
-                                AutomationProperties.Name="{Binding ConnectionAction}">
-                            <TextBlock Text="{Binding ConnectionAction}" />
-                        </Button>
-                        <!-- Named by their visible labels ("Go offline", "Light theme"): the label says what a press does. -->
-                        <Button x:Name="ThemeToggle"
-                                Style="{StaticResource TextButtonStyle}"
-                                MinHeight="{StaticResource TouchTargetSize}"
-                                Command="{Binding ToggleTheme}"
-                                AutomationProperties.Name="{Binding ThemeAction}">
-                            <TextBlock Text="{Binding ThemeAction}" />
-                        </Button>
-                    </controls:WrapPanel>
-                </Grid>
+                    </Grid>
+                    <!-- A theme switch that did not happen. Its own gap, so it costs nothing while hidden. -->
+                    <TextBlock Text="{Binding ThemeError}"
+                               Style="{StaticResource ErrorText}"
+                               Margin="{StaticResource GapTopS}"
+                               AutomationProperties.LiveSetting="Assertive"
+                               Visibility="{Binding ThemeError, Converter={StaticResource StringToVisibility}}" />
+                </StackPanel>
             </Border>
 
             <mvux:FeedView IsTabStop="False" Grid.Row="2"
