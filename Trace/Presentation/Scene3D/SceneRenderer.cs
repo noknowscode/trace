@@ -74,8 +74,6 @@ public sealed class SceneRenderer : IDisposable
             return;
         }
 
-        EnsureResources();
-
         var density = Supersample * MathF.Max(pixelScale, 0.5f);
         var scaledWidth = (int)MathF.Ceiling(bounds.Width * density);
         var scaledHeight = (int)MathF.Ceiling(bounds.Height * density);
@@ -99,7 +97,7 @@ public sealed class SceneRenderer : IDisposable
             image,
             new SKRect(0, 0, bounds.Width, bounds.Height),
             new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.None),
-            _blitPaint!);
+            BlitPaint);
     }
 
     /// <summary>
@@ -129,18 +127,15 @@ public sealed class SceneRenderer : IDisposable
         _shadowBuilder = null;
     }
 
-    /// <summary>
-    /// The small native objects are created on first use and again after a
-    /// <see cref="Dispose"/>, so releasing them on Unloaded never leaves a later frame
-    /// drawing with a freed paint.
-    /// </summary>
-    private void EnsureResources()
-    {
-        _meshPaint ??= new SKPaint { IsAntialias = false, Color = SKColors.White };
-        _blitPaint ??= new SKPaint { IsAntialias = true };
-        _shadowPaint ??= new SKPaint { IsAntialias = true };
-        _shadowBuilder ??= new SKPathBuilder();
-    }
+    // The small native objects are created on first use and again after a Dispose, so releasing
+    // them on Unloaded never leaves a later frame drawing with a freed paint.
+    private SKPaint MeshPaint => _meshPaint ??= new SKPaint { IsAntialias = false, Color = SKColors.White };
+
+    private SKPaint BlitPaint => _blitPaint ??= new SKPaint { IsAntialias = true };
+
+    private SKPaint ShadowPaint => _shadowPaint ??= new SKPaint { IsAntialias = true };
+
+    private SKPathBuilder ShadowBuilder => _shadowBuilder ??= new SKPathBuilder();
 
     private SKSurface? EnsureSurface(int width, int height, GRRecordingContext? context)
     {
@@ -265,7 +260,7 @@ public sealed class SceneRenderer : IDisposable
             // modulating against white passes them through untouched. Leaving the paint at
             // its default black draws the whole machine as a silhouette.
             using var mesh = SKVertices.CreateCopy(SKVertexMode.Triangles, _positions, _colors);
-            canvas.DrawVertices(mesh, SKBlendMode.Modulate, _meshPaint!);
+            canvas.DrawVertices(mesh, SKBlendMode.Modulate, MeshPaint);
         }
 
         // Anchors are refreshed even when nothing was drawn, or the markers would stay
@@ -329,8 +324,8 @@ public sealed class SceneRenderer : IDisposable
 
         // One builder reused across frames; Detach hands over the path and leaves the
         // builder empty for the next frame.
-        var builder = _shadowBuilder!;
-        var paint = _shadowPaint!;
+        var builder = ShadowBuilder;
+        var paint = ShadowPaint;
 
         builder.MoveTo(ellipse[0]);
         for (var i = 1; i < ellipse.Length; i++)

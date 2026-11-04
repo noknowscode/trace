@@ -31,19 +31,19 @@ public partial record ScanModel
 
     public async ValueTask ScanTag(CancellationToken ct)
     {
-        if (await ResolveAsync(_scanner.ScanAsync, ct) is { Found: true } result)
+        if (await ResolveAsync(_scanner.ScanAsync, ct) is { Found: true, AssetId: { } assetId })
         {
-            await Code.UpdateAsync(_ => result.AssetId ?? string.Empty, ct);
-            await OpenAsync(result.AssetId!, ct);
+            await Code.UpdateAsync(_ => assetId, ct);
+            await OpenAsync(assetId, ct);
         }
     }
 
     public async ValueTask Lookup(CancellationToken ct)
     {
         var code = await Code ?? string.Empty;
-        if (await ResolveAsync(token => _scanner.ResolveAsync(code, token), ct) is { Found: true } result)
+        if (await ResolveAsync(token => _scanner.ResolveAsync(code, token), ct) is { Found: true, AssetId: { } assetId })
         {
-            await OpenAsync(result.AssetId!, ct);
+            await OpenAsync(assetId, ct);
         }
     }
 
@@ -62,7 +62,7 @@ public partial record ScanModel
         }
         catch (Exception ex) when (StoreFailures.IsStorageFailure(ex))
         {
-            await Result.UpdateAsync(_ => null!, ct);
+            await Result.UpdateAsync(_ => null, ct);
             await ReadError.UpdateAsync(_ => RecordsUnreadable, ct);
             return null;
         }
