@@ -19,13 +19,7 @@ public interface ISyncQueue
     /// <summary>Attempts every pending and failed operation. Returns the number that succeeded.</summary>
     ValueTask<SyncResult> SyncAsync(CancellationToken ct);
 
-    /// <summary>Moves one failed operation back to pending so the next pass retries it.</summary>
-    ValueTask RetryAsync(string operationId, CancellationToken ct);
-
     ValueTask RetryAllFailedAsync(CancellationToken ct);
 }
 
-public sealed record SyncResult(int Succeeded, int Failed, bool WasOffline)
-{
-    public bool AnyAttempted => Succeeded + Failed > 0;
-}
+public sealed record SyncResult(int Succeeded, int Failed, bool WasOffline);

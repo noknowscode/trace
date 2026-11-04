@@ -281,7 +281,7 @@ public class InspectionWorkflowTests
 
         var outcome = await _harness.Workflow.CompleteAsync(draft, default);
 
-        var history = await new InspectionRepository(_harness.Store).GetHistoryAsync("P-204", default);
+        var history = await TestHarness.FirstAsync(new InspectionRepository(_harness.Store).WatchHistory("P-204", default));
 
         history.First().Id.Should().Be(outcome.Event!.Id);
         history.Should().BeInDescendingOrder(e => e.Timestamp);

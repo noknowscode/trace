@@ -24,12 +24,6 @@ public partial record InspectionPoint(
 
     public string LatestReadingText => LatestReading is { } value ? Format(value) : "—";
 
-    public bool HasReading => LatestReading is not null;
-
-    /// <summary>Where the stored latest reading sits relative to the expected range.</summary>
-    public RangeStatus LatestRangeStatus =>
-        LatestReading is { } value ? Evaluate(value) : RangeStatus.Unknown;
-
     public RangeStatus Evaluate(double reading) =>
         reading < NormalMin ? RangeStatus.Below
         : reading > NormalMax ? RangeStatus.Above

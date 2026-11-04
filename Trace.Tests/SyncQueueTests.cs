@@ -63,13 +63,12 @@ public class SyncQueueTests
 
         var failed = (await _harness.Store.GetAsync(default)).Queue.Single(o => o.EntityId == completed.Id);
         failed.Status.Should().Be(SyncState.Failed);
-        failed.HasError.Should().BeTrue();
-        failed.IsRetryable.Should().BeTrue();
+        failed.Error.Should().NotBeNullOrWhiteSpace();
 
         // A failed operation still counts as outstanding work.
         (await _harness.Store.GetAsync(default)).PendingSyncCount.Should().Be(1);
 
-        await _harness.Queue.RetryAsync(failed.Id, default);
+        await _harness.Queue.RetryAllFailedAsync(default);
         var second = await _harness.Queue.SyncAsync(default);
 
         second.Succeeded.Should().Be(1);
@@ -98,7 +97,7 @@ public class SyncQueueTests
         var result = await _harness.Queue.SyncAsync(default);
 
         result.WasOffline.Should().BeTrue();
-        result.AnyAttempted.Should().BeFalse();
+        (result.Succeeded + result.Failed).Should().Be(0);
         (await _harness.Store.GetAsync(default)).PendingSyncCount.Should().Be(1);
     }
 

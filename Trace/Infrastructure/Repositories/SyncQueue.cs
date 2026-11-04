@@ -118,18 +118,6 @@ public sealed class SyncQueue : ISyncQueue
         return new SyncResult(succeeded, failed, WasOffline: false);
     }
 
-    public async ValueTask RetryAsync(string operationId, CancellationToken ct) =>
-        await _store.MutateAsync(
-            snapshot => snapshot with
-            {
-                Queue = snapshot.Queue
-                    .Select(o => o.Id == operationId && o.Status == SyncState.Failed
-                        ? o with { Status = SyncState.Pending, Error = null }
-                        : o)
-                    .ToImmutableList(),
-            },
-            ct);
-
     public async ValueTask RetryAllFailedAsync(CancellationToken ct) =>
         await _store.MutateAsync(
             snapshot => snapshot.Queue.Any(o => o.Status == SyncState.Failed)

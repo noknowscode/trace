@@ -37,7 +37,7 @@ public class TraceStoreTests
         seal.Unit.Should().Be("mm/s");
         seal.NormalMin.Should().Be(0);
         seal.NormalMax.Should().Be(2.8);
-        seal.LatestRangeStatus.Should().Be(RangeStatus.Above);
+        seal.Evaluate(seal.LatestReading!.Value).Should().Be(RangeStatus.Above);
 
         snapshot.Events.Count(e => e.AssetId == "P-204").Should().BeGreaterThanOrEqualTo(3);
         snapshot.Actions.Should().ContainSingle();
@@ -73,7 +73,7 @@ public class TraceStoreTests
 
         compressor.PointCount.Should().Be(4);
         compressor.InspectedPointCount.Should().Be(3);
-        compressor.FindPoint("C-07-drain")!.HasReading.Should().BeFalse();
+        compressor.FindPoint("C-07-drain")!.LatestReading.Should().BeNull();
     }
 
     [Test]
