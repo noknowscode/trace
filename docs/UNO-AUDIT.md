@@ -102,7 +102,7 @@ written to the shared skill file in this pass.
 | Microsoft.NET.Test.Sdk | 17.9.0 | 18.11.0 | |
 | NUnit | 4.1.0 | 5.0.0 | Major version. |
 | NUnit3TestAdapter | 4.5.0 | 6.3.1 | Major version. |
-| coverlet.collector | 6.0.2 | 10.1.0 | Major version. |
+| coverlet.collector | 6.0.2 | 10.1.0 | Removed in the cleanup: nothing collects coverage. |
 | FluentAssertions | 6.12.0 | 8.11.0 | 8.x ships under a commercial licence. 7.2.2 is the newest Apache-2.0 release. |
 
 All heads target .NET 10 (`net10.0-*`), and `global.json` allows no prerelease SDK.
@@ -230,7 +230,7 @@ decision). What stands:
 - **`Controls/WrapPanel.cs:14`:** the comment says neither WinUI nor the Toolkit ships a wrapping panel. Windows
   Community Toolkit 8.x ships `WrapPanel` and supports Uno. Swapping it adds a package, so it is a decision to
   propose, not to make in an audit.
-- **Test packages:** the updates in the stack table above (NUnit 5, adapter 6, test SDK 18, coverlet 10;
+- **Test packages:** the updates in the stack table above (NUnit 5, adapter 6, test SDK 18;
   FluentAssertions 7.2.2 to stay on Apache-2.0).
 - **Gotcha entry:** add "TabBar navigates when first laid out" to the shared `uno-runtime-gotchas.md`, and reduce it
   to a minimal page.

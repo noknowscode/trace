@@ -39,7 +39,6 @@
       Logging;
       MVUX;
       Configuration;
-      Serialization;
       Localization;
       Navigation;
       ThemeService;
