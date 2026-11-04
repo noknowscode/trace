@@ -1,12 +1,12 @@
 # Completeness audit: TRACE (2026-11-04, Uno.Sdk 7.0.0-dev.115, heads: desktop, android, ios, windows, wasm)
 
 Audited at `1909a8b` on `feat/production-readiness`. Report mode: no code was changed.
+Blocker fix pass (2026-11-04): the one Blocker is fixed in `b9a3a9c`; see Fixed below. Nothing else was re-graded.
 
-Verdict: **Incomplete**
+Verdict: **Complete with gaps** (0 Blockers, 5 functional Majors, 1 head Major, 9 Minors)
 
-Safe to show: in a fresh launch, open one asset; inspect, fail and complete a point with a note and a photo; raise one corrective action; go offline, queue, sync, fail, retry; the empty and error states.
+Safe to show: open any asset from Today, Assets, Scan or Findings, as many in a session as you like; inspect, fail and complete a point with a note and a photo; raise one corrective action; go offline, queue, sync, fail, retry; the empty and error states.
 Keep off screen:
-- opening a second asset in the same session (it shows the first one);
 - pressing Create corrective action a second time;
 - looking for a recorded photo in History;
 - dispatching from Findings;
@@ -20,7 +20,7 @@ Screens: 16 intended, 14 present, 0 unreachable, 2 not built (source: PRODUCT-SP
 
 Routes: 7 registered (`Main` and 6 nested), 15 triggers, 0 dead references.
 - The triggers are 2 × 5 shell tabs, 3 `Navigation.Request="../Asset"`, Scan's `NavigateRouteAsync` and the asset's Back.
-- 1 is broken by construction: `Asset` lives in the Visibility region and is not rebuilt for new data.
+- 0 are broken. (`Asset` lives in the Visibility region and was not rebuilt for new data; fixed in `b9a3a9c`.)
 
 Interactions: about 60 found (33 commands, 3 navigation requests, 5 text boxes, 2 combo boxes, 24 tab items, Reset view, drag to orbit, feed Retry).
 - 0 are dead by construction.
@@ -40,7 +40,7 @@ Critical workflows (derived from the spec's primary workflows):
 | # | Area | Status | Evidence | Blockers | Majors | Minors | Note |
 |---|---|---|---|---|---|---|---|
 | 1 | Screens | Missing | R | 0 | 2 | 0 | No evidence review or viewer. The Documents list is a fixed string. |
-| 2 | Navigation | Broken | R | 1 | 0 | 0 | Every asset opened after the first shows the first. |
+| 2 | Navigation | Complete | R | 0 | 0 | 0 | Every asset opens its own workspace from Today, Assets, Scan and Findings, and Back returns to where it was opened (fixed `b9a3a9c`). |
 | 3 | Interactions | Broken | R | 0 | 2 | 1 | A corrective action can be raised twice. No dispatch controls. |
 | 4 | Logic | Complete | R | 0 | 0 | 1 | Fail rule, range, idempotent completion and action inheritance are proven. At-risk list is not worst first. |
 | 5 | Data | Complete | R | 0 | 0 | 1 | Writes, evidence file, relaunch and journal (tests) are proven. An action can sync before its source event. |
@@ -54,22 +54,22 @@ Critical workflows (derived from the spec's primary workflows):
 | 13 | Performance | Partial | R | 0 | 0 | 0 | Idle CPU 0–0.3 % on the 3D view. Debug start 3.1 s. Release start X. |
 | 14 | Security/privacy | Complete | C | 0 | 0 | 0 | No secrets. Debug hooks and the fault store are inside `#if DEBUG`. |
 | 15 | Visual quality | Partial | R | 0 | 0 | 3 | Raw type names on Sync, "Priya S..", markers overlap at 390 px. |
-| 16 | Testing | Partial | R | 0 | 0 | 1 | 87 passed, 1 skipped. No UI or workflow tests. Four heads X. |
+| 16 | Testing | Partial | R | 0 | 0 | 1 | 87 passed, 1 skipped. No UI or workflow tests; the `Switch` Debug hook now opens four assets in one launch. Four heads X. |
 
 ## Critical workflows by head
 
 | Workflow | desktop | android | ios | windows | wasm | Status |
 |---|---|---|---|---|---|---|
-| 1. Open assigned asset | R | X | X | X | X | Broken |
+| 1. Open assigned asset | R | X | X | X | X | Complete |
 | 2. Inspect and complete a point | R | X | X | X | X | Complete |
 | 3. Fail to corrective action to Findings | R | X | X | X | X | Partial |
 | 4. Offline queue, sync, retry | R | X | X | X | X | Complete (simulated transport, by design) |
-| 5. Search or tag code, open asset | R | X | X | X | X | Broken |
+| 5. Search or tag code, open asset | R | X | X | X | X | Complete |
 | 6. History: measurements and photos | R | X | X | X | X | Partial |
 | 7. Supervisor review and dispatch | R | X | X | X | X | Partial |
 
 How each desktop result was proven:
-1. AHU-12 opened first and showed AHU-12. Back, tap C-07: AHU-12 showed. Back, tap P-204: AHU-12 showed. Reproduced in two sessions.
+1. At the audit: AHU-12 opened first and showed AHU-12. Back, tap C-07: AHU-12 showed. Back, tap P-204: AHU-12 showed. Reproduced in two sessions. After the fix: each asset shows itself; see Fixed.
 2. Seal housing was read at 7.6 with Fail.
    - Complete stayed disabled with "needs a note or a photo" until a photo was added.
    - `events.json` gained the event with `ms-appdata` evidence; the PNG is on disk.
@@ -80,7 +80,7 @@ How each desktop result was proven:
 4. Offline: Sync now is disabled, and a Pass completion added a Pending operation.
    - Online sync: 3 synced, 1 failed, with the photo error.
    - Retry and sync: all Synced, and every event's `syncState` reads Synced.
-5. Search worked: "line 3" leaves C-07, "zzq" shows the empty state, and code X-1 shows Asset unavailable. Opening C-07 from search or by code showed the session's first asset.
+5. Search worked: "line 3" leaves C-07, "zzq" shows the empty state, and code X-1 shows Asset unavailable. At the audit, opening C-07 from search or by code showed the session's first asset; after the fix, code C-07 on Scan opens C-07 after three other assets (see Fixed).
 6. A new event shows with its reading, note, Fail and Pending, but no photo or evidence marker.
 7. Corrective work and at-risk assets are listed. Tapping a work row changes nothing, and no control changes assignee or status.
 
@@ -89,10 +89,24 @@ The other heads are X: the container cannot run Android, iOS or WinAppSDK (CI bu
 ## Findings
 
 ### Blockers
-- [Navigation] Any asset opened after the first in a session shows the first asset's workspace, from every entry point: Today, Assets, Scan and Findings.
-  - Where: `MainPage.xaml:122`. `Asset` is a `Region.Name` child of the `Visibility` navigator, which shows the existing child again. The `DataViewMap<AssetPage, AssetModel, AssetSummary>` data does not rebuild the model.
-  - Evidence: R. AHU-12 first; then C-07 and P-204 cards and the C-07 code lookup all showed AHU-12. The page kept the earlier tab and confirmation.
-  - Effect: a reading taken "on C-07" is recorded against the first asset. COMPLETION-CHECKLIST ticks "Asset cards open the correct asset"; its hooks only ever open P-204 once per launch.
+None open. The one found at the audit is under Fixed.
+
+### Fixed
+- [Navigation] Any asset opened after the first in a session showed the first asset's workspace, from every entry point: Today, Assets, Scan and Findings. Fixed in `b9a3a9c`; regression hook in `1dbaf73`.
+  - Where: `MainPage.xaml:122`. `Asset` is a `Region.Name` child of the `Visibility` navigator, which shows the existing child again. The `DataViewMap<AssetPage, AssetModel, AssetSummary>` data did not rebuild the model.
+  - Evidence at the audit: R. AHU-12 first; then C-07 and P-204 cards and the C-07 code lookup all showed AHU-12. The page kept the earlier tab and confirmation. A reading taken "on C-07" would be recorded against the first asset.
+  - Cause: Uno.Extensions 8.0.0-dev.150 `ControlNavigator.InitializeCurrentView` builds a view model only when the shown view's `DataContext` is null or not of the mapped type. The inline Asset child kept the first `AssetViewModel`, so later requests reused it and their `AssetSummary` was dropped.
+  - Fix: `MainPage` takes the asset's model off the region when the asset is hidden, so the next request builds one from the asset it carries. The closed model is disposed when the next asset is shown. The region, routes, `NavigationOrigin` and Back are unchanged.
+  - Proof: R, Debug desktop, Xvfb, real pointer, one session from a reset store.
+    - AHU-12 from Today showed AHU-12. A draft of 9.8 was entered at Drive belt, then Back went to Today.
+    - Assets, C-07 card: C-07 showed. Receiver auto-drain was recorded at 5 per hour, Pass. `events.json` gained `ev-94276905…` with `assetId` C-07 and `pointId` C-07-drain. `sync-queue.json` gained its operation. Back went to Assets.
+    - Today, P-204 card: P-204 showed, and Back went to Today.
+    - Scan, code C-07, Open asset: C-07 showed, with the new 5 per hour Pass. Back went to Scan.
+    - Findings, AHU-12 row: AHU-12 showed, and Drive belt reopened with the 9.8 draft. Back went to Findings.
+    - After a relaunch, C-07's History still lists 5 per hour, Pass, Pending. The app log has no errors.
+  - Regression: `--trace-route=Switch` printed `VERIFY switch result=pass opened=4/4 recordedOn=C-07` at 1280×860 and at 390×844. With the fix stashed it printed `opened=1/4` and `result=fail`, with AHU-12 shown for all four.
+  - Still pass: `Action` (sheet opens after a Fail), `Again` (seal events 2 to 4), and `Asset --trace-from=Findings --trace-back=1` (back to Findings).
+  - No unit test: the bug lives in the navigator's view-model reuse on a XAML region child, which the `net10.0` test project cannot host. The `Switch` hook covers it instead.
   - Owner: uno-navigation.
 
 ### Majors (functional)
@@ -131,7 +145,7 @@ The other heads are X: the container cannot run Android, iOS or WinAppSDK (CI bu
 - [Visual] Sync rows show the raw type names `CorrectiveAction` and `InspectionEvent`. R.
 - [Visual] The confirmation reads "assigned to Priya S.." with a doubled period. R.
 - [Visual] At 390 px the Inspect view's markers overlap each other and the asset title. R.
-- [Testing] There are no UI or integration tests for the workflows (UNO-BUILD-SPEC asks for them). The verification hooks open only P-204, once, so the Blocker went unseen. C.
+- [Testing] There are no UI or integration tests for the workflows (UNO-BUILD-SPEC asks for them). The verification hooks opened only P-204, once, so the Blocker went unseen; `--trace-route=Switch` now opens four assets in one launch. C.
 
 ## Not checked (X)
 - Android, iOS, WinAppSDK and WebAssembly runs: the container cannot run them, and WASM was skipped for time. Run workflows 1–7 on a device, the Windows head and a browser.
