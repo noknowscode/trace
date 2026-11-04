@@ -1,8 +1,6 @@
-using System.IO;
 using Microsoft.Extensions.Logging.Abstractions;
 using Trace.Infrastructure.Repositories;
 using Trace.Presentation;
-using Uno.Extensions.Reactive;
 
 namespace Trace.Tests;
 

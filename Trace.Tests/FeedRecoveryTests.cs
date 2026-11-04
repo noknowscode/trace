@@ -1,6 +1,5 @@
 using System.Runtime.CompilerServices;
 using Trace.Presentation;
-using Uno.Extensions.Reactive;
 
 namespace Trace.Tests;
 

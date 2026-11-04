@@ -1,6 +1,3 @@
-using Trace.Domain.Models;
-using Trace.Services;
-
 namespace Trace.Infrastructure.Platform;
 
 /// <summary>

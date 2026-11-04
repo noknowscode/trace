@@ -1,14 +1,9 @@
-using System.IO;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using Trace.Domain.Models;
 using Trace.Infrastructure.Persistence;
 using Trace.Infrastructure.Platform;
 using Trace.Infrastructure.Repositories;
-using Trace.Models;
 using Trace.Presentation;
-using Trace.Services;
-using Uno.Extensions.Navigation;
 
 namespace Trace.Tests;
 

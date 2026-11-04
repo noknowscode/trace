@@ -1,6 +1,3 @@
-using Trace.Domain.Enums;
-using Trace.Domain.Models;
-using Trace.Domain.Rules;
 using Trace.Infrastructure.Persistence;
 
 namespace Trace.Infrastructure.Repositories;

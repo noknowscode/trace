@@ -1,5 +1,4 @@
 using System.Globalization;
-using Trace.Domain.Rules;
 
 namespace Trace.Tests;
 

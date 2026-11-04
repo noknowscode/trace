@@ -1,4 +1,3 @@
-using Trace.Domain.Models;
 using Trace.Infrastructure.Persistence;
 
 namespace Trace.Infrastructure.Seed;

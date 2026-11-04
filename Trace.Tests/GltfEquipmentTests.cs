@@ -1,5 +1,4 @@
 using SkiaSharp;
-using Trace.Domain.Enums;
 using Trace.Presentation.Scene3D;
 using Trace.Tests.Support;
 

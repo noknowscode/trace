@@ -1,6 +1,3 @@
-using Trace.Domain.Enums;
-using Trace.Domain.Rules;
-
 namespace Trace.Tests;
 
 /// <summary>
