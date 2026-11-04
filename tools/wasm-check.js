@@ -21,8 +21,8 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 const steps = [
   { shot: '01-today' },
-  { click: [600, 270], wait: 4000, shot: '02-asset' },
-  { click: [300, 736], wait: 3000, shot: '03-point' },
+  { click: [600, 270], until: 'changed', shot: '02-asset' },
+  { click: [300, 736], until: 'changed', shot: '03-point' },
   { click: [1055, 505] },
   { key: 'End' }, { key: 'Backspace' }, { key: 'Backspace' }, { key: 'Backspace' },
   { type: '7.6' },
@@ -46,11 +46,21 @@ const steps = [
 
   for (const s of steps) {
     if (s.click) {
+      const before = s.until ? await page.screenshot() : null;
       await page.mouse.move(s.click[0], s.click[1]);
       await page.mouse.down();
       await sleep(150);
       await page.mouse.up();
-      await sleep(s.wait ?? 1500);
+      if (before) {
+        // A step that opens a page or a panel waits until the frame shows it: under load the
+        // runtime can take several seconds, and the next press would land on the old screen.
+        for (let i = 0; i < 60 && Buffer.compare(before, await page.screenshot()) === 0; i++) {
+          await sleep(500);
+        }
+        await sleep(2500);
+      } else {
+        await sleep(s.wait ?? 1500);
+      }
     }
     if (s.key) { await page.keyboard.press(s.key); await sleep(s.wait ?? 800); }
     if (s.type) { await page.keyboard.type(s.type, { delay: 40 }); await sleep(s.wait ?? 1500); }
