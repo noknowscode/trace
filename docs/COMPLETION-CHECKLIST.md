@@ -17,7 +17,7 @@ Items that cannot be checked in this container are listed under "Not verified he
       Today, C-07 from Assets, P-204 from Today and C-07 by code on Scan in one launch, and a
       reading taken on the second is stored against C-07.)
 - [x] Back returns to the previous context without losing an in-progress inspection.
-      (A note typed into a point survives Today and back — `check-draft-return.png`. Back
+      (A note typed into a point survives Today and back, checked at runtime. Back
       returns to the destination that opened the asset: Today, Assets, Scan or Findings,
       checked with `--trace-from=<destination> --trace-back=1` and by pointer from Assets.)
 - [x] Discarding entered work confirms first; leaving a point keeps its draft and does not ask.
@@ -57,8 +57,8 @@ Items that cannot be checked in this container are listed under "Not verified he
 ## Evidence
 - [x] Evidence surface can be opened from the inspection point.
 - [x] Camera-denied state has a recovery path.
-      (Reachable through "Simulate denial"; "Open settings" restores access —
-      `check-camera-denied.png`, `check-camera-recovery.png`, `check-camera-granted.png`.)
+      (Reachable through "Simulate denial"; "Open settings" restores access, checked at
+      runtime.)
 - [x] At least one realistic example image is shown.
 - [x] Long notes wrap without covering actions.
 - [x] Empty evidence state is explicit.
@@ -76,7 +76,7 @@ Items that cannot be checked in this container are listed under "Not verified he
 - [x] A completion interrupted between its files is finished on the next launch, and an
       unreadable file is set aside and reported on Sync rather than overwritten (store tests).
       (The app persists snapshots as JSON in local storage; a queued operation was still
-      pending after the process was restarted — `check-persist-sync.png`. This replaces the
+      pending after the process was restarted, checked at runtime. This replaces the
       prototype's localStorage requirement.)
 
 ## States and edge cases
@@ -86,7 +86,7 @@ Items that cannot be checked in this container are listed under "Not verified he
       `FeedRecoveryTests`. The asset's Inspect tab has the same state, with the asset's name
       above it, instead of a default machine: `inspecterror-dark.jpg`.)
 - [x] Empty assignments state exists.
-      (`check-empty-today.png`, with a route back out through Scan or Assets.)
+      (`empty-dark.jpg`, with a route back out through Scan or Assets.)
 - [x] Populated state exists.
 - [x] Asset-not-found state exists.
 - [x] Disabled action state is visually distinct.
