@@ -23,7 +23,7 @@ stay for the next pass.
 | `uno-material` | Material roles and type-ramp styles only. The Reset view button moved to `ElevatedButtonStyle`, the Material button that brings its own surface. |
 | `uno-toolkit` | `utu:Responsive` for every breakpoint, `utu:TabBar` for both navigation bars, `utu:SafeArea`, and `utu:AncestorBinding` for Try again. CardContentControl versus the styled `Border` surfaces is under Remaining. |
 | `winui-xaml` | `ItemsRepeater` for lists, a command instead of a `Click` handler, `AutomationProperties` on the new controls, and a live region on the new error text. |
-| `dotnet-csharp` | Exception filters (`when (IsWriteFailure(ex))`) so that only write failures are caught, no `async void` beyond `OnLaunched`, and unused code removed. |
+| `dotnet-csharp` | Exception filters (`when (IsWriteFailure(ex))`) so that only write failures are caught, no `async void` beyond `OnLaunched` (guarded since A pass 2, with `CrashReporter` for what nothing else catches), and unused code removed. |
 | `skiasharp-uno` | `SKCanvasElement` on Skia heads and `SKXamlCanvas` on WinAppSDK. Paints, mask filter, offscreen surface and vertex buffers are cached across frames. |
 
 ## Semantic lint gate
@@ -136,6 +136,11 @@ All heads target .NET 10 (`net10.0-*`), and `global.json` allows no prerelease S
   - the empty `Directory.Build.targets` and its entry in the solution.
 - **Constraint comments kept:** the comments that say why something is done (store commit order, FeedRecovery, the
   SafeArea pin, the renderer caches) all stay.
+- **A pass 2 (`8acd211`):** the code review found dead code this pass had missed, now removed:
+  `IAssetRepository.GetAsync` (no caller); members only the tests used (`IInspectionRepository.GetHistoryAsync`,
+  `ISyncQueue.RetryAsync`, `SyncOperation.HasError` and `IsRetryable`, `InspectionPoint.HasReading` and
+  `LatestRangeStatus`, `SyncResult.AnyAttempted`); the template's `AppInfoTests`, `AppConfig.Environment` with its
+  settings keys and `appsettings.development.json`, and `Trace/ReadMe.md`; `EvidenceType.Note`; four unused icons.
 
 ### Error handling (221f101)
 
@@ -213,20 +218,10 @@ test over `BreakableFileStore` (`Trace.Tests/TestHarness.cs`):
 
 ## Remaining
 
-Update (A pass, 2026-11-04): the `AssetModel` split and the unguarded store paths below are done (`0bb3835`,
-`cab8cd2`), and FluentAssertions is on 7.2.2 (`0b34d92`, owner decision). The other items stand.
+The `AssetModel` split and the unguarded store paths that stood here are done (A pass `0bb3835`, `cab8cd2`; A pass 2
+`6b3b371`, `92f7e29`: the container builds the workspace's parts), and FluentAssertions is on 7.2.2 (`0b34d92`, owner
+decision). What stands:
 
-- **`AssetModel` carries the whole workspace:** 530 lines and 12 dependencies, holding tabs, the point editor and
-  draft, evidence and camera, corrective action, and Back.
-  - A split along those seams (an `InspectionEditor` and an `ActionSheet` behind the page model, with the tests
-    moved with them) is about 1 day. It changes how `AssetPage` and `PointInspector` bind (`Parent.` paths or nested
-    view models), so it needs its own runtime pass.
-  - Not needed by the lint, so it was not started.
-- **Other unguarded store paths** (about 2 h with tests). Each needs a decision on where its message goes:
-  - `AssetModel.SelectPoint` (`:192`, starts or resumes the draft);
-  - `DiscardDraft` (`:245`);
-  - the draft autosave (`Draft.ForEach(PersistDraft)`, `:67`, `:523`);
-  - `ScanModel.ScanTag` and `Lookup` (`ScanModel.cs:29`, `:41`, which read the store).
 - **Card surfaces:** 43 styled `Border` surfaces (`CardSurface`, `TileSurface`, `SheetSurface`, `ValueChip`,
   `ScenePlate`, `ConfirmationSurface` in `Themes/Styles.xaml`). The lint passes them because the attributes live in
   styles, but the semantic ladder says such surfaces are `utu:CardContentControl`. Moving the static ones to an

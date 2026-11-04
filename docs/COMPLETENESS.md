@@ -5,22 +5,24 @@ Blocker fix pass (2026-11-04): the one Blocker is fixed in `b9a3a9c`; see Fixed 
 A pass (2026-11-04, from `f2c8417`): the five functional Majors are built or cut and re-proved at runtime on
 the desktop head, and the critical workflow "inspect and complete a point" was run in Chromium on the Release
 WebAssembly build. See Fixed below.
+A pass 2 (2026-11-04, from `d1e350a`, the code review's closed list): the review's defects and Minors are fixed and
+re-proved on the desktop head, and the browser check now presses the Notes field where an earlier build once closed
+the inspector. See "Fixed in A pass 2" below.
 
-Verdict: **Complete with gaps** (0 Blockers, 0 functional Majors, 1 head Major, 8 Minors)
+Verdict: **Complete with gaps** (0 Blockers, 0 functional Majors, 1 head Major, 4 Minors)
 
 Safe to show: open any asset from Today, Assets, Scan or Findings, as many in a session as you like; inspect,
 fail and complete a point with a note and a photo, in portrait or landscape; review the photos recorded at a
 point and in History; raise one corrective action per failure; dispatch and close it from Findings; go offline,
 queue, sync, fail, retry; the empty and error states; the same inspection in a browser.
-Keep off screen:
-- in the browser, pressing the Notes field while it is mostly scrolled out of the inspector (see Minors).
+Keep off screen: nothing known.
 
 ## Inventory
 
 Screens: 16 intended, 15 present, 0 unreachable, 1 not built (source: PRODUCT-SPEC and UNO-BUILD-SPEC).
 - The 16 are 6 destinations, 4 asset tabs and 6 transient layers.
-- The evidence viewer is built (A pass). Not built: the sync conflict dialog (N/A while there is no server; see
-  Unresolved Questions).
+- The evidence viewer is built (A pass). Not built: the sync conflict dialog, cut while there is no server (D-004,
+  proposed).
 
 Routes: 7 registered (`Main` and 6 nested), 15 triggers, 0 dead references.
 - The triggers are 2 × 5 shell tabs, 3 `Navigation.Request="../Asset"`, Scan's `NavigateRouteAsync` and the asset's Back.
@@ -45,20 +47,20 @@ Critical workflows (derived from the spec's primary workflows):
 |---|---|---|---|---|---|---|---|
 | 1 | Screens | Complete | R | 0 | 0 | 0 | Recorded photos show in History, on the point and in a viewer. Documents shows the nameplate and the inspection plan. |
 | 2 | Navigation | Complete | R | 0 | 0 | 0 | Every asset opens its own workspace from Today, Assets, Scan and Findings, and Back returns to where it was opened (fixed `b9a3a9c`). |
-| 3 | Interactions | Complete | R | 0 | 0 | 1 | One corrective action per failure; Dispatch and Close in Findings. A single photo cannot be removed from a draft. |
+| 3 | Interactions | Complete | R | 0 | 0 | 0 | One corrective action per failure, still offered after the point is closed and reopened; Dispatch and Close in Findings; one photo at a time comes off a draft. |
 | 4 | Logic | Complete | R | 0 | 0 | 0 | Fail rule, range, idempotent completion and action raising, action inheritance and the status steps are proven. |
-| 5 | Data | Complete | R | 0 | 0 | 1 | Writes, evidence file, relaunch, journal and old action statuses (tests) are proven. An action can sync before its source event. |
+| 5 | Data | Complete | R | 0 | 0 | 0 | Writes, evidence file, relaunch, journal and old action statuses (tests) are proven. Corrective work syncs only after its inspection; a failed upload reads Failed in History. |
 | 6 | States | Complete | R | 0 | 0 | 0 | Error and Retry, empty, asset unavailable, offline, pending, sync failed, camera denied, validation, draft not saved, records unreadable on Scan and success are proven. Loading is C. |
 | 7 | Forms | Complete | R | 0 | 0 | 0 | Numeric reading, Fail needs note or photo, summary required, priority and assignee. |
 | 8 | Authentication | N/A | C | 0 | 0 | 0 | No accounts in the spec; the technician name comes from config. |
 | 9 | Responsive/adaptive UI | Complete | R | 0 | 0 | 1 | Phone landscape scrolls the inspector as one (fixed). The machine is small in landscape. |
 | 10 | Platform behavior | Simulated (by design) | C | 0 | 0 | 0 | Camera, QR/NFC, network and sync transport sit behind interfaces. |
-| 11 | Failure handling | Complete | R | 0 | 0 | 1 | Every store write and read a command makes is caught and said on screen. No global handler. |
-| 12 | Accessibility | Complete | R | 0 | 0 | 1 | 21.3 names per 1,000 XAML lines; keyboard walk reaches every control; modal layers take focus. Three Toolkit parts are empty tab stops. |
+| 11 | Failure handling | Complete | R | 0 | 0 | 0 | Every store write and read a command makes is caught and said on screen; a failed theme switch too. The launch is guarded and `CrashReporter` logs what nothing else caught to `crash.log`. |
+| 12 | Accessibility | Complete | R | 0 | 0 | 1 | 21.0 names per 1,000 XAML lines; keyboard walk reaches every control; modal layers take focus. Three Toolkit parts are empty tab stops. |
 | 13 | Performance | Partial | R | 0 | 0 | 0 | Idle CPU 0–0.3 % on the 3D view. Debug start 3.1 s. Release start X. |
 | 14 | Security/privacy | Complete | C | 0 | 0 | 0 | No secrets. Debug hooks and the fault store are inside `#if DEBUG`. |
 | 15 | Visual quality | Partial | R | 0 | 0 | 1 | Markers overlap at 390 px. (Raw type names on Sync and "Priya S.." fixed.) |
-| 16 | Testing | Partial | R | 0 | 0 | 1 | 136 passed, 1 skipped, including the page models. No UI tests; the Debug hooks and the browser script drive the workflows. |
+| 16 | Testing | Partial | R | 0 | 0 | 1 | 176 passed, 1 skipped, including every page model (Today, Assets and the shell added). No UI tests; the Debug hooks and the browser script drive the workflows. |
 
 ## Critical workflows by head
 
@@ -97,6 +99,26 @@ WebAssembly (Release `net10.0-browserwasm`, headless Chromium 1280 x 800, `tools
 Seal housing, 7.6 mm/s with a note, Fail, Complete point: the confirmation, the Sync badge (1) and the new History
 entry (Fail, Pending) showed. `docs/evidence/wasm-complete-point.jpg`. Android, iOS and WinAppSDK stay X: the
 container cannot run them (CI builds them).
+
+A pass 2, desktop (Debug, Xvfb :614, software renderer, Dark, 1280 x 800 and 390 x 844, real pointer):
+- Today and Assets cards read their condition, progress, due time and findings through the presentation layer;
+  Assets search ("compressor") leaves C-07.
+- Scan a tag opens P-204, code C-07 opens C-07, code X-99 shows Asset unavailable.
+- The point's recorded photo opens the viewer from the inspector. Two photos added, one removed: the other stays, and
+  the draft resumes with it after a relaunch.
+- Seal housing failed with a photo and completed; in a new session the reopened point still offers Create corrective
+  action, and Create raises it ("…assigned to Mechanical Team.").
+- Sync now: the inspection reads Failed with its error and the action stays Pending ("1 corrective action change
+  waits until the inspection it came from has synced"); History shows Failed on the event. Retry: both Pending, History
+  Pending. Sync now: both Synced, History Synced.
+- Findings (Dispatch, Close), Overview, Documents and History tabs; the theme switch to Light and back (`VERIFY
+  theme=Light actual=Light`, `theme=Dark actual=Dark`).
+- `--trace-crash=launch`: no window, the exception in `crash.log` and on the console. `--trace-crash=task`:
+  `VERIFY crash=task reported=True`. `--trace-route=Switch`: `result=pass opened=4/4`, no `crash.log` written.
+
+A pass 2, WebAssembly (`tools/wasm-check.js`, Release, Chromium 1280 x 800): reading 7.6, Fail, then the Notes field
+pressed while it is mostly scrolled out: it scrolls into view and takes the note (`docs/evidence/wasm-notes-press.jpg`);
+Complete point, the confirmation and Create corrective action (`wasm-complete-point.jpg`); History shows the new entry.
 
 ## Findings
 
@@ -152,6 +174,34 @@ Also fixed in the pass:
   their text; the action sheet and the photo viewer take focus and keep Tab inside (`532b805`). Keyboard walk with
   `--trace-focus=log` on every destination and asset tab at 1280 px and on Inspect at 390 px reaches every control.
 
+### Fixed in A pass 2 (2026-11-04)
+The code review's closed list (`d1e350a`). Each with tests where a unit test reaches it.
+- [Data] **A failed upload reads Failed, and corrective work waits for its inspection** (`6134fdf`). A sync pass
+  writes each inspection's own sync state (Failed while its upload has not gone, Pending again on Retry, Synced once
+  sent) and sends corrective work only after the inspection it came from; an action's later change waits for the
+  action. `SyncQueueTests`. R (see A pass 2, desktop).
+- [Failure handling] **The launch is guarded and nothing else is lost** (`42023cf`, `1ee5a2a`). `OnLaunched` reports
+  and rethrows a launch failure; `CrashReporter` attaches to `Application.UnhandledException`,
+  `AppDomain.UnhandledException` and `TaskScheduler.UnobservedTaskException` and writes to the log and `crash.log`;
+  the closed workspace's `DisposeAsync` is awaited in a guarded helper. `CrashReporterTests`. R.
+- [Failure handling] **A theme switch that fails says so** (`31ed6e3`): the label and theme stay, and the round
+  shows a message. `TodayModelTests`.
+- [Interactions] **A failure closed before Create still offers its action** (`f4604b2`): opening a point offers
+  Create for its latest failed inspection with no action. `PointInspectorModelTests`. R across sessions.
+- [Interactions] **One photo comes off a draft** (`ba3dc29`, `922d492`): Remove on each attached photo; the rest
+  of the draft stays. `PointInspectorModelTests`. R.
+- [WebAssembly] **Pressing Notes while it is scrolled out no longer closes the inspector, as far as can be shown.**
+  It did once in the A pass (Chromium, `s4`→`s5` of that run). In this pass it did not reproduce in 17 presses over
+  15 browser sessions, 8 on this head and 9 on a rebuild of `d1e350a` (at the field's sliver, below it, on its label,
+  with and without Fail first, and as a short drag). No fix was made, because no cause could be shown;
+  `tools/wasm-check.js` now presses the field there on every run (`21a72ea`), so a return would show.
+- Structure and quality items from the review, with no behaviour change: the container builds the workspace's parts
+  (`AssetWorkspaceParts`; `AssetModel` 12 → 9 dependencies, forwards none), the inspector's photos and camera are
+  their own part (`PointEvidenceModel`; `PointInspectorModel` 446 → 376 lines, 4 inputs) and open photos through it,
+  each asset tab is its own control (`AssetPage.xaml` 649 → 166 lines), screen text left the domain (`ScreenText`),
+  dead members and template files went (`8acd211`), no `!` silences a nullable value (`8c3041e`, `4131c76`), the
+  latest photos are looked up once, and Today, Assets (search) and the shell have model tests (`a7198a6`).
+
 ### Majors (functional)
 None open.
 
@@ -160,13 +210,9 @@ None open.
   WebAssembly (Tier 2) ran workflows 1, 2 and 6 in Chromium in the A pass.
 
 ### Minors
-- [Interactions] A single photo cannot be removed from a draft; only Discard all. `PointInspector.xaml`. C.
-- [Data] A corrective action syncs while its source event's upload has failed (queue: action Synced, event Failed). This would break referential order against a real server. R.
-- [Failure handling] There is no `UnhandledException` / `UnobservedTaskException` handler. C.
 - [Visual] At 390 px the Inspect view's markers overlap each other and the asset title. R.
 - [Responsive] In phone landscape the docked machine is about 135 px tall under its nameplate and Reset view plates. R.
 - [Accessibility] The root ContentControl, the Toolkit's `TabBarSelectionIndicatorPresenter` and `SafeAreaPresenter` are empty tab stops (their styles are set inside the Toolkit's templates, so an implicit style does not reach them). R.
-- [WebAssembly] In the browser, after editing the reading and calling Fail, pressing the Notes field while it is mostly scrolled out of the inspector's middle closed the inspector (the draft is kept). Pressing it once it is in view, or reaching it by keyboard, works; the desktop head does not do this. R (Chromium). Cause not found.
 - [Testing] There are no UI tests for the workflows (UNO-BUILD-SPEC asks for them). The page models are tested, and the Debug hooks and `tools/wasm-check.js` drive the workflows at runtime. C.
 
 ### Pending owner question (unchanged)
@@ -189,6 +235,6 @@ None open.
 
 ## Unresolved Questions
 - Authentication is N/A: the spec has no accounts, and the technician comes from `AppConfig`. Confirm that a single technician per device is intended.
-- The sync conflict dialog (spec "Offline conflict dialog", `SyncConflictDialog`) is N/A while the transport is simulated, because nothing can conflict. Confirm, or build it with a fake conflict mode.
+- The sync conflict dialog (spec "Offline conflict dialog", `SyncConflictDialog`) is cut while the transport is simulated, because nothing can conflict (D-004, proposed). Confirm.
 - Dispatch is built as one status step at a time (D-001, proposed); evidence comparison and document sync are cut (D-002, D-003, proposed). Confirm.
 - Every X on a supported head: Android and Windows (Tier 1) and iOS.
