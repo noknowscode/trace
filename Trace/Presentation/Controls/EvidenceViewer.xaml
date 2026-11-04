@@ -1,0 +1,47 @@
+﻿<UserControl x:Class="Trace.Presentation.Controls.EvidenceViewer"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             IsTabStop="False">
+
+    <!--
+        A recorded photo, full size, bound to the workspace's EvidenceViewerModel. The asset page
+        hosts it in a modal layer over the whole page; the picture scales to fit the height left.
+    -->
+    <Grid RowSpacing="{StaticResource SpaceM}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid ColumnSpacing="{StaticResource SpaceS}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Spacing="{StaticResource SpaceXXS}" VerticalAlignment="Center">
+                <TextBlock Text="EVIDENCE" Style="{StaticResource EyebrowText}" />
+                <TextBlock Text="{Binding Viewed.Caption}" Style="{StaticResource CardTitleText}" />
+                <TextBlock Text="{Binding Viewed.CreatedAt, Converter={StaticResource RelativeTime}}"
+                           Style="{StaticResource SupportingText}" />
+            </StackPanel>
+            <Button x:Name="CloseViewerButton"
+                    Grid.Column="1"
+                    Style="{StaticResource IconButtonStyle}"
+                    VerticalAlignment="Top"
+                    Command="{Binding Close}"
+                    AutomationProperties.Name="Close photo"
+                    ToolTipService.ToolTip="Close">
+                <Viewbox Width="{StaticResource IconSizeS}" Height="{StaticResource IconSizeS}">
+                    <PathIcon Data="{StaticResource IconFail}" />
+                </Viewbox>
+            </Button>
+        </Grid>
+        <!-- xaml-lint: allow card - image clip with a placeholder fill -->
+        <Border Grid.Row="1"
+                CornerRadius="{StaticResource SmallRadius}"
+                Background="{ThemeResource SurfaceVariantBrush}">
+            <Image Source="{Binding Viewed.LocalUri}"
+                   Stretch="Uniform"
+                   AutomationProperties.Name="{Binding Viewed.Caption}" />
+        </Border>
+    </Grid>
+</UserControl>
