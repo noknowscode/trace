@@ -30,10 +30,6 @@ public partial record Asset(
 
     public int InspectedPointCount => Points.Count(p => p.Disposition != Disposition.None);
 
-    public string Location => $"{Area} · {Site}";
-
-    public string Designation => $"{Id} · {TypeLabel}";
-
     public InspectionPoint? FindPoint(string pointId) =>
         Points.FirstOrDefault(p => p.Id == pointId);
 

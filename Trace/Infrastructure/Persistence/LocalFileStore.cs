@@ -11,7 +11,8 @@ public sealed class LocalFileStore : ILocalFileStore
     private readonly SemaphoreSlim _gate = new(1, 1);
     private string? _root;
 
-    public LocalFileStore(string root)
+    /// <summary>A store over a folder that already exists: the tests' seam, over a temp folder.</summary>
+    internal LocalFileStore(string root)
         : this(() => ValueTask.FromResult(root))
     {
     }

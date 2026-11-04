@@ -2,8 +2,8 @@ namespace Trace.Presentation.Controls;
 
 /// <summary>
 /// How loudly a piece of status should read. One scale covers dispositions, asset
-/// conditions, reading ranges and sync states, so the same colour always means the same
-/// thing wherever it appears.
+/// conditions, sync states, action statuses and priorities, so the same colour always means
+/// the same thing wherever it appears.
 /// </summary>
 public enum StatusSeverity
 {
@@ -29,13 +29,6 @@ public static class StatusSeverityMap
         AssetCondition.Healthy => StatusSeverity.Positive,
         AssetCondition.Watch => StatusSeverity.Caution,
         AssetCondition.Failed => StatusSeverity.Critical,
-        _ => StatusSeverity.Neutral,
-    };
-
-    public static StatusSeverity ToSeverity(this RangeStatus range) => range switch
-    {
-        RangeStatus.Within => StatusSeverity.Positive,
-        RangeStatus.Below or RangeStatus.Above => StatusSeverity.Caution,
         _ => StatusSeverity.Neutral,
     };
 

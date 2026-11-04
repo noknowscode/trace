@@ -53,7 +53,6 @@ public sealed class SeverityConverter : IValueConverter
     {
         Disposition disposition => disposition.ToSeverity(),
         AssetCondition condition => condition.ToSeverity(),
-        RangeStatus range => range.ToSeverity(),
         SyncState state => state.ToSeverity(),
         CorrectivePriority priority => priority.ToSeverity(),
         ActionStatus status => status.ToSeverity(),

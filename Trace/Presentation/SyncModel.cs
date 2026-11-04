@@ -21,8 +21,6 @@ public partial record SyncModel
 
     public IFeed<int> PendingCount => _recovery.Watch(_queue.WatchPendingCount);
 
-    public IFeed<bool> HasPending => PendingCount.Select(count => count > 0);
-
     /// <summary>
     /// Records that could not be read at launch and were set aside. Whatever they held is not
     /// in the queue, so an empty queue is not proof that everything reached the server.
