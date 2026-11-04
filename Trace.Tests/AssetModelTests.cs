@@ -3,9 +3,8 @@ using Trace.Presentation;
 namespace Trace.Tests;
 
 /// <summary>
-/// The asset workspace's commands over a real store: what the technician does at a point and
-/// what ends up recorded. MVUX folds the editors into the draft in the background, so a test
-/// waits for the draft to show an edit before it acts on it.
+/// The asset workspace itself: its record of the machine, its tabs, the point it hands the
+/// inspector, and where Back goes.
 /// </summary>
 public class AssetModelTests
 {
@@ -17,213 +16,94 @@ public class AssetModelTests
     [TearDown]
     public void TearDown() => _harness.Dispose();
 
-    private async Task<AssetModel> OpenAtAsync(string pointId)
+    [Test]
+    public async Task The_workspace_opens_on_the_machine_with_its_points_in_order()
     {
         var model = await _harness.OpenAssetAsync();
-        await model.SelectPoint(await _harness.PointAsync(pointId), default);
-        return model;
-    }
 
-    /// <summary>Types a reading and a note and makes a call, as the inspector's fields do.</summary>
-    private static async Task EnterAsync(AssetModel model, string reading, Disposition disposition, string notes = "")
-    {
-        await model.ReadingText.UpdateAsync(_ => reading, default);
-        await model.NoteText.UpdateAsync(_ => notes, default);
-        await model.ChosenDisposition.UpdateAsync(_ => disposition, default);
+        (await model.TabIndex).Should().Be((int)AssetTab.Inspect, "the machine is the task, not a record about it");
+        (await model.ShowsMachine).Should().BeTrue();
+        (await model.SchematicKind).Should().Be(AssetKind.CentrifugalPump);
 
-        await TestHarness.UntilAsync(async () => await model.Draft is { } draft
-            && draft.ReadingText == reading
-            && draft.Notes == notes
-            && draft.Disposition == disposition);
-    }
-
-    private async Task<IImmutableList<CorrectiveAction>> ActionsAsync() =>
-        (await _harness.Store.GetAsync(default)).Actions;
-
-    [Test]
-    public async Task Completing_a_point_editing_it_and_completing_it_again_records_two_inspections()
-    {
-        var before = (await _harness.Store.GetAsync(default)).Events.Count(e => e.PointId == "P-204-seal");
-        var model = await OpenAtAsync("P-204-seal");
-
-        await EnterAsync(model, "1.6", Disposition.Pass);
-        await model.CompletePoint(default);
-
-        // The editor kept the completed draft, saved it back on the next edit, and every
-        // later Complete at this point was reported as "Already recorded" and wrote nothing.
-        await EnterAsync(model, "2.1", Disposition.Watch);
-        await model.CompletePoint(default);
-
-        var events = (await _harness.Store.GetAsync(default)).Events.Where(e => e.PointId == "P-204-seal").ToList();
-        events.Should().HaveCount(before + 2);
-        events.Should().ContainSingle(e => e.Reading == 2.1 && e.Disposition == Disposition.Watch);
-        (await model.Confirmation).Should().StartWith("Seal housing recorded as Watch");
+        var markers = await model.Markers;
+        markers.Select(m => m.Point.Sequence).Should().BeInAscendingOrder();
+        markers.Should().HaveCount((await _harness.PumpAsync()).Points.Count);
+        markers.Should().NotContain(m => m.IsSelected, "no point is open yet");
     }
 
     [Test]
-    public async Task Corrective_work_is_offered_only_from_an_inspection_recorded_as_fail()
+    public async Task Choosing_a_point_opens_it_on_the_inspect_tab_and_marks_it()
     {
-        var model = await OpenAtAsync("P-204-seal");
-        await EnterAsync(model, "1.6", Disposition.Pass);
-        await model.CompletePoint(default);
+        var model = await _harness.OpenAssetAsync();
+        await model.TabIndex.UpdateAsync(_ => (int)AssetTab.History, default);
 
-        // Tapping Fail after a Pass was recorded used to offer corrective work raised from the
-        // passed event.
-        await model.ChosenDisposition.UpdateAsync(_ => Disposition.Fail, default);
-        await TestHarness.UntilAsync(async () => (await model.Draft)?.Disposition == Disposition.Fail);
-
-        (await model.CanRaiseAction).Should().BeFalse();
-
-        var before = await ActionsAsync();
-        await model.ActionSummary.UpdateAsync(_ => "Replace seal", default);
-        await model.CreateAction(default);
-        (await ActionsAsync()).Should().HaveCount(before.Count);
-    }
-
-    [Test]
-    public async Task A_failed_point_raises_work_against_its_own_event()
-    {
-        var model = await OpenAtAsync("P-204-seal");
-        await EnterAsync(model, "7.4", Disposition.Fail, "Seal weeping at the gland.");
-        await model.CompletePoint(default);
-
-        (await model.CanRaiseAction).Should().BeTrue();
-        var recorded = (await model.RecordedEvent)!;
-
-        await model.CreateAction(default);
-
-        var action = (await ActionsAsync()).Should().ContainSingle(a => a.SourceInspectionEventId == recorded.Id).Subject;
-        action.PointId.Should().Be("P-204-seal");
-        action.Summary.Should().Be("Inspect seal housing on P-204", "the summary is suggested from the failed point");
-    }
-
-    [Test]
-    public async Task Choosing_another_point_forgets_the_failure_recorded_at_the_last_one()
-    {
-        var model = await OpenAtAsync("P-204-seal");
-        await EnterAsync(model, "7.4", Disposition.Fail, "Seal weeping at the gland.");
-        await model.CompletePoint(default);
-        (await model.CanRaiseAction).Should().BeTrue();
-
-        // Opening the coupling used to keep the seal's event, so an action raised there
-        // carried the coupling's name and the seal's inspection.
-        await model.SelectPoint(await _harness.PointAsync("P-204-coupling"), default);
-
-        (await model.CanRaiseAction).Should().BeFalse();
-        (await model.RecordedEvent).Should().BeNull();
-
-        var before = await ActionsAsync();
-        await model.ActionSummary.UpdateAsync(_ => "Replace coupling", default);
-        await model.CreateAction(default);
-        (await ActionsAsync()).Should().HaveCount(before.Count);
-    }
-
-    [Test]
-    public async Task A_completion_the_device_cannot_write_is_reported_in_the_inspector()
-    {
-        await _harness.Store.GetAsync(default);
-        var model = await _harness.OpenAssetAsync(store: _harness.StoreThatDiesWriting("commit.json"));
-        await model.SelectPoint(await _harness.PointAsync("P-204-seal"), default);
-        await EnterAsync(model, "1.6", Disposition.Pass);
-
-        // The store's IOException used to escape the command, and the inspector showed nothing.
-        await model.CompletePoint(default);
-
-        (await model.CompletionError).Should().Contain("could not be saved");
-        (await model.Confirmation).Should().BeNullOrEmpty();
-        (await model.Draft)!.ReadingText.Should().Be("1.6", "the reading stays for another try");
-    }
-
-    [Test]
-    public async Task A_completion_for_an_asset_that_has_gone_says_why_nothing_was_recorded()
-    {
-        var model = await OpenAtAsync("P-204-seal");
-        await EnterAsync(model, "1.6", Disposition.Pass);
-
-        await _harness.Store.MutateAsync(s => s with { Assets = s.Assets.RemoveAll(a => a.Id == "P-204") }, default);
-        await model.CompletePoint(default);
-
-        (await model.CompletionError).Should().Contain("no longer available");
-        (await model.Confirmation).Should().BeNullOrEmpty();
-    }
-
-    [Test]
-    public async Task A_point_with_nothing_entered_offers_no_discard()
-    {
-        var model = await OpenAtAsync("P-204-seal");
-
-        (await model.CanDiscard).Should().BeFalse("a pristine draft has nothing to lose");
-    }
-
-    [Test]
-    public async Task Discarding_asks_first_then_starts_the_point_afresh()
-    {
-        var model = await OpenAtAsync("P-204-seal");
-        await EnterAsync(model, "1.6", Disposition.Fail, "Weeping at the gland.");
-        var entered = (await model.Draft)!;
-        await TestHarness.UntilAsync(async () =>
-            (await _harness.Store.GetAsync(default)).FindDraft("P-204-seal")?.Notes == "Weeping at the gland.");
-
-        (await model.CanDiscard).Should().BeTrue();
-
-        await model.AskDiscard(default);
-        (await model.IsDiscardPending).Should().BeTrue();
-        (await _harness.Store.GetAsync(default)).FindDraft("P-204-seal")!.Notes
-            .Should().Be("Weeping at the gland.", "nothing is thrown away until the technician confirms");
-
-        await model.DiscardDraft(default);
-
-        (await model.IsDiscardPending).Should().BeFalse();
-        var stored = (await _harness.Store.GetAsync(default)).FindDraft("P-204-seal")!;
-        stored.ClientToken.Should().NotBe(entered.ClientToken);
-        stored.Notes.Should().BeEmpty();
-        stored.Disposition.Should().Be(Disposition.None);
-        (await model.NoteText).Should().BeEmpty();
-        (await model.ReadingText).Should().Be("7.2", "the point starts again from its last reading");
-    }
-
-    [Test]
-    public async Task A_photo_the_device_cannot_keep_is_reported_and_attaches_nothing()
-    {
-        var files = _harness.BreakableFiles();
-        files.Broken = true;
-        var model = await _harness.OpenAssetAsync(
-            camera: new FrameCamera(),
-            evidence: new Trace.Infrastructure.Platform.LocalEvidenceStore(files, _harness.Time));
         await model.SelectPoint(await _harness.PointAsync("P-204-seal"), default);
 
-        // The evidence store's IOException used to escape the command, and Add photo did nothing visible.
-        await model.AttachPhoto(default);
-
-        (await model.EvidenceError).Should().Contain("could not be saved");
-        (await model.Draft)!.Evidence.Should().BeEmpty();
-
-        files.Broken = false;
-        await model.AttachPhoto(default);
-
-        (await model.EvidenceError).Should().BeNullOrEmpty("a photo that was kept clears the message");
-        (await model.Draft)!.Evidence.Should().ContainSingle();
+        (await model.TabIndex).Should().Be((int)AssetTab.Inspect);
+        (await model.IsInspect).Should().BeTrue();
+        (await model.InspectorModel.IsOpen).Should().BeTrue();
+        await TestHarness.UntilAsync(async () => (await model.Markers).Any(m => m.IsSelected));
+        (await model.Markers).Should().ContainSingle(m => m.IsSelected).Which.Id.Should().Be("P-204-seal");
     }
 
     [Test]
-    public async Task A_corrective_action_the_device_cannot_write_is_reported_on_the_sheet()
+    public async Task A_marker_opens_the_point_it_carries()
     {
-        var files = _harness.BreakableFiles();
-        var store = _harness.StoreOver(files);
-        var model = await _harness.OpenAssetAsync(store: store);
-        await model.SelectPoint(await _harness.PointAsync("P-204-seal"), default);
-        await EnterAsync(model, "7.4", Disposition.Fail, "Seal weeping at the gland.");
-        await model.CompletePoint(default);
-        (await model.CanRaiseAction).Should().BeTrue();
+        var model = await _harness.OpenAssetAsync();
+        var coupling = (await model.Markers).Single(m => m.Id == "P-204-coupling");
 
-        files.Broken = true;
+        await model.SelectMarker(coupling, default);
 
-        // The store's IOException used to escape the command, and the sheet stayed open with no word.
-        await model.CreateAction(default);
+        (await model.InspectorModel.SelectedPointId).Should().Be("P-204-coupling");
+    }
 
-        (await model.ActionError).Should().Contain("could not be saved");
-        var recorded = (await model.RecordedEvent)!;
-        (await _harness.Reopen().GetAsync(default)).Actions
-            .Should().NotContain(a => a.SourceInspectionEventId == recorded.Id);
+    [Test]
+    public async Task Each_tab_shows_one_face_of_the_asset()
+    {
+        var model = await _harness.OpenAssetAsync();
+
+        foreach (var tab in Enum.GetValues<AssetTab>())
+        {
+            await model.TabIndex.UpdateAsync(_ => (int)tab, default);
+
+            (await model.IsOverview).Should().Be(tab == AssetTab.Overview);
+            (await model.IsInspect).Should().Be(tab == AssetTab.Inspect);
+            (await model.IsHistory).Should().Be(tab == AssetTab.History);
+            (await model.IsDocuments).Should().Be(tab == AssetTab.Documents);
+            (await model.ShowsMachine).Should().Be(tab == AssetTab.Inspect, "the machine is drawn on Inspect only");
+        }
+    }
+
+    [Test]
+    public async Task History_lists_the_asset_s_inspections_newest_first()
+    {
+        var model = await _harness.OpenAssetAsync();
+
+        var history = await model.History;
+
+        history.Should().NotBeEmpty();
+        history.Should().OnlyContain(e => e.AssetId == "P-204");
+        history.Select(e => e.Timestamp).Should().BeInDescendingOrder();
+    }
+
+    [Test]
+    public async Task Back_returns_to_the_destination_the_asset_was_opened_from()
+    {
+        var origin = new NavigationOrigin();
+        origin.Shown("Findings");
+
+        var model = await _harness.OpenAssetAsync(origin: origin);
+
+        model.BackRoute.Should().Be("../Findings");
+    }
+
+    [Test]
+    public async Task The_identity_comes_from_the_row_that_was_tapped()
+    {
+        var model = await _harness.OpenAssetAsync("C-07");
+
+        model.AssetId.Should().Be("C-07");
+        model.Designation.Should().StartWith("C-07");
+        (await model.SchematicKind).Should().Be(AssetKind.Compressor);
     }
 }

@@ -275,8 +275,8 @@
                             Width="{utu:Responsive Narrow=NaN, Wide={StaticResource InspectorWidthWide}, Widest={StaticResource InspectorWidthWidest}}"
                             CornerRadius="{utu:Responsive Narrow={StaticResource SheetRadius}, Wide={StaticResource CardRadius}}"
                             Padding="{utu:Responsive Narrow={StaticResource SheetPadding}, Normal={StaticResource SheetPaddingWide}}"
-                            Visibility="{Binding IsInspectorOpen, Converter={StaticResource BoolToVisibility}}">
-                        <controls:PointInspector />
+                            Visibility="{Binding Inspector.IsOpen, Converter={StaticResource BoolToVisibility}}">
+                        <controls:PointInspector DataContext="{Binding Inspector}" />
                     </Border>
                 </Grid>
 
@@ -524,94 +524,16 @@
             Corrective action, raised from the point that failed. A modal sheet over the whole
             page: centred at DialogMaxWidth from Normal up, the full width less a margin on a phone.
         -->
-        <Grid Background="{ThemeResource SheetScrimBrush}"
-              Visibility="{Binding IsActionSheetOpen, Converter={StaticResource BoolToVisibility}}">
+        <Grid DataContext="{Binding ActionSheet}"
+              Background="{ThemeResource SheetScrimBrush}"
+              Visibility="{Binding IsOpen, Converter={StaticResource BoolToVisibility}}">
             <Border Style="{StaticResource SheetSurface}"
                     MaxWidth="{StaticResource DialogMaxWidth}"
                     VerticalAlignment="Center"
                     HorizontalAlignment="Center"
                     Margin="{StaticResource InsetL}"
                     Padding="{utu:Responsive Narrow={StaticResource SheetPadding}, Normal={StaticResource SheetPaddingWide}}">
-                    <ScrollViewer>
-                        <StackPanel Spacing="{StaticResource SpaceM}">
-                            <StackPanel Spacing="{StaticResource SpaceXXS}">
-                                <TextBlock Text="CORRECTIVE ACTION" Style="{StaticResource EyebrowText}" />
-                                <TextBlock Style="{StaticResource PanelTitleText}"
-                                           TextWrapping="Wrap">
-                                    <Run Text="Raise work from" />
-                                    <Run Text="{Binding RecordedEvent.PointLabel}" />
-                                </TextBlock>
-                                <TextBlock Style="{StaticResource SupportingText}"
-                                           Text="The asset, the point and the inspection that failed are carried across automatically." />
-                            </StackPanel>
-
-                            <StackPanel Spacing="{StaticResource SpaceS}">
-                                <TextBlock Text="Summary" Style="{StaticResource FieldLabelText}" />
-                                <TextBox Text="{Binding ActionSummary, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                         MinHeight="{StaticResource TouchTargetSize}"
-                                         TextWrapping="Wrap"
-                                         AcceptsReturn="True"
-                                         AutomationProperties.Name="Corrective action summary" />
-                            </StackPanel>
-
-                            <!-- Side by side from Normal; stacked on a phone, where two pickers
-                                 across 300 px cut "Mechanical Team" short. -->
-                            <Grid ColumnSpacing="{utu:Responsive Narrow=0, Normal={StaticResource SpaceM}}"
-                                  RowSpacing="{utu:Responsive Narrow={StaticResource SpaceM}, Normal=0}">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-                                <StackPanel Spacing="{StaticResource SpaceS}"
-                                            Grid.ColumnSpan="{utu:Responsive Narrow=2, Normal=1}">
-                                    <TextBlock Text="Priority" Style="{StaticResource FieldLabelText}" />
-                                    <ComboBox ItemsSource="{Binding Priorities}"
-                                              SelectedItem="{Binding ActionPriority, Mode=TwoWay}"
-                                              HorizontalAlignment="Stretch"
-                                              MinHeight="{StaticResource TouchTargetSize}"
-                                              AutomationProperties.Name="Priority" />
-                                </StackPanel>
-                                <StackPanel Grid.Row="{utu:Responsive Narrow=1, Normal=0}"
-                                            Grid.Column="{utu:Responsive Narrow=0, Normal=1}"
-                                            Grid.ColumnSpan="{utu:Responsive Narrow=2, Normal=1}"
-                                            Spacing="{StaticResource SpaceS}">
-                                    <TextBlock Text="Assignee" Style="{StaticResource FieldLabelText}" />
-                                    <ComboBox ItemsSource="{Binding Assignees}"
-                                              SelectedItem="{Binding ActionAssignee, Mode=TwoWay}"
-                                              HorizontalAlignment="Stretch"
-                                              MinHeight="{StaticResource TouchTargetSize}"
-                                              AutomationProperties.Name="Assignee" />
-                                </StackPanel>
-                            </Grid>
-
-                            <TextBlock Text="{Binding ActionError}"
-                                       Style="{StaticResource ErrorText}"
-                                       Visibility="{Binding ActionError, Converter={StaticResource StringToVisibility}}" />
-
-                            <Grid ColumnSpacing="{StaticResource SpaceS}">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <Button Style="{StaticResource OutlinedButtonStyle}"
-                                        HorizontalAlignment="Stretch"
-                                        MinHeight="{StaticResource TouchTargetSize}"
-                                        Command="{Binding CancelAction}"
-                                        Content="Cancel" />
-                                <Button Grid.Column="1"
-                                        Style="{StaticResource FilledButtonStyle}"
-                                        HorizontalAlignment="Stretch"
-                                        MinHeight="{StaticResource TouchTargetSize}"
-                                        Command="{Binding CreateAction}"
-                                        IsEnabled="{Binding CanCreateAction}"
-                                        Content="Create action" />
-                            </Grid>
-                        </StackPanel>
-                    </ScrollViewer>
+                <controls:CorrectiveActionSheet />
             </Border>
         </Grid>
     </Grid>

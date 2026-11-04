@@ -69,7 +69,7 @@ public partial record SyncModel
         {
             result = await _queue.SyncAsync(ct);
         }
-        catch (Exception ex) when (IsWriteFailure(ex))
+        catch (Exception ex) when (StoreFailures.IsStorageFailure(ex))
         {
             await LastResult.UpdateAsync(_ => QueueWriteFailed, ct);
             return;
@@ -93,7 +93,7 @@ public partial record SyncModel
         {
             await _queue.RetryAllFailedAsync(ct);
         }
-        catch (Exception ex) when (IsWriteFailure(ex))
+        catch (Exception ex) when (StoreFailures.IsStorageFailure(ex))
         {
             await LastResult.UpdateAsync(_ => QueueWriteFailed, ct);
             return;
@@ -109,6 +109,4 @@ public partial record SyncModel
 
     private const string QueueWriteFailed =
         "The sync queue on this device could not be updated. Your work is still on the device; try again, and restart TRACE if it keeps failing.";
-
-    private static bool IsWriteFailure(Exception ex) => ex is IOException or UnauthorizedAccessException;
 }

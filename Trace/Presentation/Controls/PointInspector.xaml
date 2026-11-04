@@ -5,9 +5,9 @@
              IsTabStop="False">
 
     <!--
-        Everything one inspection point needs. Hosted as a bottom sheet on a phone and as a
-        pinned inspector on wider screens — the same element either way, so an in-progress
-        reading survives a resize.
+        Everything one inspection point needs, bound to the workspace's PointInspectorModel. Hosted
+        as a bottom sheet on a phone and as a pinned inspector on wider screens — the same element
+        either way, so an in-progress reading survives a resize.
 
         The split between what scrolls and what stays is the design of this panel. A
         technician needs the reading they are entering, the call they are making and the
@@ -47,7 +47,7 @@
                 <Button Grid.Column="2"
                         Style="{StaticResource IconButtonStyle}"
                         VerticalAlignment="Top"
-                        Command="{Binding CloseInspector}"
+                        Command="{Binding Close}"
                         AutomationProperties.Name="Close inspection point"
                         ToolTipService.ToolTip="Close">
                     <Viewbox Width="{StaticResource IconSizeS}" Height="{StaticResource IconSizeS}">

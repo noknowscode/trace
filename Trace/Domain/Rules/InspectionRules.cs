@@ -125,7 +125,7 @@ public static class InspectionRules
             Status: ActionStatus.Open,
             CreatedAt: createdAt);
 
-    /// <summary>The default summary offered when raising work from a failed point.</summary>
-    public static string SuggestActionSummary(Asset asset, InspectionPoint point) =>
-        $"Inspect {point.Label.ToLowerInvariant()} on {asset.Id}";
+    /// <summary>The default summary offered when raising work from a failed inspection.</summary>
+    public static string SuggestActionSummary(InspectionEvent failed) =>
+        $"Inspect {failed.PointLabel.ToLowerInvariant()} on {failed.AssetId}";
 }

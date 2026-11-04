@@ -71,4 +71,9 @@
     <PackageReference Include="SharpGLTF.Core" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- The model tests drive the asset workspace's parts and their wiring, which the page keeps internal. -->
+    <InternalsVisibleTo Include="Trace.Tests" />
+  </ItemGroup>
+
 </Project>
