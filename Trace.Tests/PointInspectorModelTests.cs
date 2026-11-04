@@ -213,3 +213,79 @@ internal static class Editing
             && draft.Disposition == disposition);
     }
 }
+
+/// <summary>The inspector when the device cannot keep the draft: it says so, and the entry stays on screen.</summary>
+public class PointInspectorStorageTests
+{
+    private TestHarness _harness = null!;
+
+    [SetUp]
+    public void SetUp() => _harness = TestHarness.Create();
+
+    [TearDown]
+    public void TearDown() => _harness.Dispose();
+
+    [Test]
+    public async Task A_draft_the_device_cannot_save_is_reported_and_the_entry_stays()
+    {
+        var files = _harness.BreakableFiles();
+        var model = await _harness.OpenAssetAsync(store: _harness.StoreOver(files));
+        await model.SelectPoint(await _harness.PointAsync("P-204-seal"), default);
+        var inspector = model.InspectorModel;
+
+        files.Broken = true;
+
+        // The autosave's IOException used to vanish in the background, so a technician typed
+        // on into a draft that would not survive the app closing.
+        await Editing.EnterAsync(inspector, "3.1", Disposition.Watch, "Rising since last round.");
+        await TestHarness.UntilAsync(async () => !string.IsNullOrEmpty(await inspector.DraftError));
+
+        (await inspector.DraftError).Should().Contain("could not be saved");
+        (await inspector.ReadingText).Should().Be("3.1", "the entry stays in the editor");
+
+        files.Broken = false;
+        await Editing.EnterAsync(inspector, "3.2", Disposition.Watch, "Rising since last round.");
+        await TestHarness.UntilAsync(async () => string.IsNullOrEmpty(await inspector.DraftError));
+
+        (await inspector.DraftError).Should().BeNullOrEmpty("a draft that was saved clears the message");
+        (await _harness.Reopen().GetAsync(default)).FindDraft("P-204-seal")!.ReadingText.Should().Be("3.2");
+    }
+
+    [Test]
+    public async Task A_point_whose_draft_cannot_be_kept_still_opens()
+    {
+        var files = _harness.BreakableFiles();
+        var model = await _harness.OpenAssetAsync(store: _harness.StoreOver(files));
+        files.Broken = true;
+
+        // Starting the draft writes it; the IOException used to escape SelectPoint, and the
+        // point never opened.
+        await model.SelectPoint(await _harness.PointAsync("P-204-seal"), default);
+
+        var inspector = model.InspectorModel;
+        (await inspector.IsOpen).Should().BeTrue();
+        (await inspector.DraftError).Should().Contain("could not be saved");
+        (await inspector.ReadingText).Should().Be("7.2", "the point opens on a fresh draft held in memory");
+    }
+
+    [Test]
+    public async Task A_discard_the_device_cannot_write_keeps_what_was_entered()
+    {
+        var files = _harness.BreakableFiles();
+        var store = _harness.StoreOver(files);
+        var model = await _harness.OpenAssetAsync(store: store);
+        await model.SelectPoint(await _harness.PointAsync("P-204-seal"), default);
+        var inspector = model.InspectorModel;
+        await Editing.EnterAsync(inspector, "1.6", Disposition.Fail, "Weeping at the gland.");
+        await TestHarness.UntilAsync(async () =>
+            (await store.GetAsync(default)).FindDraft("P-204-seal")?.Notes == "Weeping at the gland.");
+
+        files.Broken = true;
+        await inspector.AskDiscard(default);
+        await inspector.DiscardDraft(default);
+
+        (await inspector.DraftError).Should().Contain("could not be discarded");
+        (await inspector.NoteText).Should().Be("Weeping at the gland.", "nothing was thrown away");
+        (await _harness.Reopen().GetAsync(default)).FindDraft("P-204-seal")!.Notes.Should().Be("Weeping at the gland.");
+    }
+}

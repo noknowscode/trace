@@ -196,12 +196,18 @@ internal sealed class DyingFileStore(ILocalFileStore inner, string fatalKey) : I
     public ValueTask MoveAsync(string name, string newName, CancellationToken ct) => inner.MoveAsync(name, newName, ct);
 }
 
-/// <summary>Fails every write while <see cref="Broken"/> is set, as a full or read-only disk does.</summary>
+/// <summary>
+/// Fails every write while <see cref="Broken"/> is set, as a full or read-only disk does, and
+/// every read while <see cref="ReadsBroken"/> is set.
+/// </summary>
 internal sealed class BreakableFileStore(ILocalFileStore inner) : ILocalFileStore
 {
     public bool Broken { get; set; }
 
-    public ValueTask<string?> ReadTextAsync(string name, CancellationToken ct) => inner.ReadTextAsync(name, ct);
+    public bool ReadsBroken { get; set; }
+
+    public ValueTask<string?> ReadTextAsync(string name, CancellationToken ct) =>
+        ReadsBroken ? throw new IOException($"{name} could not be read.") : inner.ReadTextAsync(name, ct);
 
     public ValueTask WriteTextAsync(string name, string content, CancellationToken ct) =>
         Broken ? throw Full(name) : inner.WriteTextAsync(name, content, ct);

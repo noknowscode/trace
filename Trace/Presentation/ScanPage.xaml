@@ -44,7 +44,8 @@
                         HorizontalAlignment="Stretch"
                         MinHeight="{StaticResource TouchTargetSize}"
                         Command="{Binding ScanTag}"
-                        Content="Scan a tag" />
+                        Content="Scan a tag"
+                        AutomationProperties.Name="Scan a tag" />
 
                 <Border Style="{StaticResource CardSurface}">
                     <StackPanel Spacing="{StaticResource SpaceM}">
@@ -59,9 +60,16 @@
                                 HorizontalAlignment="Stretch"
                                 MinHeight="{StaticResource TouchTargetSize}"
                                 Command="{Binding Lookup}"
-                                Content="Open asset" />
+                                Content="Open asset"
+                                AutomationProperties.Name="Open asset" />
                     </StackPanel>
                 </Border>
+
+                <!-- The records could not be read: not the same as no asset matching the code. -->
+                <TextBlock Text="{Binding ReadError}"
+                           Style="{StaticResource ErrorText}"
+                           AutomationProperties.LiveSetting="Assertive"
+                           Visibility="{Binding ReadError, Converter={StaticResource StringToVisibility}}" />
 
                 <Border Style="{StaticResource TileSurface}"
                         Visibility="{Binding NotResolved, Converter={StaticResource BoolToVisibility}}">

@@ -63,7 +63,8 @@ public partial record PointInspectorModel
     /// </summary>
     internal async ValueTask OpenAsync(InspectionPoint point, CancellationToken ct)
     {
-        var draft = await _workflow.StartOrResumeDraftAsync(point, ct);
+        await DraftError.UpdateAsync(_ => string.Empty, ct);
+        var draft = await StartOrResumeDraftAsync(point, ct);
 
         await SelectedPointId.UpdateAsync(_ => point.Id, ct);
         await LoadDraftAsync(draft, ct);
@@ -133,6 +134,12 @@ public partial record PointInspectorModel
     /// <summary>Why the last Complete point recorded nothing, when the inspector does not already say.</summary>
     public IState<string> CompletionError => State<string>.Empty(this);
 
+    /// <summary>
+    /// Why the draft at this point is not on the device: it could not be read, saved or
+    /// discarded there. The editor keeps working from memory meanwhile.
+    /// </summary>
+    public IState<string> DraftError => State<string>.Empty(this);
+
     public ValueTask DismissConfirmation(CancellationToken ct) =>
         Confirmation.UpdateAsync(_ => string.Empty, ct);
 
@@ -175,7 +182,7 @@ public partial record PointInspectorModel
         // this inspection that records nothing.
         if (await SelectedPoint is { } open && open.Id == draft.PointId)
         {
-            await LoadDraftAsync(await _workflow.StartOrResumeDraftAsync(open, ct), ct);
+            await LoadDraftAsync(await StartOrResumeDraftAsync(open, ct), ct);
             await IsDiscardPending.UpdateAsync(_ => false, ct);
         }
 
@@ -216,8 +223,21 @@ public partial record PointInspectorModel
             return;
         }
 
-        await _workflow.DiscardDraftAsync(point.Id, ct);
-        await LoadDraftAsync(await _workflow.StartOrResumeDraftAsync(point, ct), ct);
+        try
+        {
+            await _workflow.DiscardDraftAsync(point.Id, ct);
+        }
+        catch (Exception ex) when (StoreFailures.IsStorageFailure(ex))
+        {
+            // Nothing was thrown away: the entry stays in the editor and on the device.
+            await DraftError.UpdateAsync(
+                _ => "What was entered here could not be discarded on the device. Try Discard again; if it keeps failing, restart TRACE.",
+                ct);
+            return;
+        }
+
+        await DraftError.UpdateAsync(_ => string.Empty, ct);
+        await LoadDraftAsync(await StartOrResumeDraftAsync(point, ct), ct);
         await CompletionError.UpdateAsync(_ => string.Empty, ct);
     }
 
@@ -345,11 +365,47 @@ public partial record PointInspectorModel
             current => current is null ? null! : current with { Disposition = value },
             ct);
 
+    /// <summary>
+    /// The saved draft for <paramref name="point"/>, or a new one. When the device cannot read
+    /// or keep it, the point still opens, on a draft held in memory, and the inspector says so.
+    /// </summary>
+    private async ValueTask<InspectionDraft> StartOrResumeDraftAsync(InspectionPoint point, CancellationToken ct)
+    {
+        try
+        {
+            return await _workflow.StartOrResumeDraftAsync(point, ct);
+        }
+        catch (Exception ex) when (StoreFailures.IsStorageFailure(ex))
+        {
+            await DraftError.UpdateAsync(_ => DraftNotSaved, ct);
+            return InspectionDraft.For(point);
+        }
+    }
+
     private async ValueTask PersistDraft(InspectionDraft? draft, CancellationToken ct)
     {
-        if (draft is not null)
+        if (draft is null)
+        {
+            return;
+        }
+
+        try
         {
             await _workflow.SaveDraftAsync(draft, ct);
         }
+        catch (Exception ex) when (StoreFailures.IsStorageFailure(ex))
+        {
+            await DraftError.UpdateAsync(_ => DraftNotSaved, ct);
+            return;
+        }
+
+        // Saved: a message left by an earlier failed save is no longer true.
+        if (await DraftError == DraftNotSaved)
+        {
+            await DraftError.UpdateAsync(_ => string.Empty, ct);
+        }
     }
+
+    private const string DraftNotSaved =
+        "This entry could not be saved on the device, so it would be lost if TRACE closed. Keep going: Complete point tries the device again.";
 }

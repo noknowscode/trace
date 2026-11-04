@@ -22,8 +22,10 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Identity, and the one action that throws entered work away, which confirms first. -->
-        <StackPanel Spacing="{StaticResource SpaceS}">
+        <!-- Identity, and the one action that throws entered work away, which confirms first.
+             The messages under it are often hidden, so each carries its own gap rather than
+             the panel's Spacing, which a collapsed child would still be charged. -->
+        <StackPanel>
             <Grid ColumnSpacing="{StaticResource SpaceS}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -57,6 +59,7 @@
             </Grid>
 
             <Border Style="{StaticResource TileSurface}"
+                    Margin="{StaticResource GapTopS}"
                     AutomationProperties.LiveSetting="Polite"
                     Visibility="{Binding IsDiscardPending, Converter={StaticResource BoolToVisibility}}">
                 <StackPanel Spacing="{StaticResource SpaceS}">
@@ -83,6 +86,13 @@
                     </Grid>
                 </StackPanel>
             </Border>
+
+            <!-- The draft is not on the device: it could not be read, saved or discarded there. -->
+            <TextBlock Text="{Binding DraftError}"
+                       Style="{StaticResource ErrorText}"
+                       Margin="{StaticResource GapTopS}"
+                       AutomationProperties.LiveSetting="Assertive"
+                       Visibility="{Binding DraftError, Converter={StaticResource StringToVisibility}}" />
         </StackPanel>
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="{StaticResource ScrollBarGutter}">

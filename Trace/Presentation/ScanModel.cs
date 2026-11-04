@@ -26,12 +26,12 @@ public partial record ScanModel
 
     public IFeed<string> ResultMessage => Result.Select(result => result?.Message ?? string.Empty);
 
+    /// <summary>Why the last scan or lookup found nothing to say about the code: the device's records could not be read.</summary>
+    public IState<string> ReadError => State<string>.Empty(this);
+
     public async ValueTask ScanTag(CancellationToken ct)
     {
-        var result = await _scanner.ScanAsync(ct);
-        await Result.UpdateAsync(_ => result, ct);
-
-        if (result.Found)
+        if (await ResolveAsync(_scanner.ScanAsync, ct) is { Found: true } result)
         {
             await Code.UpdateAsync(_ => result.AssetId ?? string.Empty, ct);
             await OpenAsync(result.AssetId!, ct);
@@ -40,21 +40,53 @@ public partial record ScanModel
 
     public async ValueTask Lookup(CancellationToken ct)
     {
-        var code = await Code;
-        var result = await _scanner.ResolveAsync(code ?? string.Empty, ct);
-        await Result.UpdateAsync(_ => result, ct);
-
-        if (result.Found)
+        var code = await Code ?? string.Empty;
+        if (await ResolveAsync(token => _scanner.ResolveAsync(code, token), ct) is { Found: true } result)
         {
             await OpenAsync(result.AssetId!, ct);
         }
+    }
+
+    /// <summary>
+    /// Resolves a tag or code against the device's records and shows the answer. A store that
+    /// cannot be read is not "no such asset": it says so, and the code stays for another try.
+    /// </summary>
+    private async ValueTask<ScanResult?> ResolveAsync(
+        Func<CancellationToken, ValueTask<ScanResult>> resolve,
+        CancellationToken ct)
+    {
+        ScanResult result;
+        try
+        {
+            result = await resolve(ct);
+        }
+        catch (Exception ex) when (StoreFailures.IsStorageFailure(ex))
+        {
+            await Result.UpdateAsync(_ => null!, ct);
+            await ReadError.UpdateAsync(_ => RecordsUnreadable, ct);
+            return null;
+        }
+
+        await ReadError.UpdateAsync(_ => string.Empty, ct);
+        await Result.UpdateAsync(_ => result, ct);
+        return result;
     }
 
     private async ValueTask OpenAsync(string assetId, CancellationToken ct)
     {
         // Navigation carries the same row shape the lists carry, so an asset opened from a
         // tag lands on exactly the page an asset opened from the round does.
-        var summaries = await TraceAsync(_assets.WatchSummaries, ct);
+        IImmutableList<AssetSummary> summaries;
+        try
+        {
+            summaries = await TraceAsync(_assets.WatchSummaries, ct);
+        }
+        catch (Exception ex) when (StoreFailures.IsStorageFailure(ex))
+        {
+            await ReadError.UpdateAsync(_ => RecordsUnreadable, ct);
+            return;
+        }
+
         var summary = summaries.FirstOrDefault(s => s.AssetId == assetId);
 
         if (summary is not null)
@@ -74,4 +106,7 @@ public partial record ScanModel
 
         return ImmutableList<AssetSummary>.Empty;
     }
+
+    private const string RecordsUnreadable =
+        "This device's records could not be read, so nothing was looked up. Try again; if it keeps failing, restart TRACE.";
 }

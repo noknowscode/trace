@@ -25,6 +25,7 @@
     <Thickness x:Key="InsetM">12</Thickness>
     <Thickness x:Key="InsetL">16</Thickness>
     <Thickness x:Key="GapTopXXS">0,2,0,0</Thickness>
+    <Thickness x:Key="GapTopS">0,8,0,0</Thickness>
     <Thickness x:Key="GapTopM">0,12,0,0</Thickness>
     <Thickness x:Key="GapBottomXS">0,0,0,4</Thickness>
     <!-- Room for a vertical scroll bar beside scrolling content. -->
