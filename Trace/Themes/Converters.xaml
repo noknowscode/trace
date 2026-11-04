@@ -6,5 +6,7 @@
     <controls:StringToVisibilityConverter x:Key="StringToVisibility" />
     <controls:SeverityConverter x:Key="ToSeverity" />
     <controls:RelativeTimeConverter x:Key="RelativeTime" />
+    <controls:NextStepConverter x:Key="NextStep" />
+    <controls:SyncKindConverter x:Key="SyncKind" />
 
 </ResourceDictionary>

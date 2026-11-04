@@ -1,4 +1,5 @@
 using Trace.Infrastructure.Repositories;
+using Trace.Presentation;
 
 namespace Trace.Tests;
 
@@ -104,7 +105,7 @@ public class ActionDispatchTests
 
         var operations = (await _harness.Store.GetAsync(default)).Queue.Where(o => o.EntityId == action.Id).ToList();
         operations.Should().OnlyContain(o => o.Status == SyncState.Synced);
-        operations.Select(o => o.KindLabel).Should().BeEquivalentTo(["Corrective action", "Action status"]);
+        operations.Select(ScreenText.SyncKind).Should().BeEquivalentTo(["Corrective action", "Action status"]);
     }
 
     [TestCase("Assigned", ActionStatus.Dispatched)]

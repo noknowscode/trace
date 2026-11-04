@@ -64,6 +64,33 @@ public sealed class SeverityConverter : IValueConverter
         throw new NotSupportedException();
 }
 
+/// <summary>
+/// A corrective action's next step as its button reads (Dispatch, Close), or, with <c>Name</c> as
+/// the parameter, as a screen reader names it (the step and the work it applies to).
+/// </summary>
+public sealed class NextStepConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, string language) => value switch
+    {
+        CorrectiveAction action when string.Equals(parameter as string, "Name", StringComparison.OrdinalIgnoreCase) => ScreenText.NextStepName(action),
+        CorrectiveAction action => ScreenText.NextStep(action),
+        _ => string.Empty,
+    };
+
+    public object ConvertBack(object value, Type targetType, object parameter, string language) =>
+        throw new NotSupportedException();
+}
+
+/// <summary>What kind of change a queued operation is, as a Sync row names it.</summary>
+public sealed class SyncKindConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, string language) =>
+        value is SyncOperation operation ? ScreenText.SyncKind(operation) : string.Empty;
+
+    public object ConvertBack(object value, Type targetType, object parameter, string language) =>
+        throw new NotSupportedException();
+}
+
 /// <summary>Renders a timestamp the way a technician reads a round: relative, then exact.</summary>
 /// <remarks>
 /// XAML creates converters outside dependency injection, so this one reads the system clock;

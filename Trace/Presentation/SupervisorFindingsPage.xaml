@@ -108,11 +108,11 @@
                                                                 Style="{StaticResource OutlinedButtonStyle}"
                                                                 VerticalAlignment="Bottom"
                                                                 MinHeight="{StaticResource TouchTargetSize}"
-                                                                Content="{Binding NextStep}"
+                                                                Content="{Binding Converter={StaticResource NextStep}}"
                                                                 Command="{utu:AncestorBinding AncestorType=mvux:FeedView, Path=DataContext.Advance}"
                                                                 CommandParameter="{Binding}"
                                                                 Visibility="{Binding CanAdvance, Converter={StaticResource BoolToVisibility}}"
-                                                                AutomationProperties.Name="{Binding NextStepName}" />
+                                                                AutomationProperties.Name="{Binding Converter={StaticResource NextStep}, ConverterParameter=Name}" />
                                                     </Grid>
                                                 </Border>
                                             </DataTemplate>

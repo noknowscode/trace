@@ -95,7 +95,7 @@
                                                     <ColumnDefinition Width="Auto" />
                                                 </Grid.ColumnDefinitions>
                                                 <StackPanel Spacing="{StaticResource SpaceXS}">
-                                                    <TextBlock Text="{Binding KindLabel}"
+                                                    <TextBlock Text="{Binding Converter={StaticResource SyncKind}}"
                                                                Style="{StaticResource EyebrowText}" />
                                                     <TextBlock Text="{Binding Description}"
                                                                Style="{StaticResource BodyText}"

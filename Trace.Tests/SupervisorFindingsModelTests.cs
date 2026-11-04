@@ -45,7 +45,7 @@ public class SupervisorFindingsModelTests
         await model.Advance(open, default);
 
         await TestHarness.UntilAsync(async () => (await model.Actions).Single(a => a.Id == open.Id).Status == ActionStatus.Dispatched);
-        (await model.Actions).Single(a => a.Id == open.Id).NextStep.Should().Be("Close");
+        ScreenText.NextStep((await model.Actions).Single(a => a.Id == open.Id)).Should().Be("Close");
         (await model.DispatchError).Should().BeNullOrEmpty();
         (await model.Headline).Should().Be("2 corrective actions are open.");
     }

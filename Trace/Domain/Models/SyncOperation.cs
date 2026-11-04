@@ -19,13 +19,4 @@ public partial record SyncOperation(
     public bool IsRetryable => Status == SyncState.Failed;
 
     public bool HasError => !string.IsNullOrWhiteSpace(Error);
-
-    /// <summary>What kind of change this is, in the words the Sync screen uses.</summary>
-    public string KindLabel => (EntityType, Operation) switch
-    {
-        (nameof(InspectionEvent), _) => "Inspection",
-        (nameof(CorrectiveAction), "update") => "Action status",
-        (nameof(CorrectiveAction), _) => "Corrective action",
-        _ => EntityType,
-    };
 }

@@ -358,7 +358,7 @@ public partial record PointInspectorModel
     {
         if (await RecordedEvent is { Disposition: Disposition.Fail } recorded)
         {
-            await _actionSheet.OpenAsync(recorded, InspectionRules.SuggestActionSummary(recorded), ct);
+            await _actionSheet.OpenAsync(recorded, ScreenText.SuggestedActionSummary(recorded), ct);
         }
     }
 
@@ -379,7 +379,7 @@ public partial record PointInspectorModel
             await RecordedEvent.UpdateAsync(_ => null!, ct);
         }
 
-        await Confirmation.UpdateAsync(_ => InspectionRules.DescribeRaisedAction(action), ct);
+        await Confirmation.UpdateAsync(_ => ScreenText.ActionRaised(action), ct);
     }
 
     // ---- Editor plumbing ---------------------------------------------------------------

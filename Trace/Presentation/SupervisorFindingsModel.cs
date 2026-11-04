@@ -75,7 +75,7 @@ public partial record SupervisorFindingsModel
         catch (Exception ex) when (StoreFailures.IsStorageFailure(ex))
         {
             await DispatchError.UpdateAsync(
-                _ => $"{action.Summary} could not be updated on the device. Try {action.NextStep} again; if it keeps failing, restart TRACE.",
+                _ => $"{action.Summary} could not be updated on the device. Try {ScreenText.NextStep(action)} again; if it keeps failing, restart TRACE.",
                 ct);
             return;
         }

@@ -26,15 +26,4 @@ public partial record CorrectiveAction(
     public ActionStatus? NextStatus => InspectionRules.NextStatus(Status);
 
     public bool CanAdvance => NextStatus is not null;
-
-    /// <summary>The supervisor's next step, as its button reads: Dispatch, then Close.</summary>
-    public string NextStep => NextStatus switch
-    {
-        ActionStatus.Dispatched => "Dispatch",
-        ActionStatus.Closed => "Close",
-        _ => string.Empty,
-    };
-
-    /// <summary>The next step with what it applies to, for a screen reader.</summary>
-    public string NextStepName => $"{NextStep} {Summary}";
 }
