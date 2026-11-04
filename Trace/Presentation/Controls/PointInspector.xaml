@@ -132,6 +132,10 @@
                 <!-- Evidence -->
                 <StackPanel Spacing="{StaticResource SpaceS}">
                     <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
                         <TextBlock Text="Evidence" Style="{StaticResource FieldLabelText}"
                                    VerticalAlignment="Center" />
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="{StaticResource SpaceXS}">
@@ -149,6 +153,13 @@
                                     Content="Add photo"
                                     AutomationProperties.Name="Add photo evidence" />
                         </StackPanel>
+                        <!-- An Add photo that attached nothing. A row of this grid rather than a
+                             child of the spaced panel, which would keep a gap for it while hidden. -->
+                        <TextBlock Grid.Row="1"
+                                   Text="{Binding EvidenceError}"
+                                   Style="{StaticResource ErrorText}"
+                                   AutomationProperties.LiveSetting="Assertive"
+                                   Visibility="{Binding EvidenceError, Converter={StaticResource StringToVisibility}}" />
                     </Grid>
 
                     <!-- Camera denied: the only way back on a real device is settings. -->

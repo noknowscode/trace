@@ -64,7 +64,16 @@ public partial record SyncModel
 
     public async ValueTask SyncNow(CancellationToken ct)
     {
-        var result = await _queue.SyncAsync(ct);
+        SyncResult result;
+        try
+        {
+            result = await _queue.SyncAsync(ct);
+        }
+        catch (Exception ex) when (IsWriteFailure(ex))
+        {
+            await LastResult.UpdateAsync(_ => QueueWriteFailed, ct);
+            return;
+        }
 
         var message = result switch
         {
@@ -80,7 +89,16 @@ public partial record SyncModel
 
     public async ValueTask RetryFailed(CancellationToken ct)
     {
-        await _queue.RetryAllFailedAsync(ct);
+        try
+        {
+            await _queue.RetryAllFailedAsync(ct);
+        }
+        catch (Exception ex) when (IsWriteFailure(ex))
+        {
+            await LastResult.UpdateAsync(_ => QueueWriteFailed, ct);
+            return;
+        }
+
         await LastResult.UpdateAsync(_ => "Failed uploads are queued again. Sync when you have signal.", ct);
     }
 
@@ -88,4 +106,9 @@ public partial record SyncModel
 
     /// <summary>Reads the device's records again after a failed read.</summary>
     public void Retry() => _recovery.Retry();
+
+    private const string QueueWriteFailed =
+        "The sync queue on this device could not be updated. Your work is still on the device; try again, and restart TRACE if it keeps failing.";
+
+    private static bool IsWriteFailure(Exception ex) => ex is IOException or UnauthorizedAccessException;
 }

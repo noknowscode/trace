@@ -205,6 +205,7 @@ public partial record AssetModel
         await LoadDraftAsync(draft, ct);
         await Confirmation.UpdateAsync(_ => string.Empty, ct);
         await CompletionError.UpdateAsync(_ => string.Empty, ct);
+        await EvidenceError.UpdateAsync(_ => string.Empty, ct);
         await IsDiscardPending.UpdateAsync(_ => false, ct);
 
         // What was recorded at the previous point stays with that point: corrective work
@@ -278,7 +279,7 @@ public partial record AssetModel
         {
             outcome = await _workflow.CompleteAsync(draft, ct);
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        catch (Exception ex) when (IsWriteFailure(ex))
         {
             // The device could not write. The reading stays in the editor, and a second try
             // either records it or finds it already recorded: the token makes that safe.
@@ -333,6 +334,9 @@ public partial record AssetModel
 
     public IFeed<bool> HasEvidence => Draft.Select(draft => draft?.HasEvidence == true);
 
+    /// <summary>Why the last Add photo attached nothing, when the device could not keep the picture.</summary>
+    public IState<string> EvidenceError => State<string>.Empty(this);
+
     public async ValueTask AttachPhoto(CancellationToken ct)
     {
         var point = await SelectedPoint;
@@ -349,15 +353,27 @@ public partial record AssetModel
             return;
         }
 
-        var capture = await _camera.CapturePhotoAsync(ct);
-        if (capture is null)
+        Evidence saved;
+        try
         {
+            var capture = await _camera.CapturePhotoAsync(ct);
+            if (capture is null)
+            {
+                return;
+            }
+
+            saved = await _evidence.SavePhotoAsync(
+                point.Id, capture.Content, capture.Extension, $"{point.Label} · {_time.GetLocalNow():t}", ct);
+        }
+        catch (Exception ex) when (IsWriteFailure(ex))
+        {
+            await EvidenceError.UpdateAsync(
+                _ => "The photo could not be saved on the device, so nothing was attached. Try Add photo again; a written note also satisfies a failed point.",
+                ct);
             return;
         }
 
-        var saved = await _evidence.SavePhotoAsync(
-            point.Id, capture.Content, capture.Extension, $"{point.Label} · {_time.GetLocalNow():t}", ct);
-
+        await EvidenceError.UpdateAsync(_ => string.Empty, ct);
         await Draft.UpdateAsync(current => current is null ? null! : current with
         {
             Evidence = current.Evidence.Add(saved),
@@ -436,15 +452,28 @@ public partial record AssetModel
             ? parsed
             : CorrectivePriority.High;
 
-        var outcome = await _workflow.RaiseCorrectiveActionAsync(
-            new CorrectiveActionRequest(
-                AssetId: _summary.AssetId,
-                PointId: recorded.PointId,
-                SourceInspectionEventId: recorded.Id,
-                Summary: await ActionSummary ?? string.Empty,
-                Priority: priority,
-                Assignee: await ActionAssignee ?? "Mechanical Team"),
-            ct);
+        var request = new CorrectiveActionRequest(
+            AssetId: _summary.AssetId,
+            PointId: recorded.PointId,
+            SourceInspectionEventId: recorded.Id,
+            Summary: await ActionSummary ?? string.Empty,
+            Priority: priority,
+            Assignee: await ActionAssignee ?? "Mechanical Team");
+
+        CorrectiveActionOutcome outcome;
+        try
+        {
+            outcome = await _workflow.RaiseCorrectiveActionAsync(request, ct);
+        }
+        catch (Exception ex) when (IsWriteFailure(ex))
+        {
+            // The store finishes a half-written commit on its next read, so the action may yet
+            // appear: point the technician at the list before a second try makes a duplicate.
+            await ActionError.UpdateAsync(
+                _ => "The action could not be saved on the device. Check Open findings on Overview before trying again; if it keeps failing, restart TRACE.",
+                ct);
+            return;
+        }
 
         if (!outcome.Succeeded)
         {
@@ -466,6 +495,9 @@ public partial record AssetModel
         await _navigator.NavigateRouteAsync(this, BackRoute, cancellation: ct);
 
     // ---- Editor plumbing ---------------------------------------------------------------
+
+    /// <summary>The store or the evidence folder could not be written.</summary>
+    private static bool IsWriteFailure(Exception ex) => ex is IOException or UnauthorizedAccessException;
 
     /// <summary>Puts a draft in the editor: the draft itself, then each field it feeds.</summary>
     private async ValueTask LoadDraftAsync(InspectionDraft draft, CancellationToken ct)

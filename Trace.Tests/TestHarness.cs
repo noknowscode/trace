@@ -66,6 +66,12 @@ internal sealed class TestHarness : IDisposable
     public TraceStore StoreThatDiesWriting(string key) =>
         new(new DyingFileStore(new LocalFileStore(_root), key), Time, NullLogger<TraceStore>.Instance);
 
+    /// <summary>The same directory through a file store whose writes can be made to fail.</summary>
+    public BreakableFileStore BreakableFiles() => new(new LocalFileStore(_root));
+
+    /// <summary>A store over <paramref name="files"/>, sharing this harness's clock.</summary>
+    public TraceStore StoreOver(ILocalFileStore files) => new(files, Time, NullLogger<TraceStore>.Instance);
+
     public InspectionWorkflow WorkflowOver(ITraceStore store) => new(
         store,
         Time,
@@ -96,7 +102,9 @@ internal sealed class TestHarness : IDisposable
     public async Task<AssetModel> OpenAssetAsync(
         string assetId = "P-204",
         ITraceStore? store = null,
-        NavigationOrigin? origin = null)
+        NavigationOrigin? origin = null,
+        ICameraService? camera = null,
+        ILocalEvidenceStore? evidence = null)
     {
         store ??= Store;
         var assets = new AssetRepository(store);
@@ -108,8 +116,8 @@ internal sealed class TestHarness : IDisposable
             new InspectionRepository(store),
             new CorrectiveActionRepository(store),
             ReferenceEquals(store, Store) ? Workflow : WorkflowOver(store),
-            new SimulatedCameraService(NullLogger<SimulatedCameraService>.Instance),
-            Evidence,
+            camera ?? new SimulatedCameraService(NullLogger<SimulatedCameraService>.Instance),
+            evidence ?? Evidence,
             Network,
             new NullNavigator(),
             origin ?? new NavigationOrigin(),
@@ -191,4 +199,48 @@ internal sealed class DyingFileStore(ILocalFileStore inner, string fatalKey) : I
         _dead ? throw new IOException($"The process died before {name} was deleted.") : inner.DeleteAsync(name, ct);
 
     public ValueTask MoveAsync(string name, string newName, CancellationToken ct) => inner.MoveAsync(name, newName, ct);
+}
+
+/// <summary>Fails every write while <see cref="Broken"/> is set, as a full or read-only disk does.</summary>
+internal sealed class BreakableFileStore(ILocalFileStore inner) : ILocalFileStore
+{
+    public bool Broken { get; set; }
+
+    public ValueTask<string?> ReadTextAsync(string name, CancellationToken ct) => inner.ReadTextAsync(name, ct);
+
+    public ValueTask WriteTextAsync(string name, string content, CancellationToken ct) =>
+        Broken ? throw Full(name) : inner.WriteTextAsync(name, content, ct);
+
+    public ValueTask<string> WriteBytesAsync(string name, byte[] content, CancellationToken ct) =>
+        Broken ? throw Full(name) : inner.WriteBytesAsync(name, content, ct);
+
+    public ValueTask DeleteAsync(string name, CancellationToken ct) =>
+        Broken ? throw Full(name) : inner.DeleteAsync(name, ct);
+
+    public ValueTask MoveAsync(string name, string newName, CancellationToken ct) =>
+        Broken ? throw Full(name) : inner.MoveAsync(name, newName, ct);
+
+    private static IOException Full(string name) => new($"No space left on the device for {name}.");
+}
+
+/// <summary>A camera that is allowed and always returns the same small frame.</summary>
+internal sealed class FrameCamera : ICameraService
+{
+    public CameraPermission Permission => CameraPermission.Granted;
+
+    public async IAsyncEnumerable<CameraPermission> WatchPermission(
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct)
+    {
+        await Task.CompletedTask;
+        yield return Permission;
+    }
+
+    public ValueTask<CameraPermission> RequestPermissionAsync(CancellationToken ct) => ValueTask.FromResult(Permission);
+
+    public ValueTask<PhotoCapture?> CapturePhotoAsync(CancellationToken ct) =>
+        ValueTask.FromResult<PhotoCapture?>(new PhotoCapture([1, 2, 3], ".png"));
+
+    public void SetPermission(CameraPermission permission)
+    {
+    }
 }

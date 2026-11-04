@@ -182,4 +182,49 @@ public class AssetModelTests
         (await model.NoteText).Should().BeEmpty();
         (await model.ReadingText).Should().Be("7.2", "the point starts again from its last reading");
     }
+
+    [Test]
+    public async Task A_photo_the_device_cannot_keep_is_reported_and_attaches_nothing()
+    {
+        var files = _harness.BreakableFiles();
+        files.Broken = true;
+        var model = await _harness.OpenAssetAsync(
+            camera: new FrameCamera(),
+            evidence: new Trace.Infrastructure.Platform.LocalEvidenceStore(files, _harness.Time));
+        await model.SelectPoint(await _harness.PointAsync("P-204-seal"), default);
+
+        // The evidence store's IOException used to escape the command, and Add photo did nothing visible.
+        await model.AttachPhoto(default);
+
+        (await model.EvidenceError).Should().Contain("could not be saved");
+        (await model.Draft)!.Evidence.Should().BeEmpty();
+
+        files.Broken = false;
+        await model.AttachPhoto(default);
+
+        (await model.EvidenceError).Should().BeNullOrEmpty("a photo that was kept clears the message");
+        (await model.Draft)!.Evidence.Should().ContainSingle();
+    }
+
+    [Test]
+    public async Task A_corrective_action_the_device_cannot_write_is_reported_on_the_sheet()
+    {
+        var files = _harness.BreakableFiles();
+        var store = _harness.StoreOver(files);
+        var model = await _harness.OpenAssetAsync(store: store);
+        await model.SelectPoint(await _harness.PointAsync("P-204-seal"), default);
+        await EnterAsync(model, "7.4", Disposition.Fail, "Seal weeping at the gland.");
+        await model.CompletePoint(default);
+        (await model.CanRaiseAction).Should().BeTrue();
+
+        files.Broken = true;
+
+        // The store's IOException used to escape the command, and the sheet stayed open with no word.
+        await model.CreateAction(default);
+
+        (await model.ActionError).Should().Contain("could not be saved");
+        var recorded = (await model.RecordedEvent)!;
+        (await _harness.Reopen().GetAsync(default)).Actions
+            .Should().NotContain(a => a.SourceInspectionEventId == recorded.Id);
+    }
 }
