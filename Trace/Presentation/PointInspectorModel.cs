@@ -77,7 +77,8 @@ public partial record PointInspectorModel
 
     /// <summary>
     /// Opens a point. Resumes any saved draft for it rather than starting over, so an
-    /// interrupted reading is still there when the technician comes back.
+    /// interrupted reading is still there when the technician comes back, and offers corrective
+    /// work again for a failure at the point that has none yet.
     /// </summary>
     internal async ValueTask OpenAsync(InspectionPoint point, CancellationToken ct)
     {
@@ -92,8 +93,11 @@ public partial record PointInspectorModel
         await IsDiscardPending.UpdateAsync(_ => false, ct);
 
         // What was recorded at the previous point stays with that point: corrective work
-        // raised from here must come from an inspection of this point.
-        await RecordedEvent.UpdateAsync(_ => null, ct);
+        // raised from here must come from an inspection of this point. Its latest inspection,
+        // when it failed and no work was raised from it, still offers Create corrective action:
+        // closing the inspector before Create used to lose the offer for good.
+        var awaitingAction = await FailureAwaitingActionAsync(point, ct);
+        await RecordedEvent.UpdateAsync(_ => awaitingAction, ct);
         await _actionSheet.ResetAsync(ct);
         await IsOpen.UpdateAsync(_ => true, ct);
     }
@@ -423,6 +427,23 @@ public partial record PointInspectorModel
         {
             await DraftError.UpdateAsync(_ => DraftNotSaved, ct);
             return InspectionDraft.For(point);
+        }
+    }
+
+    /// <summary>
+    /// The latest inspection at <paramref name="point"/> when it failed and no corrective work was
+    /// raised from it. When the device cannot read its records the point opens without the offer;
+    /// the draft message above already says the device could not be reached.
+    /// </summary>
+    private async ValueTask<InspectionEvent?> FailureAwaitingActionAsync(InspectionPoint point, CancellationToken ct)
+    {
+        try
+        {
+            return await _workflow.FindFailureAwaitingActionAsync(point.Id, ct);
+        }
+        catch (Exception ex) when (StoreFailures.IsStorageFailure(ex))
+        {
+            return null;
         }
     }
 

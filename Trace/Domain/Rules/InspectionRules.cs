@@ -136,6 +136,23 @@ public static class InspectionRules
         _ => null,
     };
 
+    /// <summary>
+    /// The latest inspection at <paramref name="pointId"/> when it failed and no corrective action
+    /// was raised from it: work the point still owes. A later inspection that passed supersedes
+    /// the failure.
+    /// </summary>
+    public static InspectionEvent? FailureAwaitingAction(
+        IEnumerable<InspectionEvent> events,
+        IEnumerable<CorrectiveAction> actions,
+        string pointId) =>
+        events
+            .Where(e => e.PointId == pointId)
+            .OrderByDescending(e => e.Timestamp)
+            .FirstOrDefault() is { Disposition: Disposition.Fail } latest
+            && !actions.Any(a => a.SourceInspectionEventId == latest.Id)
+                ? latest
+                : null;
+
     /// <summary>The newest inspection at <paramref name="pointId"/> that recorded a photo, if any.</summary>
     public static InspectionEvent? LatestWithPhotos(IEnumerable<InspectionEvent>? events, string? pointId) =>
         string.IsNullOrEmpty(pointId) || events is null

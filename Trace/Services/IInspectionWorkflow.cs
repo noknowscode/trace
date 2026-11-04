@@ -16,6 +16,12 @@ public interface IInspectionWorkflow
     ValueTask<CompletionOutcome> CompleteAsync(InspectionDraft draft, CancellationToken ct);
 
     /// <summary>
+    /// The latest inspection at a point when it failed and no corrective action was raised from
+    /// it yet, so the point can still offer one; otherwise null.
+    /// </summary>
+    ValueTask<InspectionEvent?> FindFailureAwaitingActionAsync(string pointId, CancellationToken ct);
+
+    /// <summary>
     /// Raises corrective work from a failed inspection. One inspection raises one action: a
     /// repeated request resolves to the action it already raised and writes nothing.
     /// </summary>

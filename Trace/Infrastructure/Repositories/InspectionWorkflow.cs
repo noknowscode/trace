@@ -198,6 +198,12 @@ public sealed class InspectionWorkflow : IInspectionWorkflow
         return new CompletionOutcome(true, stored, validation, WasQueued: !duplicate, WasDuplicate: duplicate);
     }
 
+    public async ValueTask<InspectionEvent?> FindFailureAwaitingActionAsync(string pointId, CancellationToken ct)
+    {
+        var snapshot = await _store.GetAsync(ct);
+        return InspectionRules.FailureAwaitingAction(snapshot.Events, snapshot.Actions, pointId);
+    }
+
     private static TraceSnapshot WithoutDraft(TraceSnapshot s, string clientToken) =>
         s.Drafts.Any(d => d.ClientToken == clientToken)
             ? s with { Drafts = s.Drafts.RemoveAll(d => d.ClientToken == clientToken) }

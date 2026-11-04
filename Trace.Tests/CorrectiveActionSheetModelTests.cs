@@ -149,6 +149,39 @@ public class CorrectiveActionSheetModelTests
     }
 
     [Test]
+    public async Task A_failure_closed_before_Create_still_offers_its_action_when_the_point_reopens()
+    {
+        var model = await FailTheSealAsync();
+        var failed = (await model.InspectorModel.RecordedEvent)!;
+
+        // Closing the inspector before Create used to drop the offer: reopening the point lost it.
+        await model.InspectorModel.Close(default);
+        await model.SelectPoint(await _harness.PointAsync("P-204-seal"), default);
+
+        (await model.InspectorModel.CanRaiseAction).Should().BeTrue();
+        await model.InspectorModel.OpenActionSheet(default);
+        (await model.ActionSheetModel.Source)!.Id.Should().Be(failed.Id);
+        await model.ActionSheetModel.Create(default);
+        (await ActionsAsync()).Should().ContainSingle(a => a.SourceInspectionEventId == failed.Id);
+
+        // Raised now, so the point offers nothing more.
+        await model.InspectorModel.Close(default);
+        await model.SelectPoint(await _harness.PointAsync("P-204-seal"), default);
+        (await model.InspectorModel.CanRaiseAction).Should().BeFalse();
+    }
+
+    [Test]
+    public async Task A_failure_that_has_its_action_is_not_offered_again()
+    {
+        var model = await _harness.OpenAssetAsync();
+
+        // The seed's seal failure was raised as ca-1001.
+        await model.SelectPoint(await _harness.PointAsync("P-204-seal"), default);
+
+        (await model.InspectorModel.CanRaiseAction).Should().BeFalse();
+    }
+
+    [Test]
     public async Task A_blank_summary_cannot_be_created()
     {
         var model = await FailTheSealAsync();
