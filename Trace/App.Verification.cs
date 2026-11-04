@@ -21,6 +21,11 @@ namespace Trace;
 /// <c>Again</c> completes the seal housing as Pass, enters a new reading and completes it again,
 /// and prints how many events the point gained; <c>Discard</c> enters the reading and asks to
 /// discard it, for the confirmation; <c>Photo</c> attaches a photo and prints its URI.</item>
+/// <item><c>--trace-route=Switch</c> opens four assets in one session, the ways a technician does:
+/// AHU-12 from Today, C-07 from Assets, P-204 from Today, and C-07 by its code on Scan, pressing
+/// Back after each. It prints the asset each one asked for, the asset the workspace shows and where
+/// Back landed, and records a Pass at C-07's first point and prints the asset the stored event
+/// names.</item>
 /// <item><c>--trace-from=Assets|Scan|Sync|Findings</c> opens that destination first and the asset
 /// from there; <c>--trace-back=1</c> then presses the asset's Back and prints where it landed.</item>
 /// <item><c>--trace-seed=empty</c> clears the round, the corrective actions and the queue after the
@@ -119,6 +124,12 @@ public partial class App
             {
                 var tab = await navigator.NavigateRouteAsync(today, $"../{route}");
                 Console.Error.WriteLine($"VERIFY route={spec} success={tab?.Success}");
+                return;
+            }
+
+            if (route is "Switch")
+            {
+                await VerifyAssetSwitchingAsync(root, today, navigator);
                 return;
             }
 
@@ -271,6 +282,114 @@ public partial class App
         {
             Console.Error.WriteLine($"VERIFY failed: {ex}");
         }
+    }
+
+    /// <summary>
+    /// Opens one asset after another in a single session, from each kind of entry point, and
+    /// checks that every one shows the asset it was opened for and that Back returns to where
+    /// it was opened from. Then records a reading on the second and checks the store files it
+    /// under that asset. The checklist's other hooks open one asset per launch, which is how a
+    /// workspace that kept showing the first asset went unnoticed.
+    /// </summary>
+    private async Task VerifyAssetSwitchingAsync(FrameworkElement root, TodayPage today, INavigator navigator)
+    {
+        var services = Host!.Services;
+        IImmutableList<AssetSummary> summaries = ImmutableList<AssetSummary>.Empty;
+        await foreach (var value in services.GetRequiredService<IAssetRepository>().WatchSummaries(CancellationToken.None))
+        {
+            summaries = value;
+            break;
+        }
+
+        var visits = new (string AssetId, string From)[] { ("AHU-12", "Today"), ("C-07", "Assets"), ("P-204", "Today"), ("C-07", "Scan") };
+        var passed = 0;
+        string? recordedOn = null;
+
+        for (var i = 0; i < visits.Length; i++)
+        {
+            var (assetId, from) = visits[i];
+            await navigator.NavigateRouteAsync(today, $"../{from}");
+            await Task.Delay(800);
+
+            if (from is "Scan")
+            {
+                // The code typed off the nameplate, through Scan's own Open asset.
+                var scan = Find<ScanPage>(root);
+                SetText(scan!, "Asset code", assetId);
+                await Task.Delay(500);
+                All<Button>(scan!).FirstOrDefault(b => b.Content as string == "Open asset")?.Command?.Execute(null);
+            }
+            else
+            {
+                // A card on that destination: the request its list makes, with the row it carries.
+                FrameworkElement opener = from is "Assets" ? Find<AssetsPage>(root)! : today;
+                var summary = summaries.First(s => s.AssetId == assetId);
+                await (opener.Navigator() ?? navigator).NavigateRouteAsync(opener, "../Asset", data: summary);
+            }
+
+            await Task.Delay(1500);
+            var page = Find<AssetPage>(root);
+            var shown = (page?.DataContext as AssetViewModel)?.AssetId;
+            var headers = page is null
+                ? string.Empty
+                : string.Join("|", All<PageHeader>(page).Select(h => h.Eyebrow).Where(e => !string.IsNullOrEmpty(e)).Distinct());
+            var opened = shown == assetId && headers.Length > 0 && headers.Split('|').All(h => h.StartsWith(assetId, StringComparison.Ordinal));
+
+            if (i == 1 && page is not null && opened)
+            {
+                recordedOn = await RecordPassAtFirstPointAsync(page);
+            }
+
+            Invoke(page!, "Back");
+            await Task.Delay(1200);
+            var back = new FrameworkElement?[]
+                {
+                    today, Find<AssetsPage>(root), Find<ScanPage>(root), Find<SyncPage>(root), Find<SupervisorFindingsPage>(root), page,
+                }
+                .Where(p => p is { Parent: FrameworkElement { Visibility: Visibility.Visible } })
+                .Select(p => p!.GetType().Name)
+                .FirstOrDefault();
+            var returned = back == $"{from}Page";
+
+            Console.Error.WriteLine(
+                $"VERIFY switch asked={assetId} from={from} shown={shown} header=\"{headers}\" back={back} ok={opened && returned}");
+            passed += opened && returned ? 1 : 0;
+        }
+
+        var result = passed == visits.Length && recordedOn == visits[1].AssetId ? "pass" : "fail";
+        Console.Error.WriteLine($"VERIFY switch result={result} opened={passed}/{visits.Length} recordedOn={recordedOn}");
+    }
+
+    /// <summary>Completes the open asset's first point as Pass, mid-range, and returns the asset the stored event names.</summary>
+    private async Task<string?> RecordPassAtFirstPointAsync(AssetPage page)
+    {
+        var store = Host!.Services.GetRequiredService<ITraceStore>();
+        var before = (await store.GetAsync(CancellationToken.None)).Events.Select(e => e.Id).ToHashSet();
+
+        var chip = All<Button>(page).FirstOrDefault(b => b.DataContext is PointMarkerView && b is not InspectionPointMarker);
+        if (chip?.DataContext is not PointMarkerView { Point: var point })
+        {
+            Console.Error.WriteLine("VERIFY switch recorded none: no point to open");
+            return null;
+        }
+
+        chip.Command?.Execute(chip.CommandParameter);
+        await Task.Delay(1500);
+        SetText(page, "New reading", ((point.NormalMin + point.NormalMax) / 2).ToString("0.##", System.Globalization.CultureInfo.CurrentCulture));
+        await Task.Delay(800);
+        Invoke(page, "Record pass");
+        await Task.Delay(800);
+        Invoke(page, "Complete point");
+        await Task.Delay(1500);
+
+        var added = (await store.GetAsync(CancellationToken.None)).Events.Where(e => !before.Contains(e.Id)).ToList();
+        foreach (var recorded in added)
+        {
+            Console.Error.WriteLine(
+                $"VERIFY switch recorded event={recorded.Id} asset={recorded.AssetId} point={recorded.PointId} reading={recorded.ReadingText} disposition={recorded.Disposition}");
+        }
+
+        return added.Count == 1 ? added[0].AssetId : null;
     }
 
     private static void SetText(DependencyObject root, string automationName, string text)

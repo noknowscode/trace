@@ -13,6 +13,9 @@ Items that cannot be checked in this container are listed under "Not verified he
 ## Screens and navigation
 - [x] Today list opens with realistic assigned assets.
 - [x] Asset cards open the correct asset.
+      (Every asset in a session, not only the first: `--trace-route=Switch` opens AHU-12 from
+      Today, C-07 from Assets, P-204 from Today and C-07 by code on Scan in one launch, and a
+      reading taken on the second is stored against C-07.)
 - [x] Back returns to the previous context without losing an in-progress inspection.
       (A note typed into a point survives Today and back — `check-draft-return.png`. Back
       returns to the destination that opened the asset: Today, Assets, Scan or Findings,
