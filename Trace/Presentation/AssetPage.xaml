@@ -354,6 +354,9 @@
                                                             <controls:StatusChip
                                                                 Severity="{Binding Priority, Converter={StaticResource ToSeverity}}"
                                                                 Text="{Binding Priority}" />
+                                                            <controls:StatusChip
+                                                                Severity="{Binding Status, Converter={StaticResource ToSeverity}}"
+                                                                Text="{Binding Status}" />
                                                             <controls:StatusChip Severity="Neutral"
                                                                                  Text="{Binding Assignee}" />
                                                         </controls:WrapPanel>

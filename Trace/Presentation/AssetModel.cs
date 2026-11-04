@@ -96,8 +96,9 @@ public partial record AssetModel
     public IListFeed<InspectionEvent> History =>
         _recovery.WatchList(ct => _inspections.WatchHistory(_summary.AssetId, ct));
 
+    /// <summary>The asset's corrective work that is not closed yet.</summary>
     public IListFeed<CorrectiveAction> Findings =>
-        _recovery.WatchList(ct => _actions.WatchForAsset(_summary.AssetId, ct));
+        _recovery.WatchList(ct => _actions.WatchOpenForAsset(_summary.AssetId, ct));
 
     public IFeed<bool> IsOffline => Feed.AsyncEnumerable(_network.Watch).Select(online => !online);
 

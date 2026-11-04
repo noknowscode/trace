@@ -9,7 +9,8 @@ namespace Trace.Infrastructure.Persistence;
 [JsonSourceGenerationOptions(
     WriteIndented = true,
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
-    UseStringEnumConverter = true)]
+    UseStringEnumConverter = true,
+    Converters = [typeof(ActionStatusJsonConverter)])]
 [JsonSerializable(typeof(ImmutableList<Asset>))]
 [JsonSerializable(typeof(ImmutableList<Assignment>))]
 [JsonSerializable(typeof(ImmutableList<InspectionEvent>))]

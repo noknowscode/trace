@@ -52,7 +52,7 @@ public static class SeedData
                 Priority: CorrectivePriority.High,
                 Summary: "Inspect and replace pump seal at next shutdown",
                 Assignee: "Mechanical Team",
-                Status: ActionStatus.Assigned,
+                Status: ActionStatus.Dispatched,
                 CreatedAt: now.AddDays(-1).AddMinutes(12)));
 
         return new TraceSnapshot(

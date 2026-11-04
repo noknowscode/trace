@@ -61,6 +61,7 @@ public partial class App : Application
                     services.AddSingleton<ICorrectiveActionRepository, CorrectiveActionRepository>();
                     services.AddSingleton<ISyncQueue, SyncQueue>();
                     services.AddSingleton<IInspectionWorkflow, InspectionWorkflow>();
+                    services.AddSingleton<IActionDispatch, ActionDispatch>();
 
                     // One retry for every screen that failed to read the store.
                     services.AddSingleton<FeedRecovery>();

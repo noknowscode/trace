@@ -56,6 +56,7 @@ public sealed class SeverityConverter : IValueConverter
         RangeStatus range => range.ToSeverity(),
         SyncState state => state.ToSeverity(),
         CorrectivePriority priority => priority.ToSeverity(),
+        ActionStatus status => status.ToSeverity(),
         _ => StatusSeverity.Neutral,
     };
 

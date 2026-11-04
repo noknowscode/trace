@@ -35,5 +35,5 @@ public sealed record TraceSnapshot(
     public int PendingSyncCount => Queue.Count(o => o.Status is SyncState.Pending or SyncState.Failed);
 
     public int OpenFindingsFor(string assetId) =>
-        Actions.Count(a => a.AssetId == assetId && a.Status != ActionStatus.Complete);
+        Actions.Count(a => a.AssetId == assetId && a.IsOpenWork);
 }

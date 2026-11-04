@@ -47,6 +47,15 @@ public static class StatusSeverityMap
         _ => StatusSeverity.Neutral,
     };
 
+    /// <summary>Open work waits on the supervisor, dispatched work is under way, closed work is done.</summary>
+    public static StatusSeverity ToSeverity(this ActionStatus status) => status switch
+    {
+        ActionStatus.Open => StatusSeverity.Caution,
+        ActionStatus.Dispatched => StatusSeverity.Info,
+        ActionStatus.Closed => StatusSeverity.Positive,
+        _ => StatusSeverity.Neutral,
+    };
+
     public static StatusSeverity ToSeverity(this CorrectivePriority priority) => priority switch
     {
         CorrectivePriority.Critical or CorrectivePriority.High => StatusSeverity.Critical,

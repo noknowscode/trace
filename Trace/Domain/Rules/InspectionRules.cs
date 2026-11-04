@@ -125,6 +125,17 @@ public static class InspectionRules
             Status: ActionStatus.Open,
             CreatedAt: createdAt);
 
+    /// <summary>
+    /// The one step corrective work can take from <paramref name="status"/>: an open action is
+    /// dispatched, a dispatched one is closed, and a closed one goes nowhere.
+    /// </summary>
+    public static ActionStatus? NextStatus(ActionStatus status) => status switch
+    {
+        ActionStatus.Open => ActionStatus.Dispatched,
+        ActionStatus.Dispatched => ActionStatus.Closed,
+        _ => null,
+    };
+
     /// <summary>The confirmation shown once corrective work is raised.</summary>
     /// <remarks>An assignee written with a closing abbreviation ("Priya S.") ends the sentence itself.</remarks>
     public static string DescribeRaisedAction(CorrectiveAction action) =>

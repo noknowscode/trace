@@ -22,9 +22,17 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <controls:PageHeader Eyebrow="REVIEW"
-                                 Title="Findings"
-                                 Supporting="{Binding Headline}" />
+            <StackPanel>
+                <controls:PageHeader Eyebrow="REVIEW"
+                                     Title="Findings"
+                                     Supporting="{Binding Headline}" />
+                <!-- A Dispatch or Close the device could not write. -->
+                <TextBlock Text="{Binding DispatchError}"
+                           Style="{StaticResource ErrorText}"
+                           Margin="{StaticResource GapTopS}"
+                           AutomationProperties.LiveSetting="Assertive"
+                           Visibility="{Binding DispatchError, Converter={StaticResource StringToVisibility}}" />
+            </StackPanel>
 
             <ScrollViewer Grid.Row="1">
                 <Grid RowSpacing="{utu:Responsive Narrow={StaticResource SpaceXL}, Widest=0}"
@@ -47,7 +55,7 @@
                                        ErrorTemplate="{StaticResource FeedErrorTemplate}">
                             <mvux:FeedView.ValueTemplate>
                                 <DataTemplate>
-                                    <ItemsRepeater ItemsSource="{Binding Data}">
+                                    <ItemsRepeater ItemsSource="{Binding Data}" TabFocusNavigation="Local">
                                         <ItemsRepeater.Layout>
                                             <StackLayout Spacing="{StaticResource SpaceM}" />
                                         </ItemsRepeater.Layout>
@@ -64,6 +72,8 @@
                                                             <RowDefinition Height="Auto" />
                                                         </Grid.RowDefinitions>
 
+                                                        <!-- Origin, what to do, and the supervisor's next step with it:
+                                                             Dispatch an open action, Close a dispatched one. -->
                                                         <StackPanel Spacing="{StaticResource SpaceXS}">
                                                             <TextBlock Text="{Binding Origin}"
                                                                        Style="{StaticResource EyebrowText}" />
@@ -77,22 +87,32 @@
                                                                              Severity="{Binding Priority, Converter={StaticResource ToSeverity}}"
                                                                              Text="{Binding Priority}" />
 
-                                                        <controls:WrapPanel Grid.Row="1" Grid.ColumnSpan="2"
+                                                        <controls:WrapPanel Grid.Row="1"
+                                                                            VerticalAlignment="Center"
                                                                             HorizontalSpacing="{StaticResource SpaceS}"
                                                                             VerticalSpacing="{StaticResource SpaceS}">
+                                                            <controls:StatusChip
+                                                                Severity="{Binding Status, Converter={StaticResource ToSeverity}}"
+                                                                Text="{Binding Status}" />
                                                             <Border Style="{StaticResource ValueChip}">
                                                                 <TextBlock Style="{StaticResource ChipValueText}"
                                                                            Text="{Binding Assignee}" />
                                                             </Border>
                                                             <Border Style="{StaticResource ValueChip}">
                                                                 <TextBlock Style="{StaticResource ChipValueText}"
-                                                                           Text="{Binding Status}" />
-                                                            </Border>
-                                                            <Border Style="{StaticResource ValueChip}">
-                                                                <TextBlock Style="{StaticResource ChipValueText}"
                                                                            Text="{Binding CreatedAt, Converter={StaticResource RelativeTime}}" />
                                                             </Border>
                                                         </controls:WrapPanel>
+
+                                                        <Button Grid.Row="1" Grid.Column="1"
+                                                                Style="{StaticResource OutlinedButtonStyle}"
+                                                                VerticalAlignment="Bottom"
+                                                                MinHeight="{StaticResource TouchTargetSize}"
+                                                                Content="{Binding NextStep}"
+                                                                Command="{utu:AncestorBinding AncestorType=mvux:FeedView, Path=DataContext.Advance}"
+                                                                CommandParameter="{Binding}"
+                                                                Visibility="{Binding CanAdvance, Converter={StaticResource BoolToVisibility}}"
+                                                                AutomationProperties.Name="{Binding NextStepName}" />
                                                     </Grid>
                                                 </Border>
                                             </DataTemplate>

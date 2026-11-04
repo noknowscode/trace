@@ -29,6 +29,7 @@ internal sealed class TestHarness : IDisposable
             Options.Create(new AppConfig { Technician = "Test Tech" }),
             NullLogger<InspectionWorkflow>.Instance);
         Evidence = new LocalEvidenceStore(Files, Time);
+        Dispatch = new ActionDispatch(Store, Time, NullLogger<ActionDispatch>.Instance);
     }
 
     public TestTimeProvider Time { get; }
@@ -44,6 +45,8 @@ internal sealed class TestHarness : IDisposable
     public InspectionWorkflow Workflow { get; }
 
     public LocalEvidenceStore Evidence { get; }
+
+    public ActionDispatch Dispatch { get; }
 
     public static TestHarness Create()
     {
