@@ -2,10 +2,52 @@ namespace Trace.Presentation;
 
 public sealed partial class MainPage : Page
 {
+    /// <summary>The workspace of the asset that was last closed, until the next one opens.</summary>
+    private AssetViewModel? _closedAsset;
+
     public MainPage()
     {
         this.InitializeComponent();
         Loaded += RealizeBothNavigationBars;
+        AssetRegion.RegisterPropertyChangedCallback(VisibilityProperty, OnAssetRegionVisibilityChanged);
+    }
+
+    /// <summary>
+    /// Gives every asset that is opened its own workspace.
+    /// </summary>
+    /// <remarks>
+    /// The asset shares the destinations' Visibility region, whose navigator builds a view model
+    /// only when the child it shows has none of the mapped type. Its region child is declared
+    /// here rather than created per request, so the first asset's model stayed on it: every later
+    /// asset, from any list or a tag, showed the first one, and a reading taken there was recorded
+    /// against it. Once the asset is hidden its model is taken off the region, which returns to
+    /// the state it had at launch, and the next request builds a model from the asset it carries.
+    ///
+    /// The closed model is disposed only when the next asset is shown: it is usually hidden by its
+    /// own Back command, which is still finishing at that moment, and disposing a model cancels
+    /// its commands. Until then it is idle, as the one shared model was before.
+    /// </remarks>
+    private void OnAssetRegionVisibilityChanged(DependencyObject sender, DependencyProperty property)
+    {
+        if (AssetRegion.Visibility == Visibility.Visible)
+        {
+            DisposeClosedAsset();
+        }
+        else if (AssetRegion.DataContext is AssetViewModel shown)
+        {
+            AssetRegion.ClearValue(DataContextProperty);
+            DisposeClosedAsset();
+            _closedAsset = shown;
+        }
+    }
+
+    private void DisposeClosedAsset()
+    {
+        if (_closedAsset is { } closed)
+        {
+            _closedAsset = null;
+            _ = closed.DisposeAsync().AsTask();
+        }
     }
 
     /// <summary>

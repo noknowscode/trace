@@ -119,7 +119,13 @@
             <Grid uen:Region.Name="Findings" Visibility="Collapsed">
                 <local:SupervisorFindingsPage />
             </Grid>
-            <Grid uen:Region.Name="Asset" Visibility="Collapsed">
+            <!--
+                The navigator keeps the view model it finds on a child it shows again, so every
+                asset after the first would open on the first one's workspace. MainPage drops the
+                asset's model when this region is hidden (code-behind), and the next request
+                builds one from the asset it carries.
+            -->
+            <Grid x:Name="AssetRegion" uen:Region.Name="Asset" Visibility="Collapsed">
                 <local:AssetPage />
             </Grid>
         </Grid>
