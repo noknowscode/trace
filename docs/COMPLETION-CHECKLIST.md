@@ -49,6 +49,10 @@ Items that cannot be checked in this container are listed under "Not verified he
 - [x] Summary is required.
 - [x] Confirmation is shown after creation.
 - [x] The action remains present after navigating away and returning.
+- [x] One failure raises one action: once raised, Create corrective action is not offered for that
+      inspection again, and a repeated request in the workflow resolves to the first action (tests).
+- [x] Findings dispatches and closes an action (Open → Dispatched → Closed), one step per tap,
+      each step persisted and queued to sync (tests; pointer at 1280 and 390 px).
 
 ## Evidence
 - [x] Evidence surface can be opened from the inspection point.
@@ -58,6 +62,8 @@ Items that cannot be checked in this container are listed under "Not verified he
 - [x] At least one realistic example image is shown.
 - [x] Long notes wrap without covering actions.
 - [x] Empty evidence state is explicit.
+- [x] Recorded photos show again: on their History entry, as "Photos recorded" on the point, and
+      full size in a viewer that either thumbnail opens (tests; pointer at 1280 px).
 
 ## Offline and persistence
 - [x] Toggling offline does not block inspection completion.
@@ -114,6 +120,8 @@ Items that cannot be checked in this container are listed under "Not verified he
 - [x] Resizing or rotating keeps the asset and a half-entered reading on screen.
       (Live resize 360 → 599 → 600 → 800 → 360 → 1080 with a reading in progress.)
 - [x] No horizontal scrolling is required for core task flow.
+- [x] Phone landscape (800 × 360, 844 × 390): the inspector scrolls as one, so the validation
+      message and Complete point stay reachable (reached by keyboard at both sizes).
       (The point chip strip scrolls sideways by design; nothing else does.)
 
 ## Product polish
@@ -127,9 +135,9 @@ Items that cannot be checked in this container are listed under "Not verified he
 
 ## Not verified here
 
-- **Android, iOS, WebAssembly and Windows heads.** Release builds of the Android and
-  WebAssembly heads compile here with zero warnings; the iOS and WinAppSDK heads compile
-  only in CI (`.github/workflows/ci.yml`). None of the four has been run: the desktop head
-  is the only one exercised at runtime on this machine.
+- **Android, iOS and Windows heads.** The iOS, WinAppSDK and Android heads compile in CI
+  (`.github/workflows/ci.yml`); none has been run here. The Release WebAssembly build was run
+  in headless Chromium (`tools/wasm-check.js`): a point inspected, failed with a note and
+  completed, and the History entry seen (`docs/evidence/wasm-complete-point.jpg`).
 - **Real hardware.** Camera, tag scanning, network state and the sync transport are
   deterministic simulations behind interfaces in `Services/`.

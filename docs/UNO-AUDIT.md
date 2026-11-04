@@ -213,6 +213,9 @@ test over `BreakableFileStore` (`Trace.Tests/TestHarness.cs`):
 
 ## Remaining
 
+Update (A pass, 2026-11-04): the `AssetModel` split and the unguarded store paths below are done (`0bb3835`,
+`cab8cd2`), and FluentAssertions is on 7.2.2 (`0b34d92`, owner decision). The other items stand.
+
 - **`AssetModel` carries the whole workspace:** 530 lines and 12 dependencies, holding tabs, the point editor and
   draft, evidence and camera, corrective action, and Back.
   - A split along those seams (an `InspectionEditor` and an `ActionSheet` behind the page model, with the tests

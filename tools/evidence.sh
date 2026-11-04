@@ -11,7 +11,7 @@ WORK=${1:?work dir}; shift
 ROUTES=("$@")
 # Empty and Error are Today with an empty round, and with store reads failing (the Try again state);
 # InspectError is the asset's Inspect tab with its record unreadable.
-[ ${#ROUTES[@]} -eq 0 ] && ROUTES=(Today Assets Scan Asset Point Discard Action Asset:History Sync Findings Empty Error InspectError)
+[ ${#ROUTES[@]} -eq 0 ] && ROUTES=(Today Assets Scan Asset Point Discard Action Asset:History Asset:Documents Sync Findings Empty Error InspectError)
 WIDTHS="360 599 600 800 1080 1920"
 SHEETS="$ROOT/docs/evidence"
 mkdir -p "$WORK" "$SHEETS"
