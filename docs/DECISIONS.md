@@ -60,3 +60,21 @@ Tradeoff: no manuals or drawings. The tab keeps its spec name, Documents.
 
 Applies to: the asset's Documents tab.
 Source: COMPLETENESS.md Major "The Documents tab is Simulated".
+
+### D-004 · 2026-11-04 · The offline conflict dialog is cut while the sync transport is simulated (proposed)
+
+Decision: the spec's "Offline conflict dialog" (`SyncConflictDialog`) is not built. No screen
+or copy offers to resolve a conflict.
+
+Reason: TRACE has no server, by design (CLAUDE.md, UNO-BUILD-SPEC: deterministic simulated
+implementations), so nothing on another device can change a record this one also changed, and
+the simulated transport never reports a conflict. A dialog that no path can open would be
+dead UI; a fake conflict mode to open it would be a large feature (a conflict model, a merge
+rule, a resolution write and its sync operation) built only to show itself. Build small, cut
+large. The completeness audit listed it as N/A without recording the cut; this records it.
+
+Tradeoff: the day a real transport lands, it brings the conflict case with it, and this dialog
+with it. Until then every write is the device's own and syncs as queued.
+
+Applies to: Sync, the transient layers. Source: COMPLETENESS.md Unresolved Question "The sync
+conflict dialog", A pass 2 review.
