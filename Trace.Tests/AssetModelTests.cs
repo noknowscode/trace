@@ -94,11 +94,25 @@ public class AssetModelTests
 
         await model.ViewEvidence(photo, default);
 
-        (await model.IsViewingEvidence).Should().BeTrue();
-        (await model.ViewedEvidence)!.LocalUri.Should().Be(photo.LocalUri);
+        (await model.ViewerModel.IsOpen).Should().BeTrue();
+        (await model.ViewerModel.Viewed)!.LocalUri.Should().Be(photo.LocalUri);
 
-        await model.CloseEvidence(default);
-        (await model.IsViewingEvidence).Should().BeFalse();
+        await model.ViewerModel.Close(default);
+        (await model.ViewerModel.IsOpen).Should().BeFalse();
+    }
+
+    [Test]
+    public async Task A_photo_on_the_point_opens_in_the_workspace_s_viewer_through_the_inspector()
+    {
+        var model = await _harness.OpenAssetAsync();
+        await model.SelectPoint(await _harness.PointAsync("P-204-seal"), default);
+        await TestHarness.UntilAsync(async () => (await model.InspectorModel.LastPhotos)?.Count > 0);
+        var photo = (await model.InspectorModel.LastPhotos)!.Single();
+
+        await model.InspectorModel.ViewEvidence(photo, default);
+
+        (await model.ViewerModel.IsOpen).Should().BeTrue("the inspector opens the viewer through its own model");
+        (await model.ViewerModel.Viewed)!.Id.Should().Be(photo.Id);
     }
 
     [Test]

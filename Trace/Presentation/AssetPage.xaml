@@ -595,8 +595,9 @@
             ViewerMaxWidth over a scrim; the picture scales to fit whatever height is left.
         -->
         <Grid x:Name="ViewerLayer"
+              DataContext="{Binding Viewer}"
               Background="{ThemeResource SheetScrimBrush}"
-              Visibility="{Binding IsViewingEvidence, Converter={StaticResource BoolToVisibility}}">
+              Visibility="{Binding IsOpen, Converter={StaticResource BoolToVisibility}}">
             <Border Style="{StaticResource SheetSurface}"
                     TabFocusNavigation="Cycle"
                     MaxWidth="{StaticResource ViewerMaxWidth}"
@@ -616,15 +617,15 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel Spacing="{StaticResource SpaceXXS}" VerticalAlignment="Center">
                             <TextBlock Text="EVIDENCE" Style="{StaticResource EyebrowText}" />
-                            <TextBlock Text="{Binding ViewedEvidence.Caption}" Style="{StaticResource CardTitleText}" />
-                            <TextBlock Text="{Binding ViewedEvidence.CreatedAt, Converter={StaticResource RelativeTime}}"
+                            <TextBlock Text="{Binding Viewed.Caption}" Style="{StaticResource CardTitleText}" />
+                            <TextBlock Text="{Binding Viewed.CreatedAt, Converter={StaticResource RelativeTime}}"
                                        Style="{StaticResource SupportingText}" />
                         </StackPanel>
                         <Button x:Name="CloseViewerButton"
                                 Grid.Column="1"
                                 Style="{StaticResource IconButtonStyle}"
                                 VerticalAlignment="Top"
-                                Command="{Binding CloseEvidence}"
+                                Command="{Binding Close}"
                                 AutomationProperties.Name="Close photo"
                                 ToolTipService.ToolTip="Close">
                             <Viewbox Width="{StaticResource IconSizeS}" Height="{StaticResource IconSizeS}">
@@ -636,9 +637,9 @@
                     <Border Grid.Row="1"
                             CornerRadius="{StaticResource SmallRadius}"
                             Background="{ThemeResource SurfaceVariantBrush}">
-                        <Image Source="{Binding ViewedEvidence.LocalUri}"
+                        <Image Source="{Binding Viewed.LocalUri}"
                                Stretch="Uniform"
-                               AutomationProperties.Name="{Binding ViewedEvidence.Caption}" />
+                               AutomationProperties.Name="{Binding Viewed.Caption}" />
                     </Border>
                 </Grid>
             </Border>

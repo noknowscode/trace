@@ -15,6 +15,7 @@ public partial record PointInspectorModel
     private readonly IFeed<Asset> _asset;
     private readonly IFeed<IImmutableList<InspectionEvent>> _history;
     private readonly CorrectiveActionSheetModel _actionSheet;
+    private readonly EvidenceViewerModel _viewer;
     private readonly IInspectionWorkflow _workflow;
     private readonly ICameraService _camera;
     private readonly ILocalEvidenceStore _evidence;
@@ -23,10 +24,12 @@ public partial record PointInspectorModel
     /// <param name="asset">The open asset, as the workspace reads it: the point shown is always its stored self.</param>
     /// <param name="history">The asset's recorded inspections, newest first.</param>
     /// <param name="actionSheet">The sheet corrective work is raised on, from what is recorded here.</param>
+    /// <param name="viewer">The workspace's photo viewer, which the photos recorded here open in.</param>
     public PointInspectorModel(
         IFeed<Asset> asset,
         IFeed<IImmutableList<InspectionEvent>> history,
         CorrectiveActionSheetModel actionSheet,
+        EvidenceViewerModel viewer,
         IInspectionWorkflow workflow,
         ICameraService camera,
         ILocalEvidenceStore evidence,
@@ -35,6 +38,7 @@ public partial record PointInspectorModel
         _asset = asset;
         _history = history;
         _actionSheet = actionSheet;
+        _viewer = viewer;
         _workflow = workflow;
         _camera = camera;
         _evidence = evidence;
@@ -257,7 +261,7 @@ public partial record PointInspectorModel
 
     /// <summary>
     /// The photos of <see cref="LastEvidence"/>, as a list of the records themselves: each opens
-    /// the viewer with its own <see cref="Evidence"/> as the command parameter.
+    /// the viewer (<see cref="ViewEvidence"/>) with its own <see cref="Evidence"/> as the command parameter.
     /// </summary>
     public IListFeed<Evidence> LastPhotos =>
         Feed.Combine(SelectedPointId, _history)
@@ -269,6 +273,10 @@ public partial record PointInspectorModel
     public IFeed<bool> HasLastEvidence =>
         Feed.Combine(SelectedPointId, _history)
             .Select(pair => InspectionRules.LatestWithPhotos(pair.Item2, pair.Item1) is not null);
+
+    /// <summary>Opens one of the photos last recorded here full size, in the workspace's viewer.</summary>
+    public ValueTask ViewEvidence(Evidence evidence, CancellationToken ct) =>
+        evidence is null ? ValueTask.CompletedTask : _viewer.OpenAsync(evidence, ct);
 
     public IFeed<CameraPermission> CameraPermission => Feed.AsyncEnumerable(_camera.WatchPermission);
 

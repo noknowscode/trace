@@ -108,19 +108,23 @@ internal sealed class TestHarness : IDisposable
         var assets = new AssetRepository(store);
         var summary = (await FirstAsync(assets.WatchSummaries(default))).Single(s => s.AssetId == assetId);
 
+        var actions = new CorrectiveActionRepository(store);
+
         return new AssetModel(
             summary,
             assets,
             new InspectionRepository(store),
-            new CorrectiveActionRepository(store),
-            ReferenceEquals(store, Store) ? Workflow : WorkflowOver(store),
-            camera ?? new SimulatedCameraService(NullLogger<SimulatedCameraService>.Instance),
-            evidence ?? Evidence,
+            actions,
             Network,
             new NullNavigator(),
             origin ?? new NavigationOrigin(),
             new FeedRecovery(),
-            Time);
+            new AssetWorkspaceParts(
+                ReferenceEquals(store, Store) ? Workflow : WorkflowOver(store),
+                actions,
+                camera ?? new SimulatedCameraService(NullLogger<SimulatedCameraService>.Instance),
+                evidence ?? Evidence,
+                Time));
     }
 
     /// <summary>Polls <paramref name="condition"/> until it holds, for up to 5 s.</summary>

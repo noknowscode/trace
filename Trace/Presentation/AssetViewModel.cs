@@ -6,8 +6,8 @@ namespace Trace.Presentation;
 /// Binds the asset workspace's parts to their own controls.
 /// </summary>
 /// <remarks>
-/// MVUX generates one view model per model. The workspace composes two models of its own (the
-/// point inspector and the corrective-action sheet), and a model's property is passed to the
+/// MVUX generates one view model per model. The workspace composes three models of its own (the
+/// point inspector, the corrective-action sheet and the photo viewer), and a model's property is passed to the
 /// view as the plain record, whose states a binding cannot read. These additions to the
 /// generated view model give each part its own generated view model over the very instance the
 /// workspace composed, so the page, the inspector and the sheet share one state, and dispose
@@ -19,12 +19,16 @@ public partial class AssetViewModel
 {
     private PointInspectorViewModel? _inspector;
     private CorrectiveActionSheetViewModel? _actionSheet;
+    private EvidenceViewerViewModel? _viewer;
 
     /// <summary>The DataContext of the point inspector.</summary>
     public PointInspectorViewModel Inspector => _inspector ??= Owned(PointInspectorViewModel.Over(Model.InspectorModel));
 
     /// <summary>The DataContext of the corrective-action sheet.</summary>
     public CorrectiveActionSheetViewModel ActionSheet => _actionSheet ??= Owned(CorrectiveActionSheetViewModel.Over(Model.ActionSheetModel));
+
+    /// <summary>The DataContext of the photo viewer.</summary>
+    public EvidenceViewerViewModel Viewer => _viewer ??= Owned(EvidenceViewerViewModel.Over(Model.ViewerModel));
 
     private T Owned<T>(T part)
         where T : IAsyncDisposable
@@ -46,4 +50,11 @@ public partial class CorrectiveActionSheetViewModel
 {
     /// <summary>A view model over a sheet the workspace already composed.</summary>
     internal static CorrectiveActionSheetViewModel Over(CorrectiveActionSheetModel model) => new(model);
+}
+
+[ReactiveBindable(false)]
+public partial class EvidenceViewerViewModel
+{
+    /// <summary>A view model over a viewer the workspace already composed.</summary>
+    internal static EvidenceViewerViewModel Over(EvidenceViewerModel model) => new(model);
 }

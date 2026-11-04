@@ -69,6 +69,10 @@ public partial class App : Application
                     // Where an asset was opened from, for its Back.
                     services.AddSingleton<NavigationOrigin>();
 
+                    // The asset workspace's parts (inspector, action sheet, photo viewer), built
+                    // over the services above for each asset that opens.
+                    services.AddSingleton<AssetWorkspaceParts>();
+
                     // Platform capabilities. Each is a deterministic stand-in for hardware
                     // TRACE does not own; swapping in a device implementation is a one-line
                     // change here.

@@ -13,10 +13,11 @@ public enum AssetTab
 /// opened from.
 /// </summary>
 /// <remarks>
-/// The inspection at a point and the corrective-action sheet are models of their own
-/// (<see cref="PointInspectorModel"/>, <see cref="CorrectiveActionSheetModel"/>), each bound to
-/// its own control. The workspace builds both over its own record of the asset, so all three
-/// read the same machine, and hands a point to the inspector when one is chosen.
+/// The inspection at a point, the corrective-action sheet and the photo viewer are models of
+/// their own (<see cref="PointInspectorModel"/>, <see cref="CorrectiveActionSheetModel"/>,
+/// <see cref="EvidenceViewerModel"/>), each bound to its own control. The container builds them
+/// (<see cref="AssetWorkspaceParts"/>); the workspace gives the inspector its own record of the
+/// asset, so all of them read the same machine, and hands it a point when one is chosen.
 /// </remarks>
 public partial record AssetModel
 {
@@ -34,14 +35,11 @@ public partial record AssetModel
         IAssetRepository assets,
         IInspectionRepository inspections,
         ICorrectiveActionRepository actions,
-        IInspectionWorkflow workflow,
-        ICameraService camera,
-        ILocalEvidenceStore evidence,
         INetworkStatusService network,
         INavigator navigator,
         NavigationOrigin origin,
         FeedRecovery recovery,
-        TimeProvider time)
+        AssetWorkspaceParts parts)
     {
         _summary = summary;
         _assets = assets;
@@ -52,15 +50,13 @@ public partial record AssetModel
         _origin = origin;
         _recovery = recovery;
 
-        ActionSheetModel = new CorrectiveActionSheetModel(workflow, actions);
-        InspectorModel = new PointInspectorModel(
+        ActionSheetModel = parts.ActionSheet();
+        ViewerModel = parts.Viewer();
+        InspectorModel = parts.Inspector(
             Asset,
             _recovery.Watch(ct => _inspections.WatchHistory(_summary.AssetId, ct)),
             ActionSheetModel,
-            workflow,
-            camera,
-            evidence,
-            time);
+            ViewerModel);
     }
 
     /// <summary>The inspection at the open point (bound through <see cref="AssetViewModel.Inspector"/>).</summary>
@@ -68,6 +64,9 @@ public partial record AssetModel
 
     /// <summary>Corrective work raised from the open point (bound through <see cref="AssetViewModel.ActionSheet"/>).</summary>
     internal CorrectiveActionSheetModel ActionSheetModel { get; }
+
+    /// <summary>The recorded photo shown full size (bound through <see cref="AssetViewModel.Viewer"/>).</summary>
+    internal EvidenceViewerModel ViewerModel { get; }
 
     public string AssetId => _summary.AssetId;
 
@@ -154,23 +153,9 @@ public partial record AssetModel
 
     // ---- Reviewing a recorded photo ----------------------------------------------------
 
-    /// <summary>The recorded photo shown full size over the workspace, from History or the point.</summary>
-    public IState<Evidence> ViewedEvidence => State<Evidence>.Empty(this);
-
-    public IState<bool> IsViewingEvidence => State.Value(this, () => false);
-
-    public async ValueTask ViewEvidence(Evidence evidence, CancellationToken ct)
-    {
-        if (evidence is null)
-        {
-            return;
-        }
-
-        await ViewedEvidence.UpdateAsync(_ => evidence, ct);
-        await IsViewingEvidence.UpdateAsync(_ => true, ct);
-    }
-
-    public ValueTask CloseEvidence(CancellationToken ct) => IsViewingEvidence.UpdateAsync(_ => false, ct);
+    /// <summary>Opens a photo from History full size, in the workspace's viewer.</summary>
+    public ValueTask ViewEvidence(Evidence evidence, CancellationToken ct) =>
+        evidence is null ? ValueTask.CompletedTask : ViewerModel.OpenAsync(evidence, ct);
 
     // ---- Back --------------------------------------------------------------------------
 

@@ -2,12 +2,12 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="using:Trace.Presentation.Controls"
-             xmlns:utu="using:Uno.Toolkit.UI"
              IsTabStop="False"
              SizeChanged="OnPartResized">
 
     <!--
-        Everything one inspection point needs, bound to the workspace's PointInspectorModel. Hosted
+        Everything one inspection point needs, bound to the workspace's PointInspectorModel, and
+        nothing else: a recorded photo opens through the inspector's own ViewEvidence. Hosted
         as a bottom sheet on a phone and as a pinned inspector on wider screens — the same element
         either way, so an in-progress reading survives a resize.
 
@@ -171,7 +171,7 @@
                                 <ItemsRepeater.ItemTemplate>
                                     <DataTemplate>
                                         <Button Style="{StaticResource PhotoButtonStyle}"
-                                                Command="{utu:AncestorBinding AncestorType=Page, Path=DataContext.ViewEvidence}"
+                                                Command="{Binding DataContext.ViewEvidence, ElementName=WholePanel}"
                                                 CommandParameter="{Binding}"
                                                 AutomationProperties.Name="{Binding Caption}"
                                                 ToolTipService.ToolTip="{Binding Caption}">
