@@ -1,56 +1,58 @@
-# HANDOFF — TRACE (2026-11-04, A pass)
+# HANDOFF — TRACE (2026-11-04, A pass 2)
 
-Branch `feat/production-readiness` (PR #1), from `f2c8417` to the head of this pass. Pushed as it went.
+Branch `feat/production-readiness` (PR #1). A pass 2 ran from `d1e350a` on the code review's closed list
+(`uno-lab/docs/production-readiness/reviews/2026-11-04-a-pass/trace.json`). Pushed as it went.
 
 ## What this pass did
 
 | Commit | What |
 |---|---|
-| `0bb3835` | refactor: `AssetModel` split into the workspace, `PointInspectorModel` and `CorrectiveActionSheetModel` (+ `Controls/CorrectiveActionSheet`) |
-| `cab8cd2` | fix: store failures reported when a point opens, a draft saves or discards, and on Scan |
-| `e8e840b` | fix: one corrective action per failed inspection (workflow idempotent; not re-offered) |
-| `870b897` | feat: Dispatch and Close in Findings (Open → Dispatched → Closed, synced); Sync row labels; at-risk worst first |
-| `0b34d92` | chore(deps): FluentAssertions 7.2.2 (owner decision) |
-| `e000f6c` | feat: recorded photos in History, on the point, and in a viewer; comparison cut |
-| `11964e3` | fix: Documents shows the nameplate and the inspection plan; the fixed "manuals sync" tile is gone |
-| `7c6690e` | fix: phone landscape — the inspector scrolls as one when its pinned parts do not fit |
-| `532b805` | feat(a11y): names to 21.3 per 1,000 XAML lines; chips/headers read aloud; modal layers take focus |
-| `6ba97f7`, `884c6d8` | docs and evidence; `tools/wasm-check.js` (headless Chromium on the Release WebAssembly build) |
-| (this file) | handoff, and an allow comment for the sheet form's name |
+| `31ed6e3` | fix(today): a theme switch that fails is reported; `TodayModelTests` |
+| `a7198a6` | test: `AssetsModelTests` (search) and `MainModelTests` (the shell) |
+| `6b3b371`, `92f7e29` | refactor: `AssetWorkspaceParts` (a container service) builds the inspector, its evidence part (`PointEvidenceModel`), the action sheet and the viewer; the inspector opens photos through its own part |
+| `1c655e1` | refactor: each asset tab is its own control (`AssetPage.xaml` 649 → 166 lines) |
+| `fb3e701` | docs: D-004, the offline conflict dialog cut while sync is simulated (proposed) |
+| `224eb15`, `9678591` | refactor: screen text out of the domain into `ScreenText` (Findings, Sync, the confirmation, the asset cards) |
+| `42023cf`, `1ee5a2a` | fix: the launch is guarded; `CrashReporter` takes what nothing else caught; the closed workspace's dispose is guarded |
+| `8acd211` | chore: the dead code and template files the review found |
+| `6134fdf` | fix(sync): a failed upload reads Failed in History; corrective work waits for its inspection |
+| `8c3041e`, `4131c76` | refactor: no `!` silences a nullable value; the last photos are looked up once |
+| `f4604b2` | fix: a failure closed before Create still offers its corrective action |
+| `ba3dc29`, `922d492` | feat: remove one photo from a draft |
+| `21a72ea` | test(wasm): the browser check presses the scrolled-out Notes field |
+| (docs) | COMPLETENESS, UNO-AUDIT, CLAUDE.md, this file |
 
-Numbers: 136 tests pass, 1 skipped (was 90 + 1). `AssetModel` 530 lines and 12 dependencies → the workspace
-(182 lines with the photo viewer; it still takes the 4 services it hands to the inspector), `PointInspectorModel`
-(446 lines, most of them comments; 7 inputs) and `CorrectiveActionSheetModel` (132 lines, 2 dependencies). Release desktop and WebAssembly build with no
-warnings beyond the trim-analysis ones the build gate keeps as warnings.
+Numbers: 176 tests pass, 1 skipped (was 136 + 1). `AssetModel` 182 → 167 lines and 12 → 9 dependencies, forwarding
+none. `PointInspectorModel` 446 → 376 lines, 4 inputs; `PointEvidenceModel` 168. `AssetPage.xaml` 649 → 166, the
+tabs 100–200 each. 21.0 automation names per 1,000 XAML lines (66 in 3,137). Lint gate: 0 gating hits.
 
 ## State
 
 - `docs/COMPLETENESS.md`: Complete with gaps — 0 Blockers, 0 functional Majors, 1 head Major (Android, iOS,
-  WinAppSDK not run here), 8 Minors.
-- `docs/DECISIONS.md` is new. D-001 (dispatch built), D-002 (photo comparison cut), D-003 (manuals cut) are
-  **proposed**: the owner should confirm them.
-- Pending owner question, unchanged: the set-aside warning on Sync shows only once; behaviour left as it is.
+  WinAppSDK not run here), 4 Minors.
+- `docs/DECISIONS.md`: D-001 to D-004 are **proposed**; the owner should confirm them.
+- The WebAssembly "Notes press closes the inspector" Minor did not reproduce in 17 presses over 15 browser sessions,
+  at this head and on a rebuild of `d1e350a`. No fix was made; `tools/wasm-check.js` presses the field there now.
+- Pending owner question, unchanged: the set-aside warning on Sync shows only once.
 
 ## Open items (Minors, in COMPLETENESS)
 
-1. WebAssembly only: after editing the reading and calling Fail, pressing the Notes field while it is mostly
-   scrolled out of the inspector's middle closed the inspector (draft kept). Desktop does not. Cause not found;
-   start by logging `PointInspectorModel.Close` and `MainPage.OnAssetRegionVisibilityChanged` in the browser.
-2. Empty tab stops inside the Toolkit (root `ContentControl`, `TabBarSelectionIndicatorPresenter`,
-   `SafeAreaPresenter`); an implicit style does not reach them (tried, reverted).
-3. The machine is about 135 px tall in phone landscape.
-4. A single photo cannot be removed from a draft; an action can sync before its failed source event; no global
-   unhandled-exception handler; markers overlap at 390 px; no UI tests.
+1. Markers overlap at 390 px.
+2. The machine is about 135 px tall in phone landscape.
+3. Empty tab stops inside the Toolkit (root `ContentControl`, `TabBarSelectionIndicatorPresenter`,
+   `SafeAreaPresenter`).
+4. No UI tests (the page models are tested; the Debug hooks and the browser check drive the workflows).
 
 ## How to check
 
 - Tests: `dotnet test Trace.Tests/Trace.Tests.csproj -p:TraceTargetFrameworks=net10.0`.
 - Desktop: `DISPLAY_NUM=<n> TRACE_RESET=1 TRACE_ARGS="--trace-route=Switch" tools/run-desktop.sh out.png` prints
-  `VERIFY switch result=pass opened=4/4 recordedOn=C-07`. `--trace-focus=log` with Tab presses walks the focus.
-- The mouse wheel scrolls nothing under Xvfb here (any page); check scroll reach by keyboard (Tab, End).
+  `VERIFY switch result=pass opened=4/4 recordedOn=C-07`. `--trace-crash=task` prints `VERIFY crash=task reported=True`.
+- The mouse wheel scrolls nothing under Xvfb here; a taller window (`run-desktop.sh out.png 1280 1200`) shows the
+  inspector's evidence section.
 - Browser: see CLAUDE.md "WebAssembly check".
 
 ## Next
 
-- CI on the pass's head (macOS jobs are the slow ones). The Android emulator job is the coordinator's to add.
-- The owner's answers on D-001 to D-003.
+- CI on this head (the Android emulator job included).
+- The owner's answers on D-001 to D-004.
