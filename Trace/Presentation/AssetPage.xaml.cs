@@ -5,9 +5,13 @@ public sealed partial class AssetPage : Page
     /// <summary>Tallest the equipment view goes under a sheet, relative to how wide it is.</summary>
     private const double SceneAspectLimit = 0.8;
 
+    /// <summary>The equipment view's floor from the token scale, before a short window lowers it.</summary>
+    private readonly double _sceneMinHeight;
+
     public AssetPage()
     {
         InitializeComponent();
+        _sceneMinHeight = SceneCard.MinHeight;
 
         // A Layout is not part of the visual tree, so it cannot resolve the scene by
         // ElementName. Handing it over here is the whole wiring between the 3D view and the
@@ -58,10 +62,15 @@ public sealed partial class AssetPage : Page
         // calls and Complete point need all of it, and the tabs above stay visible.
         InspectorHost.MaxHeight = height;
 
+        var room = height - PointListPanel.ActualHeight - SceneStack.RowSpacing;
+
         if (isDocked)
         {
+            // A phone in landscape is docked but short: the machine gives up its floor rather
+            // than slide under the point list.
             SceneRow.Height = new GridLength(1, GridUnitType.Star);
             SceneCard.Height = double.NaN;
+            SceneCard.MinHeight = Math.Clamp(room, 0, _sceneMinHeight);
             return;
         }
 
@@ -70,8 +79,8 @@ public sealed partial class AssetPage : Page
         // than it is tall. Sizing the view to a landscape shape, within the height left once
         // the point list is placed, keeps the machine as large as it can usefully be and
         // brings the point list up directly underneath it.
-        var room = height - PointListPanel.ActualHeight - SceneStack.RowSpacing;
         SceneRow.Height = GridLength.Auto;
-        SceneCard.Height = Math.Max(SceneCard.MinHeight, Math.Min(width * SceneAspectLimit, room));
+        SceneCard.MinHeight = _sceneMinHeight;
+        SceneCard.Height = Math.Max(_sceneMinHeight, Math.Min(width * SceneAspectLimit, room));
     }
 }

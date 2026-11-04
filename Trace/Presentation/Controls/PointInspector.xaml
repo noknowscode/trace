@@ -3,7 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="using:Trace.Presentation.Controls"
              xmlns:utu="using:Uno.Toolkit.UI"
-             IsTabStop="False">
+             IsTabStop="False"
+             SizeChanged="OnPartResized">
 
     <!--
         Everything one inspection point needs, bound to the workspace's PointInspectorModel. Hosted
@@ -15,7 +16,31 @@
         button that commits it on screen together, with a glove on and one-handed, so those
         are pinned. The guidance, the previous reading, the notes and the evidence are
         reference and capture material, and they scroll.
+
+        When the height cannot hold the pinned parts (a phone in landscape: 800x360, 844x390),
+        the whole panel scrolls as one instead, so the validation message and Complete point
+        stay reachable. The code-behind picks the state from the measured header and footer;
+        the setters are here.
     -->
+    <ScrollViewer x:Name="WholePanel"
+                  VerticalScrollBarVisibility="Disabled"
+                  HorizontalScrollBarVisibility="Disabled"
+                  HorizontalScrollMode="Disabled">
+    <VisualStateManager.VisualStateGroups>
+        <VisualStateGroup x:Name="HeightStates">
+            <VisualState x:Name="Pinned" />
+            <VisualState x:Name="ScrollsAsOne">
+                <VisualState.Setters>
+                    <!-- Scroll bar visibility alone switches the scrolling: Disabled holds the
+                         content to the viewport, Auto lets it run on. The middle has nothing of
+                         its own to scroll in this state. -->
+                    <Setter Target="WholePanel.VerticalScrollBarVisibility" Value="Auto" />
+                    <Setter Target="WholePanel.Padding" Value="{StaticResource ScrollBarGutter}" />
+                    <Setter Target="Body.VerticalScrollBarVisibility" Value="Disabled" />
+                </VisualState.Setters>
+            </VisualState>
+        </VisualStateGroup>
+    </VisualStateManager.VisualStateGroups>
     <Grid RowSpacing="{StaticResource SpaceM}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -26,7 +51,7 @@
         <!-- Identity, and the one action that throws entered work away, which confirms first.
              The messages under it are often hidden, so each carries its own gap rather than
              the panel's Spacing, which a collapsed child would still be charged. -->
-        <StackPanel>
+        <StackPanel x:Name="Header" SizeChanged="OnPartResized">
             <Grid ColumnSpacing="{StaticResource SpaceS}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -96,7 +121,7 @@
                        Visibility="{Binding DraftError, Converter={StaticResource StringToVisibility}}" />
         </StackPanel>
 
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="{StaticResource ScrollBarGutter}">
+        <ScrollViewer x:Name="Body" Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="{StaticResource ScrollBarGutter}">
             <StackPanel Spacing="{StaticResource SpaceM}">
 
                 <TextBlock Text="{Binding SelectedPoint.Guidance}"
@@ -269,7 +294,7 @@
         </ScrollViewer>
 
         <!-- Enter, decide, commit: always on screen. -->
-        <StackPanel Grid.Row="2" Spacing="{StaticResource SpaceM}">
+        <StackPanel x:Name="Footer" Grid.Row="2" Spacing="{StaticResource SpaceM}" SizeChanged="OnPartResized">
 
             <StackPanel Spacing="{StaticResource SpaceS}">
                 <TextBlock Text="New reading" Style="{StaticResource FieldLabelText}" />
@@ -373,4 +398,5 @@
                     AutomationProperties.Name="Create corrective action" />
         </StackPanel>
     </Grid>
+    </ScrollViewer>
 </UserControl>
