@@ -355,7 +355,7 @@ public class RecordedEvidenceTests
         photos.Should().HaveCount(2);
 
         // Only Discard, which clears the whole entry, used to take a photo off.
-        await inspector.RemovePhoto(photos[0], default);
+        await inspector.RemovePhoto(photos[0].Id, default);
 
         (await inspector.Draft)!.Evidence.Should().ContainSingle().Which.Id.Should().Be(photos[1].Id);
         await TestHarness.UntilAsync(async () =>

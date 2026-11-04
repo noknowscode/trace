@@ -285,7 +285,7 @@
                                                 VerticalAlignment="Center"
                                                 MinHeight="{StaticResource TouchTargetSize}"
                                                 Command="{Binding DataContext.RemovePhoto, ElementName=WholePanel}"
-                                                CommandParameter="{Binding}"
+                                                CommandParameter="{Binding Id}"
                                                 Content="Remove"
                                                 AutomationProperties.Name="Remove photo"
                                                 AutomationProperties.HelpText="{Binding Caption}" />

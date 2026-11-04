@@ -341,16 +341,20 @@ public partial record PointInspectorModel
     /// on change like every other edit; the picture's file stays on the device, as it does for a
     /// discarded draft.
     /// </summary>
-    public async ValueTask RemovePhoto(Evidence photo, CancellationToken ct)
+    /// <remarks>
+    /// Takes the photo's id, not the record: the draft reaches the view through its state, whose
+    /// items the view holds as bindable copies, never the <see cref="Evidence"/> itself.
+    /// </remarks>
+    public async ValueTask RemovePhoto(string photoId, CancellationToken ct)
     {
-        if (photo is null)
+        if (string.IsNullOrEmpty(photoId))
         {
             return;
         }
 
         await Draft.UpdateAsync(current => current is null ? null : current with
         {
-            Evidence = current.Evidence.RemoveAll(item => item.Id == photo.Id),
+            Evidence = current.Evidence.RemoveAll(item => item.Id == photoId),
         }, ct);
     }
 
