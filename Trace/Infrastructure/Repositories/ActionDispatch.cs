@@ -1,5 +1,3 @@
-using Trace.Infrastructure.Persistence;
-
 namespace Trace.Infrastructure.Repositories;
 
 /// <summary>

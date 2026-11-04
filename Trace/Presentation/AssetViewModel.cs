@@ -1,5 +1,3 @@
-using Uno.Extensions.Reactive;
-
 namespace Trace.Presentation;
 
 /// <summary>

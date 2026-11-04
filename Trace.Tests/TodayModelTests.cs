@@ -2,7 +2,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Trace.Infrastructure.Repositories;
 using Trace.Presentation;
-using Uno.Extensions.Toolkit;
 
 namespace Trace.Tests;
 

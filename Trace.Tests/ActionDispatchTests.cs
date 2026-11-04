@@ -1,4 +1,3 @@
-using Trace.Infrastructure.Repositories;
 using Trace.Presentation;
 
 namespace Trace.Tests;
