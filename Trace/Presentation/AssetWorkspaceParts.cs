@@ -1,8 +1,8 @@
 namespace Trace.Presentation;
 
 /// <summary>
-/// Builds the parts of an asset workspace: the point inspector, the corrective-action sheet and
-/// the photo viewer.
+/// Builds the parts of an asset workspace: the point inspector with its evidence, the
+/// corrective-action sheet and the photo viewer.
 /// </summary>
 /// <remarks>
 /// Registered in the container, so the services the parts work with (the workflow, the camera,
@@ -38,6 +38,7 @@ public sealed class AssetWorkspaceParts
     /// <summary>A viewer for recorded photos, shown over the whole workspace.</summary>
     public EvidenceViewerModel Viewer() => new();
 
+    /// <summary>An inspector, with its evidence part over the inspector's own point and draft.</summary>
     /// <param name="asset">The open asset, as the workspace reads it.</param>
     /// <param name="history">The asset's recorded inspections, newest first.</param>
     /// <param name="actionSheet">The sheet corrective work is raised on.</param>
@@ -47,5 +48,13 @@ public sealed class AssetWorkspaceParts
         IFeed<IImmutableList<InspectionEvent>> history,
         CorrectiveActionSheetModel actionSheet,
         EvidenceViewerModel viewer) =>
-        new(asset, history, actionSheet, viewer, _workflow, _camera, _evidence, _time);
+        new(asset, actionSheet, _workflow, inspector => new PointEvidenceModel(
+            inspector.SelectedPointId,
+            inspector.SelectedPoint,
+            inspector.Draft,
+            history,
+            viewer,
+            _camera,
+            _evidence,
+            _time));
 }

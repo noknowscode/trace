@@ -8,50 +8,28 @@ namespace Trace.Presentation;
 /// The editors (reading, note, disposition) are individual states so the view can bind them
 /// two-way, and each one folds into a single persisted <see cref="Draft"/>. Validation is
 /// derived from the point and that draft, which means the Complete button, the range message
-/// and the failure prompt can never disagree with each other.
+/// and the failure prompt can never disagree with each other. The photos on the draft and the
+/// camera are a part of their own (<see cref="EvidenceModel"/>) over this point and draft.
 /// </remarks>
 public partial record PointInspectorModel
 {
     private readonly IFeed<Asset> _asset;
-    private readonly IFeed<IImmutableList<InspectionEvent>> _history;
     private readonly CorrectiveActionSheetModel _actionSheet;
-    private readonly EvidenceViewerModel _viewer;
     private readonly IInspectionWorkflow _workflow;
-    private readonly ICameraService _camera;
-    private readonly ILocalEvidenceStore _evidence;
-    private readonly TimeProvider _time;
-
-    /// <summary>
-    /// The latest recorded inspection at the open point that carried photos, looked up once for
-    /// every binding that shows it.
-    /// </summary>
-    private readonly IFeed<LastPhotographed> _lastPhotographed;
 
     /// <param name="asset">The open asset, as the workspace reads it: the point shown is always its stored self.</param>
-    /// <param name="history">The asset's recorded inspections, newest first.</param>
     /// <param name="actionSheet">The sheet corrective work is raised on, from what is recorded here.</param>
-    /// <param name="viewer">The workspace's photo viewer, which the photos recorded here open in.</param>
+    /// <param name="evidence">Builds the evidence part over this inspector's point and draft (<see cref="AssetWorkspaceParts"/>).</param>
     public PointInspectorModel(
         IFeed<Asset> asset,
-        IFeed<IImmutableList<InspectionEvent>> history,
         CorrectiveActionSheetModel actionSheet,
-        EvidenceViewerModel viewer,
         IInspectionWorkflow workflow,
-        ICameraService camera,
-        ILocalEvidenceStore evidence,
-        TimeProvider time)
+        Func<PointInspectorModel, PointEvidenceModel> evidence)
     {
         _asset = asset;
-        _history = history;
         _actionSheet = actionSheet;
-        _viewer = viewer;
         _workflow = workflow;
-        _camera = camera;
-        _evidence = evidence;
-        _time = time;
-
-        _lastPhotographed = Feed.Combine(SelectedPointId, _history)
-            .Select(pair => new LastPhotographed(InspectionRules.LatestWithPhotos(pair.Item2, pair.Item1)));
+        EvidenceModel = evidence(this);
 
         // Each editor folds straight into the draft, and the draft is persisted on every
         // change, so walking away from a half-entered reading never loses it.
@@ -61,6 +39,9 @@ public partial record PointInspectorModel
         Draft.ForEach(PersistDraft);
         _actionSheet.Raised.ForEach(OnActionRaised);
     }
+
+    /// <summary>The photos and the camera at the open point (bound through <see cref="PointInspectorViewModel.Evidence"/>).</summary>
+    internal PointEvidenceModel EvidenceModel { get; }
 
     // ---- The point that is open --------------------------------------------------------
 
@@ -89,7 +70,7 @@ public partial record PointInspectorModel
         await LoadDraftAsync(draft, ct);
         await Confirmation.UpdateAsync(_ => string.Empty, ct);
         await CompletionError.UpdateAsync(_ => string.Empty, ct);
-        await EvidenceError.UpdateAsync(_ => string.Empty, ct);
+        await EvidenceModel.ResetAsync(ct);
         await IsDiscardPending.UpdateAsync(_ => false, ct);
 
         // What was recorded at the previous point stays with that point: corrective work
@@ -263,109 +244,6 @@ public partial record PointInspectorModel
         await CompletionError.UpdateAsync(_ => string.Empty, ct);
     }
 
-    // ---- Evidence ----------------------------------------------------------------------
-
-    /// <summary>
-    /// The latest recorded inspection at the open point that carried photos: what the point
-    /// looked like the last time someone photographed it, to judge today's reading against.
-    /// </summary>
-    public IFeed<InspectionEvent> LastEvidence => _lastPhotographed.SelectOrNone(last => last.Event);
-
-    /// <summary>
-    /// The photos of <see cref="LastEvidence"/>, as a list of the records themselves: each opens
-    /// the viewer (<see cref="ViewEvidence"/>) with its own <see cref="Evidence"/> as the command parameter.
-    /// </summary>
-    public IListFeed<Evidence> LastPhotos => _lastPhotographed.Select(last => last.Photos).AsListFeed();
-
-    public IFeed<bool> HasLastEvidence => _lastPhotographed.Select(last => last.Event is not null);
-
-    /// <summary>Opens one of the photos last recorded here full size, in the workspace's viewer.</summary>
-    public ValueTask ViewEvidence(Evidence evidence, CancellationToken ct) =>
-        evidence is null ? ValueTask.CompletedTask : _viewer.OpenAsync(evidence, ct);
-
-    public IFeed<CameraPermission> CameraPermission => Feed.AsyncEnumerable(_camera.WatchPermission);
-
-    public IFeed<bool> IsCameraDenied =>
-        CameraPermission.Select(p => p == Services.CameraPermission.Denied);
-
-    public IFeed<bool> HasEvidence => Draft.Select(draft => draft?.HasEvidence == true);
-
-    /// <summary>Why the last Add photo attached nothing, when the device could not keep the picture.</summary>
-    public IState<string> EvidenceError => State<string>.Empty(this);
-
-    public async ValueTask AttachPhoto(CancellationToken ct)
-    {
-        var point = await SelectedPoint;
-        var draft = await Draft;
-        if (point is null || draft is null)
-        {
-            return;
-        }
-
-        if (_camera.Permission != Services.CameraPermission.Granted
-            && await _camera.RequestPermissionAsync(ct) != Services.CameraPermission.Granted)
-        {
-            // The denied state has its own recovery panel; nothing more to do here.
-            return;
-        }
-
-        Evidence saved;
-        try
-        {
-            var capture = await _camera.CapturePhotoAsync(ct);
-            if (capture is null)
-            {
-                return;
-            }
-
-            saved = await _evidence.SavePhotoAsync(
-                point.Id, capture.Content, capture.Extension, $"{point.Label} · {_time.GetLocalNow():t}", ct);
-        }
-        catch (Exception ex) when (StoreFailures.IsStorageFailure(ex))
-        {
-            await EvidenceError.UpdateAsync(
-                _ => "The photo could not be saved on the device, so nothing was attached. Try Add photo again; a written note also satisfies a failed point.",
-                ct);
-            return;
-        }
-
-        await EvidenceError.UpdateAsync(_ => string.Empty, ct);
-        await Draft.UpdateAsync(current => current is null ? null : current with
-        {
-            Evidence = current.Evidence.Add(saved),
-        }, ct);
-    }
-
-    /// <summary>
-    /// Takes one photo off the draft and keeps the rest of what was entered. The draft is saved
-    /// on change like every other edit; the picture's file stays on the device, as it does for a
-    /// discarded draft.
-    /// </summary>
-    /// <remarks>
-    /// Takes the photo's id, not the record: the draft reaches the view through its state, whose
-    /// items the view holds as bindable copies, never the <see cref="Evidence"/> itself.
-    /// </remarks>
-    public async ValueTask RemovePhoto(string photoId, CancellationToken ct)
-    {
-        if (string.IsNullOrEmpty(photoId))
-        {
-            return;
-        }
-
-        await Draft.UpdateAsync(current => current is null ? null : current with
-        {
-            Evidence = current.Evidence.RemoveAll(item => item.Id == photoId),
-        }, ct);
-    }
-
-    /// <summary>
-    /// The recovery path from a denied camera. On a device this opens system settings; here
-    /// it completes the same round trip so the rest of the flow is exercised end to end.
-    /// </summary>
-    public void GrantCameraFromSettings() => _camera.SetPermission(Services.CameraPermission.Granted);
-
-    public void DenyCameraForDemo() => _camera.SetPermission(Services.CameraPermission.Denied);
-
     // ---- Corrective work from what was recorded here ------------------------------------
 
     /// <summary>
@@ -495,12 +373,4 @@ public partial record PointInspectorModel
 
     private const string DraftNotSaved =
         "This entry could not be saved on the device, so it would be lost if TRACE closed. Keep going: Complete point tries the device again.";
-
-    /// <summary>The latest inspection at the open point that carried photos, and those photos.</summary>
-    private sealed record LastPhotographed(InspectionEvent? Event)
-    {
-        public IImmutableList<Evidence> Photos { get; } = Event is null
-            ? ImmutableList<Evidence>.Empty
-            : Event.Evidence.Where(item => item.Type == EvidenceType.Photo).ToImmutableList();
-    }
 }

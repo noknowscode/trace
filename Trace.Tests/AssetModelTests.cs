@@ -106,12 +106,12 @@ public class AssetModelTests
     {
         var model = await _harness.OpenAssetAsync();
         await model.SelectPoint(await _harness.PointAsync("P-204-seal"), default);
-        await TestHarness.UntilAsync(async () => (await model.InspectorModel.LastPhotos)?.Count > 0);
-        var photo = (await model.InspectorModel.LastPhotos)!.Single();
+        await TestHarness.UntilAsync(async () => (await model.InspectorModel.EvidenceModel.LastPhotos)?.Count > 0);
+        var photo = (await model.InspectorModel.EvidenceModel.LastPhotos)!.Single();
 
-        await model.InspectorModel.ViewEvidence(photo, default);
+        await model.InspectorModel.EvidenceModel.ViewEvidence(photo, default);
 
-        (await model.ViewerModel.IsOpen).Should().BeTrue("the inspector opens the viewer through its own model");
+        (await model.ViewerModel.IsOpen).Should().BeTrue("the inspector opens the viewer through its own evidence part");
         (await model.ViewerModel.Viewed)!.Id.Should().Be(photo.Id);
     }
 

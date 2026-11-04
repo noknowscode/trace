@@ -168,17 +168,17 @@ public class PointInspectorModelTests
         var inspector = model.InspectorModel;
 
         // The evidence store's IOException used to escape the command, and Add photo did nothing visible.
-        await inspector.AttachPhoto(default);
+        await inspector.EvidenceModel.AttachPhoto(default);
 
-        (await inspector.EvidenceError).Should().Contain("could not be saved");
+        (await inspector.EvidenceModel.EvidenceError).Should().Contain("could not be saved");
         (await inspector.Draft)!.Evidence.Should().BeEmpty();
 
         files.Broken = false;
-        await inspector.AttachPhoto(default);
+        await inspector.EvidenceModel.AttachPhoto(default);
 
-        (await inspector.EvidenceError).Should().BeNullOrEmpty("a photo that was kept clears the message");
+        (await inspector.EvidenceModel.EvidenceError).Should().BeNullOrEmpty("a photo that was kept clears the message");
         (await inspector.Draft)!.Evidence.Should().ContainSingle();
-        (await inspector.HasEvidence).Should().BeTrue();
+        (await inspector.EvidenceModel.HasEvidence).Should().BeTrue();
     }
 
     [Test]
@@ -307,11 +307,11 @@ public class RecordedEvidenceTests
         var model = await _harness.OpenAssetAsync();
         await model.SelectPoint(await _harness.PointAsync("P-204-seal"), default);
 
-        (await model.InspectorModel.HasLastEvidence).Should().BeTrue();
-        var last = (await model.InspectorModel.LastEvidence)!;
+        (await model.InspectorModel.EvidenceModel.HasLastEvidence).Should().BeTrue();
+        var last = (await model.InspectorModel.EvidenceModel.LastEvidence)!;
         last.Id.Should().Be("ev-p204-seal-1", "yesterday's failure carried the photo");
         last.Evidence.Should().ContainSingle(e => e.Type == EvidenceType.Photo);
-        (await model.InspectorModel.LastPhotos).Should().ContainSingle().Which.Caption.Should().Be("Seal face weeping");
+        (await model.InspectorModel.EvidenceModel.LastPhotos).Should().ContainSingle().Which.Caption.Should().Be("Seal face weeping");
     }
 
     [Test]
@@ -320,7 +320,7 @@ public class RecordedEvidenceTests
         var model = await _harness.OpenAssetAsync();
         await model.SelectPoint(await _harness.PointAsync("P-204-motor"), default);
 
-        (await model.InspectorModel.HasLastEvidence).Should().BeFalse();
+        (await model.InspectorModel.EvidenceModel.HasLastEvidence).Should().BeFalse();
     }
 
     [Test]
@@ -329,7 +329,7 @@ public class RecordedEvidenceTests
         var model = await _harness.OpenAssetAsync(camera: new FrameCamera());
         await model.SelectPoint(await _harness.PointAsync("P-204-seal"), default);
         var inspector = model.InspectorModel;
-        await inspector.AttachPhoto(default);
+        await inspector.EvidenceModel.AttachPhoto(default);
         await TestHarness.UntilAsync(async () => (await inspector.Draft)?.HasEvidence == true);
         await Editing.EnterAsync(inspector, "7.6", Disposition.Fail);
         await TestHarness.UntilAsync(async () => await inspector.CanComplete);
@@ -337,8 +337,8 @@ public class RecordedEvidenceTests
 
         await inspector.CompletePoint(default);
 
-        await TestHarness.UntilAsync(async () => (await inspector.LastEvidence)?.Reading == 7.6);
-        var last = (await inspector.LastEvidence)!;
+        await TestHarness.UntilAsync(async () => (await inspector.EvidenceModel.LastEvidence)?.Reading == 7.6);
+        var last = (await inspector.EvidenceModel.LastEvidence)!;
         last.Reading.Should().Be(7.6);
         last.Evidence.Should().ContainSingle().Which.LocalUri.Should().Contain("evidence/P-204-seal/");
     }
@@ -349,15 +349,17 @@ public class RecordedEvidenceTests
         var model = await _harness.OpenAssetAsync(camera: new FrameCamera());
         await model.SelectPoint(await _harness.PointAsync("P-204-seal"), default);
         var inspector = model.InspectorModel;
-        await inspector.AttachPhoto(default);
-        await inspector.AttachPhoto(default);
+        await inspector.EvidenceModel.AttachPhoto(default);
+        await inspector.EvidenceModel.AttachPhoto(default);
         var photos = (await inspector.Draft)!.Evidence;
         photos.Should().HaveCount(2);
 
         // Only Discard, which clears the whole entry, used to take a photo off.
-        await inspector.RemovePhoto(photos[0].Id, default);
+        await inspector.EvidenceModel.RemovePhoto(photos[0].Id, default);
 
         (await inspector.Draft)!.Evidence.Should().ContainSingle().Which.Id.Should().Be(photos[1].Id);
+        await TestHarness.UntilAsync(async () => (await inspector.EvidenceModel.Photos)?.Count == 1);
+        (await inspector.EvidenceModel.Photos).Should().ContainSingle("the list the view shows follows the draft");
         await TestHarness.UntilAsync(async () =>
             (await _harness.Store.GetAsync(default)).FindDraft("P-204-seal")?.Evidence.Count == 1);
         (await _harness.Reopen().GetAsync(default)).FindDraft("P-204-seal")!.Evidence

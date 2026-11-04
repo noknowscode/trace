@@ -7,7 +7,8 @@
 
     <!--
         Everything one inspection point needs, bound to the workspace's PointInspectorModel, and
-        nothing else: a recorded photo opens through the inspector's own ViewEvidence. Hosted
+        nothing else; the photos and the camera bind to its evidence part (Evidence), whose own
+        ViewEvidence opens a recorded photo. Hosted
         as a bottom sheet on a phone and as a pinned inspector on wider screens — the same element
         either way, so an in-progress reading survives a resize.
 
@@ -156,7 +157,9 @@
                         </StackPanel>
 
                         <!-- A grid row with its own gap, so it costs nothing when the point has no photos. -->
-                        <StackPanel Grid.Row="1" Grid.ColumnSpan="2"
+                        <StackPanel x:Name="RecordedPhotos"
+                                    DataContext="{Binding Evidence}"
+                                    Grid.Row="1" Grid.ColumnSpan="2"
                                     Margin="{StaticResource GapTopM}"
                                     Spacing="{StaticResource SpaceS}"
                                     Visibility="{Binding HasLastEvidence, Converter={StaticResource BoolToVisibility}}">
@@ -171,7 +174,7 @@
                                 <ItemsRepeater.ItemTemplate>
                                     <DataTemplate>
                                         <Button Style="{StaticResource PhotoButtonStyle}"
-                                                Command="{Binding DataContext.ViewEvidence, ElementName=WholePanel}"
+                                                Command="{Binding DataContext.ViewEvidence, ElementName=RecordedPhotos}"
                                                 CommandParameter="{Binding}"
                                                 AutomationProperties.Name="{Binding Caption}"
                                                 ToolTipService.ToolTip="{Binding Caption}">
@@ -203,7 +206,7 @@
                 </StackPanel>
 
                 <!-- Evidence -->
-                <StackPanel Spacing="{StaticResource SpaceS}">
+                <StackPanel x:Name="EvidenceSection" DataContext="{Binding Evidence}" Spacing="{StaticResource SpaceS}">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -251,7 +254,7 @@
                         </StackPanel>
                     </Border>
 
-                    <ItemsRepeater ItemsSource="{Binding Draft.Evidence}">
+                    <ItemsRepeater ItemsSource="{Binding Photos}">
                         <ItemsRepeater.Layout>
                             <StackLayout Spacing="{StaticResource SpaceS}" />
                         </ItemsRepeater.Layout>
@@ -284,7 +287,7 @@
                                                 Style="{StaticResource TextButtonStyle}"
                                                 VerticalAlignment="Center"
                                                 MinHeight="{StaticResource TouchTargetSize}"
-                                                Command="{Binding DataContext.RemovePhoto, ElementName=WholePanel}"
+                                                Command="{Binding DataContext.RemovePhoto, ElementName=EvidenceSection}"
                                                 CommandParameter="{Binding Id}"
                                                 Content="Remove"
                                                 AutomationProperties.Name="Remove photo"

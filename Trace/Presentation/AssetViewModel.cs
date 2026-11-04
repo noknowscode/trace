@@ -41,8 +41,32 @@ public partial class AssetViewModel
 [ReactiveBindable(false)]
 public partial class PointInspectorViewModel
 {
+    private PointEvidenceViewModel? _evidence;
+
     /// <summary>A view model over a point inspector the workspace already composed.</summary>
     internal static PointInspectorViewModel Over(PointInspectorModel model) => new(model);
+
+    /// <summary>The DataContext of the inspector's photos and camera.</summary>
+    public PointEvidenceViewModel Evidence
+    {
+        get
+        {
+            if (_evidence is null)
+            {
+                _evidence = PointEvidenceViewModel.Over(Model.EvidenceModel);
+                RegisterDisposable(_evidence);
+            }
+
+            return _evidence;
+        }
+    }
+}
+
+[ReactiveBindable(false)]
+public partial class PointEvidenceViewModel
+{
+    /// <summary>A view model over the evidence part its inspector already composed.</summary>
+    internal static PointEvidenceViewModel Over(PointEvidenceModel model) => new(model);
 }
 
 [ReactiveBindable(false)]
