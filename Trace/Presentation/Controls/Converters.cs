@@ -81,6 +81,28 @@ public sealed class NextStepConverter : IValueConverter
         throw new NotSupportedException();
 }
 
+/// <summary>
+/// The words on an asset's card; the parameter names which: <c>Condition</c>, <c>Progress</c>,
+/// <c>Due</c> or <c>Findings</c>.
+/// </summary>
+public sealed class AssetCardTextConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, string language) =>
+        value is AssetSummary asset
+            ? (parameter as string) switch
+            {
+                "Condition" => ScreenText.Condition(asset),
+                "Progress" => ScreenText.Progress(asset),
+                "Due" => ScreenText.Due(asset),
+                "Findings" => ScreenText.Findings(asset),
+                _ => string.Empty,
+            }
+            : string.Empty;
+
+    public object ConvertBack(object value, Type targetType, object parameter, string language) =>
+        throw new NotSupportedException();
+}
+
 /// <summary>What kind of change a queued operation is, as a Sync row names it.</summary>
 public sealed class SyncKindConverter : IValueConverter
 {

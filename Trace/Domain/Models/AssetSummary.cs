@@ -25,21 +25,7 @@ public partial record AssetSummary(
 
     public string Location => $"{Area} · {Site}";
 
-    public string Progress => $"{PointsInspected} of {PointsTotal} points inspected";
-
     public bool IsScheduled => DueAt is not null;
 
-    public string DueLabel => DueAt is { } due ? $"Due {due:t}" : string.Empty;
-
     public bool HasFindings => OpenFindings > 0;
-
-    public string FindingsText => OpenFindings == 1 ? "1 open finding" : $"{OpenFindings} open findings";
-
-    public string ConditionLabel => Condition switch
-    {
-        AssetCondition.Failed => "Fail",
-        AssetCondition.Watch => "Watch",
-        AssetCondition.Healthy => "Pass",
-        _ => "Not inspected",
-    };
 }

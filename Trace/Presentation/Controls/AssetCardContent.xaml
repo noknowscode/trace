@@ -29,7 +29,7 @@
 
             <controls:StatusChip Grid.Column="1"
                                  Severity="{Binding Condition, Converter={StaticResource ToSeverity}}"
-                                 Text="{Binding ConditionLabel}"
+                                 Text="{Binding Converter={StaticResource AssetCardText}, ConverterParameter=Condition}"
                                  VerticalAlignment="Top" />
         </Grid>
 
@@ -39,14 +39,14 @@
 
         <controls:WrapPanel HorizontalSpacing="{StaticResource SpaceS}" VerticalSpacing="{StaticResource SpaceS}">
             <Border Style="{StaticResource ValueChip}">
-                <TextBlock Text="{Binding Progress}" Style="{StaticResource ChipValueText}" />
+                <TextBlock Text="{Binding Converter={StaticResource AssetCardText}, ConverterParameter=Progress}" Style="{StaticResource ChipValueText}" />
             </Border>
             <Border Style="{StaticResource ValueChip}"
                     Visibility="{Binding IsScheduled, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="{Binding DueLabel}" Style="{StaticResource ChipValueText}" />
+                <TextBlock Text="{Binding Converter={StaticResource AssetCardText}, ConverterParameter=Due}" Style="{StaticResource ChipValueText}" />
             </Border>
             <controls:StatusChip Severity="Critical"
-                                 Text="{Binding FindingsText}"
+                                 Text="{Binding Converter={StaticResource AssetCardText}, ConverterParameter=Findings}"
                                  Visibility="{Binding HasFindings, Converter={StaticResource BoolToVisibility}}" />
         </controls:WrapPanel>
     </StackPanel>

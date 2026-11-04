@@ -39,4 +39,34 @@ public class ScreenTextTests
         ScreenText.ActionRaised(Action(ActionStatus.Open)).Should().Be("Corrective action raised for Seal housing and assigned to Mechanical Team.");
         ScreenText.ActionRaised(Action(ActionStatus.Open, "Priya S.")).Should().Be("Corrective action raised for Seal housing and assigned to Priya S.");
     }
+
+    private static AssetSummary Card(AssetCondition condition, int openFindings, DateTimeOffset? dueAt) => new(
+        "a-1", "P-204", "Centrifugal Pump", "Centrifugal Pump", "Water Treatment", "Area B",
+        "Morning", "Vibration trend", dueAt, 4, 3, condition, openFindings);
+
+    [TestCase(AssetCondition.Failed, "Fail")]
+    [TestCase(AssetCondition.Watch, "Watch")]
+    [TestCase(AssetCondition.Healthy, "Pass")]
+    [TestCase(AssetCondition.Unknown, "Not inspected")]
+    public void An_asset_card_names_its_condition(AssetCondition condition, string label)
+    {
+        ScreenText.Condition(Card(condition, 0, null)).Should().Be(label);
+    }
+
+    [Test]
+    public void An_asset_card_counts_its_points_and_its_open_findings()
+    {
+        ScreenText.Progress(Card(AssetCondition.Watch, 0, null)).Should().Be("3 of 4 points inspected");
+        ScreenText.Findings(Card(AssetCondition.Watch, 1, null)).Should().Be("1 open finding");
+        ScreenText.Findings(Card(AssetCondition.Watch, 2, null)).Should().Be("2 open findings");
+    }
+
+    [Test]
+    public void Only_a_scheduled_asset_says_when_it_is_due()
+    {
+        var due = new DateTimeOffset(2026, 11, 4, 9, 30, 0, TimeSpan.Zero);
+
+        ScreenText.Due(Card(AssetCondition.Healthy, 0, due)).Should().Be($"Due {due:t}");
+        ScreenText.Due(Card(AssetCondition.Healthy, 0, null)).Should().BeEmpty();
+    }
 }
