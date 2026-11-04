@@ -1,4 +1,4 @@
-# HANDOFF — TRACE (2026-11-04, A pass 2)
+# HANDOFF — TRACE (2026-11-04, A pass 2, cleanup and showcase info file)
 
 Branch `feat/production-readiness` (PR #1). A pass 2 ran from `d1e350a` on the code review's closed list
 (`uno-lab/docs/production-readiness/reviews/2026-11-04-a-pass/trace.json`). Pushed as it went.
@@ -26,11 +26,29 @@ Numbers: 176 tests pass, 1 skipped (was 136 + 1). `AssetModel` 182 → 167 lines
 none. `PointInspectorModel` 446 → 376 lines, 4 inputs; `PointEvidenceModel` 168. `AssetPage.xaml` 649 → 166, the
 tabs 100–200 each. 21.0 automation names per 1,000 XAML lines (66 in 3,137). Lint gate: 0 gating hits.
 
+## Cleanup (after A pass 2)
+
+| Commit | What |
+|---|---|
+| `da1f779` | refactor: unused usings (IDE0005 in a one-off analyzer build; IDE0051/52/60, CA1823, IDE0035 found nothing else) |
+| `737280d` | refactor: unused members (`Asset.Location`/`Designation`, `InspectionEvent.HasNotes`, `SyncModel.HasPending`, the range-status severity); `LocalFileStore(string)` is the tests' internal seam |
+| `5aa43e2`, `d7db119` | chore: four unused tokens; template leftovers (SharedAssets.md, the sample Resources.resw, Android About*.txt and "Hello" string, the Platforms/Windows placeholder, `.gitkeep` files) |
+| `29093ae` | chore(deps): the unused Serialization feature and coverlet.collector |
+| `62c872d`, `6e3e05b` | docs: banners and restating comments; history-style comments say why in the present; doc references to files that never existed |
+
+## Showcase info file
+
+| Commit | What |
+|---|---|
+| `71a0e8a` | feat(icon): a gauge on the primary colour in place of the template's icon and splash (D-005, proposed) |
+| `fa0ea2c` | feat: `.studiolive/` (sample.json, agent-context.json, user-conversation.json, icon.png, four Dark screenshots); absolute URLs are D-006 (proposed) |
+| `b902f12` | docs: README at the root |
+
 ## State
 
 - `docs/COMPLETENESS.md`: Complete with gaps — 0 Blockers, 0 functional Majors, 1 head Major (Android, iOS,
   WinAppSDK not run here), 4 Minors.
-- `docs/DECISIONS.md`: D-001 to D-004 are **proposed**; the owner should confirm them.
+- `docs/DECISIONS.md`: D-001 to D-006 are **proposed**; the owner should confirm them.
 - The WebAssembly "Notes press closes the inspector" Minor did not reproduce in 17 presses over 15 browser sessions,
   at this head and on a rebuild of `d1e350a`. No fix was made; `tools/wasm-check.js` presses the field there now.
 - Pending owner question, unchanged: the set-aside warning on Sync shows only once.
@@ -51,8 +69,9 @@ tabs 100–200 each. 21.0 automation names per 1,000 XAML lines (66 in 3,137). L
 - The mouse wheel scrolls nothing under Xvfb here; a taller window (`run-desktop.sh out.png 1280 1200`) shows the
   inspector's evidence section.
 - Browser: see CLAUDE.md "WebAssembly check".
+- Showcase: `python3 -I validate_studiolive.py <repo root> trace` (the coordinator's validator) prints OK.
 
 ## Next
 
 - CI on this head (the Android emulator job included).
-- The owner's answers on D-001 to D-004.
+- The owner's answers on D-001 to D-006, and the Studio team's on relative URLs in `sample.json` (uno-private#2444).

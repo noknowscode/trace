@@ -40,6 +40,7 @@ Written specs win over the prototype. Complete Must Have before Nice to Have.
 - `Trace.Tests/` — unit tests (`net10.0`) for domain rules, the store, the workflows, dispatch, and every page model (`TodayModelTests`, `AssetsModelTests`, `MainModelTests`, `AssetModelTests`, `PointInspectorModelTests`, `CorrectiveActionSheetModelTests`, `SupervisorFindingsModelTests`, `ScanModelTests`, `SyncModelTests`), driven over `TestHarness`'s temp store; the app grants them its internals (`InternalsVisibleTo`)
 - `docs/` — the product handoff package (specs, checklist, design graph)
 - `prototype/` — runnable HTML interaction reference
+- `.studiolive/` — the showcase info file (`sample.json`, the Studio agent context and conversation, the icon and four screenshots); keep `agent-context.json` current with the code. `README.md` at the root says how to run and test.
 
 Note: there is deliberately no `Application/` folder — a `Trace.Application` namespace would shadow `Microsoft.UI.Xaml.Application` inside namespace `Trace` and break `App : Application`. Application-layer services live in `Services/`.
 
