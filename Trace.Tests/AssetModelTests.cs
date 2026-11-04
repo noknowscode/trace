@@ -87,6 +87,21 @@ public class AssetModelTests
     }
 
     [Test]
+    public async Task A_recorded_photo_opens_full_size_and_closes()
+    {
+        var model = await _harness.OpenAssetAsync();
+        var photo = (await model.History).Single(e => e.Id == "ev-p204-seal-1").Evidence.Single();
+
+        await model.ViewEvidence(photo, default);
+
+        (await model.IsViewingEvidence).Should().BeTrue();
+        (await model.ViewedEvidence)!.LocalUri.Should().Be(photo.LocalUri);
+
+        await model.CloseEvidence(default);
+        (await model.IsViewingEvidence).Should().BeFalse();
+    }
+
+    [Test]
     public async Task Back_returns_to_the_destination_the_asset_was_opened_from()
     {
         var origin = new NavigationOrigin();

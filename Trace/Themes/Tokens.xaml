@@ -96,6 +96,10 @@
     <x:Double x:Key="NotesMinHeight">88</x:Double>
     <x:Double x:Key="NotesMaxHeight">160</x:Double>
     <x:Double x:Key="EvidenceThumbSize">64</x:Double>
+    <!-- A recorded photo in History: large enough to read a seal weep or a witness mark. -->
+    <x:Double x:Key="EvidencePhotoSize">96</x:Double>
+    <!-- The photo viewer: the whole picture, no wider than this, centred over the workspace. -->
+    <x:Double x:Key="ViewerMaxWidth">720</x:Double>
     <!-- Sits a unit on the baseline of the large reading beside it. -->
     <Thickness x:Key="UnitBaselineGap">0,0,0,4</Thickness>
 

@@ -13,6 +13,7 @@ namespace Trace.Presentation;
 public partial record PointInspectorModel
 {
     private readonly IFeed<Asset> _asset;
+    private readonly IFeed<IImmutableList<InspectionEvent>> _history;
     private readonly CorrectiveActionSheetModel _actionSheet;
     private readonly IInspectionWorkflow _workflow;
     private readonly ICameraService _camera;
@@ -20,9 +21,11 @@ public partial record PointInspectorModel
     private readonly TimeProvider _time;
 
     /// <param name="asset">The open asset, as the workspace reads it: the point shown is always its stored self.</param>
+    /// <param name="history">The asset's recorded inspections, newest first.</param>
     /// <param name="actionSheet">The sheet corrective work is raised on, from what is recorded here.</param>
     public PointInspectorModel(
         IFeed<Asset> asset,
+        IFeed<IImmutableList<InspectionEvent>> history,
         CorrectiveActionSheetModel actionSheet,
         IInspectionWorkflow workflow,
         ICameraService camera,
@@ -30,6 +33,7 @@ public partial record PointInspectorModel
         TimeProvider time)
     {
         _asset = asset;
+        _history = history;
         _actionSheet = actionSheet;
         _workflow = workflow;
         _camera = camera;
@@ -242,6 +246,29 @@ public partial record PointInspectorModel
     }
 
     // ---- Evidence ----------------------------------------------------------------------
+
+    /// <summary>
+    /// The latest recorded inspection at the open point that carried photos: what the point
+    /// looked like the last time someone photographed it, to judge today's reading against.
+    /// </summary>
+    public IFeed<InspectionEvent> LastEvidence =>
+        Feed.Combine(SelectedPointId, _history)
+            .Select(pair => InspectionRules.LatestWithPhotos(pair.Item2, pair.Item1)!);
+
+    /// <summary>
+    /// The photos of <see cref="LastEvidence"/>, as a list of the records themselves: each opens
+    /// the viewer with its own <see cref="Evidence"/> as the command parameter.
+    /// </summary>
+    public IListFeed<Evidence> LastPhotos =>
+        Feed.Combine(SelectedPointId, _history)
+            .Select(pair => InspectionRules.LatestWithPhotos(pair.Item2, pair.Item1) is { } latest
+                ? latest.Evidence.Where(item => item.Type == EvidenceType.Photo).ToImmutableList() as IImmutableList<Evidence>
+                : ImmutableList<Evidence>.Empty)
+            .AsListFeed();
+
+    public IFeed<bool> HasLastEvidence =>
+        Feed.Combine(SelectedPointId, _history)
+            .Select(pair => InspectionRules.LatestWithPhotos(pair.Item2, pair.Item1) is not null);
 
     public IFeed<CameraPermission> CameraPermission => Feed.AsyncEnumerable(_camera.WatchPermission);
 

@@ -218,7 +218,17 @@ public static class SeedData
         ImmutableList.Create(
             Historic("ev-p204-seal-1", "P-204", "P-204-seal", "Seal housing",
                 now.AddDays(-1), 7.2, "mm/s", RangeStatus.Above, Disposition.Fail,
-                "Vibration up sharply since last round. Housing warm to the touch and weeping at the seal face."),
+                "Vibration up sharply since last round. Housing warm to the touch and weeping at the seal face.") with
+            {
+                // The photo behind yesterday's Fail, so the round opens with evidence to review.
+                // It is one of the bundled sample frames the simulated camera also returns.
+                Evidence = ImmutableList.Create(new Evidence(
+                    "evd-p204-seal-1",
+                    EvidenceType.Photo,
+                    "ms-appx:///Assets/Evidence/capture-seal-weep.png",
+                    "Seal face weeping",
+                    now.AddDays(-1))),
+            },
             Historic("ev-p204-coupling-1", "P-204", "P-204-coupling", "Coupling",
                 now.AddDays(-1).AddMinutes(-6), 1.9, "mm", RangeStatus.Above, Disposition.Watch,
                 "Witness marks show slight offset. Re-check after the seal work."),

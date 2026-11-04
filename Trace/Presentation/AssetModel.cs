@@ -53,7 +53,14 @@ public partial record AssetModel
         _recovery = recovery;
 
         ActionSheetModel = new CorrectiveActionSheetModel(workflow, actions);
-        InspectorModel = new PointInspectorModel(Asset, ActionSheetModel, workflow, camera, evidence, time);
+        InspectorModel = new PointInspectorModel(
+            Asset,
+            _recovery.Watch(ct => _inspections.WatchHistory(_summary.AssetId, ct)),
+            ActionSheetModel,
+            workflow,
+            camera,
+            evidence,
+            time);
     }
 
     /// <summary>The inspection at the open point (bound through <see cref="AssetViewModel.Inspector"/>).</summary>
@@ -144,6 +151,26 @@ public partial record AssetModel
         await InspectorModel.OpenAsync(point, ct);
         await TabIndex.UpdateAsync(_ => (int)AssetTab.Inspect, ct);
     }
+
+    // ---- Reviewing a recorded photo ----------------------------------------------------
+
+    /// <summary>The recorded photo shown full size over the workspace, from History or the point.</summary>
+    public IState<Evidence> ViewedEvidence => State<Evidence>.Empty(this);
+
+    public IState<bool> IsViewingEvidence => State.Value(this, () => false);
+
+    public async ValueTask ViewEvidence(Evidence evidence, CancellationToken ct)
+    {
+        if (evidence is null)
+        {
+            return;
+        }
+
+        await ViewedEvidence.UpdateAsync(_ => evidence, ct);
+        await IsViewingEvidence.UpdateAsync(_ => true, ct);
+    }
+
+    public ValueTask CloseEvidence(CancellationToken ct) => IsViewingEvidence.UpdateAsync(_ => false, ct);
 
     // ---- Back --------------------------------------------------------------------------
 

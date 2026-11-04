@@ -136,6 +136,15 @@ public static class InspectionRules
         _ => null,
     };
 
+    /// <summary>The newest inspection at <paramref name="pointId"/> that recorded a photo, if any.</summary>
+    public static InspectionEvent? LatestWithPhotos(IEnumerable<InspectionEvent>? events, string? pointId) =>
+        string.IsNullOrEmpty(pointId) || events is null
+            ? null
+            : events
+                .Where(e => e.PointId == pointId && e.Evidence.Any(item => item.Type == EvidenceType.Photo))
+                .OrderByDescending(e => e.Timestamp)
+                .FirstOrDefault();
+
     /// <summary>The confirmation shown once corrective work is raised.</summary>
     /// <remarks>An assignee written with a closing abbreviation ("Priya S.") ends the sentence itself.</remarks>
     public static string DescribeRaisedAction(CorrectiveAction action) =>

@@ -195,6 +195,16 @@
     </Style>
 
     <!--
+        A recorded photo as one target: the card button's press and focus visuals around an
+        image that fills it, so a thumbnail in History or on a point opens the viewer.
+    -->
+    <Style x:Key="PhotoButtonStyle" TargetType="Button" BasedOn="{StaticResource CardButtonStyle}">
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="CornerRadius" Value="{StaticResource SmallRadius}" />
+    </Style>
+
+    <!--
         The equipment viewport is lit by the room it is drawn into. These have to come from a
         Style: the renderer reads the brushes off the control, and a ThemeResource resolves
         per theme only when it arrives through a setter.

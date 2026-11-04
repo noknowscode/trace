@@ -289,3 +289,73 @@ public class PointInspectorStorageTests
         (await _harness.Reopen().GetAsync(default)).FindDraft("P-204-seal")!.Notes.Should().Be("Weeping at the gland.");
     }
 }
+
+/// <summary>Photos recorded at a point, shown again when the point is opened.</summary>
+public class RecordedEvidenceTests
+{
+    private TestHarness _harness = null!;
+
+    [SetUp]
+    public void SetUp() => _harness = TestHarness.Create();
+
+    [TearDown]
+    public void TearDown() => _harness.Dispose();
+
+    [Test]
+    public async Task Opening_a_point_shows_the_photos_last_recorded_there()
+    {
+        var model = await _harness.OpenAssetAsync();
+        await model.SelectPoint(await _harness.PointAsync("P-204-seal"), default);
+
+        (await model.InspectorModel.HasLastEvidence).Should().BeTrue();
+        var last = (await model.InspectorModel.LastEvidence)!;
+        last.Id.Should().Be("ev-p204-seal-1", "yesterday's failure carried the photo");
+        last.Evidence.Should().ContainSingle(e => e.Type == EvidenceType.Photo);
+        (await model.InspectorModel.LastPhotos).Should().ContainSingle().Which.Caption.Should().Be("Seal face weeping");
+    }
+
+    [Test]
+    public async Task A_point_never_photographed_shows_none()
+    {
+        var model = await _harness.OpenAssetAsync();
+        await model.SelectPoint(await _harness.PointAsync("P-204-motor"), default);
+
+        (await model.InspectorModel.HasLastEvidence).Should().BeFalse();
+    }
+
+    [Test]
+    public async Task A_photo_completed_now_becomes_the_one_shown_next_time()
+    {
+        var model = await _harness.OpenAssetAsync(camera: new FrameCamera());
+        await model.SelectPoint(await _harness.PointAsync("P-204-seal"), default);
+        var inspector = model.InspectorModel;
+        await inspector.AttachPhoto(default);
+        await TestHarness.UntilAsync(async () => (await inspector.Draft)?.HasEvidence == true);
+        await Editing.EnterAsync(inspector, "7.6", Disposition.Fail);
+        await TestHarness.UntilAsync(async () => await inspector.CanComplete);
+        _harness.Time.Advance(TimeSpan.FromMinutes(5));
+
+        await inspector.CompletePoint(default);
+
+        await TestHarness.UntilAsync(async () => (await inspector.LastEvidence)?.Reading == 7.6);
+        var last = (await inspector.LastEvidence)!;
+        last.Reading.Should().Be(7.6);
+        last.Evidence.Should().ContainSingle().Which.LocalUri.Should().Contain("evidence/P-204-seal/");
+    }
+
+    [Test]
+    public void The_newest_photographed_inspection_wins()
+    {
+        var now = DateTimeOffset.UnixEpoch;
+        InspectionEvent At(string id, string point, int minutes, bool photo) => new(
+            id, id, "P-204", point, point, now.AddMinutes(minutes), "Tech", 1, "mm/s", RangeStatus.Within, Disposition.Pass, "",
+            photo ? ImmutableList.Create(new Evidence($"e-{id}", EvidenceType.Photo, "ms-appx:///x.png", "x", now)) : ImmutableList<Evidence>.Empty,
+            SyncState.Synced);
+
+        var events = new[] { At("a", "seal", 1, true), At("b", "seal", 3, false), At("c", "seal", 2, true), At("d", "motor", 9, true) };
+
+        InspectionRules.LatestWithPhotos(events, "seal")!.Id.Should().Be("c");
+        InspectionRules.LatestWithPhotos(events, "coupling").Should().BeNull();
+        InspectionRules.LatestWithPhotos(events, string.Empty).Should().BeNull();
+    }
+}

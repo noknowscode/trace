@@ -411,6 +411,31 @@
                                                         <TextBlock Text="{Binding Notes}"
                                                                    Style="{StaticResource SupportingText}"
                                                                    Visibility="{Binding Notes, Converter={StaticResource StringToVisibility}}" />
+                                                        <!-- The photos recorded with the inspection; each opens the viewer. -->
+                                                        <ItemsRepeater ItemsSource="{Binding Evidence}"
+                                                                       TabFocusNavigation="Local"
+                                                                       Visibility="{Binding HasEvidence, Converter={StaticResource BoolToVisibility}}">
+                                                            <ItemsRepeater.Layout>
+                                                                <StackLayout Orientation="Horizontal" Spacing="{StaticResource SpaceS}" />
+                                                            </ItemsRepeater.Layout>
+                                                            <ItemsRepeater.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <Button Style="{StaticResource PhotoButtonStyle}"
+                                                                            Command="{utu:AncestorBinding AncestorType=Page, Path=DataContext.ViewEvidence}"
+                                                                            CommandParameter="{Binding}"
+                                                                            AutomationProperties.Name="{Binding Caption}"
+                                                                            ToolTipService.ToolTip="{Binding Caption}">
+                                                                        <!-- xaml-lint: allow card - image clip with a placeholder fill -->
+                                                                        <Border Width="{StaticResource EvidencePhotoSize}"
+                                                                                Height="{StaticResource EvidencePhotoSize}"
+                                                                                CornerRadius="{StaticResource SmallRadius}"
+                                                                                Background="{ThemeResource SurfaceVariantBrush}">
+                                                                            <Image Source="{Binding LocalUri}" Stretch="UniformToFill" />
+                                                                        </Border>
+                                                                    </Button>
+                                                                </DataTemplate>
+                                                            </ItemsRepeater.ItemTemplate>
+                                                        </ItemsRepeater>
                                                         <controls:WrapPanel HorizontalSpacing="{StaticResource SpaceS}" VerticalSpacing="{StaticResource SpaceS}">
                                                             <controls:StatusChip
                                                                 Severity="{Binding Disposition, Converter={StaticResource ToSeverity}}"
@@ -444,7 +469,7 @@
                                     <TextBlock Text="No inspections recorded"
                                                Style="{StaticResource SectionHeaderText}" />
                                     <TextBlock Style="{StaticResource SupportingText}"
-                                               Text="Completed points appear here, newest first, with the reading and who recorded it." />
+                                               Text="Completed points appear here, newest first, with the reading, its photos and who recorded it." />
                                 </StackPanel>
                             </Border>
                         </DataTemplate>
@@ -537,6 +562,57 @@
                     Margin="{StaticResource InsetL}"
                     Padding="{utu:Responsive Narrow={StaticResource SheetPadding}, Normal={StaticResource SheetPaddingWide}}">
                 <controls:CorrectiveActionSheet />
+            </Border>
+        </Grid>
+
+        <!--
+            A recorded photo, full size, opened from History or from the point. Centred at
+            ViewerMaxWidth over a scrim; the picture scales to fit whatever height is left.
+        -->
+        <Grid Background="{ThemeResource SheetScrimBrush}"
+              Visibility="{Binding IsViewingEvidence, Converter={StaticResource BoolToVisibility}}">
+            <Border Style="{StaticResource SheetSurface}"
+                    MaxWidth="{StaticResource ViewerMaxWidth}"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                    Margin="{StaticResource InsetL}"
+                    Padding="{utu:Responsive Narrow={StaticResource SheetPadding}, Normal={StaticResource SheetPaddingWide}}">
+                <Grid RowSpacing="{StaticResource SpaceM}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid ColumnSpacing="{StaticResource SpaceS}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Spacing="{StaticResource SpaceXXS}" VerticalAlignment="Center">
+                            <TextBlock Text="EVIDENCE" Style="{StaticResource EyebrowText}" />
+                            <TextBlock Text="{Binding ViewedEvidence.Caption}" Style="{StaticResource CardTitleText}" />
+                            <TextBlock Text="{Binding ViewedEvidence.CreatedAt, Converter={StaticResource RelativeTime}}"
+                                       Style="{StaticResource SupportingText}" />
+                        </StackPanel>
+                        <Button Grid.Column="1"
+                                Style="{StaticResource IconButtonStyle}"
+                                VerticalAlignment="Top"
+                                Command="{Binding CloseEvidence}"
+                                AutomationProperties.Name="Close photo"
+                                ToolTipService.ToolTip="Close">
+                            <Viewbox Width="{StaticResource IconSizeS}" Height="{StaticResource IconSizeS}">
+                                <PathIcon Data="{StaticResource IconFail}" />
+                            </Viewbox>
+                        </Button>
+                    </Grid>
+                    <!-- xaml-lint: allow card - image clip with a placeholder fill -->
+                    <Border Grid.Row="1"
+                            CornerRadius="{StaticResource SmallRadius}"
+                            Background="{ThemeResource SurfaceVariantBrush}">
+                        <Image Source="{Binding ViewedEvidence.LocalUri}"
+                               Stretch="Uniform"
+                               AutomationProperties.Name="{Binding ViewedEvidence.Caption}" />
+                    </Border>
+                </Grid>
             </Border>
         </Grid>
     </Grid>

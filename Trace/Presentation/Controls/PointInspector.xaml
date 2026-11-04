@@ -2,6 +2,7 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="using:Trace.Presentation.Controls"
+             xmlns:utu="using:Uno.Toolkit.UI"
              IsTabStop="False">
 
     <!--
@@ -101,13 +102,17 @@
                 <TextBlock Text="{Binding SelectedPoint.Guidance}"
                            Style="{StaticResource SupportingText}" />
 
-                <!-- Last reading and the band it is judged against -->
+                <!-- Last reading and the band it is judged against, and the photos last recorded here -->
                 <Border Style="{StaticResource TileSurface}">
                     <Grid ColumnSpacing="{StaticResource SpaceM}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
                         <StackPanel Orientation="Horizontal" Spacing="{StaticResource SpaceXS}" VerticalAlignment="Center">
                             <TextBlock Text="{Binding SelectedPoint.LatestReadingText}"
                                        Style="{StaticResource MetricLargeText}" />
@@ -123,6 +128,39 @@
                                 <Run Text="Expected" />
                                 <Run Text="{Binding SelectedPoint.ExpectedRange}" />
                             </TextBlock>
+                        </StackPanel>
+
+                        <!-- A grid row with its own gap, so it costs nothing when the point has no photos. -->
+                        <StackPanel Grid.Row="1" Grid.ColumnSpan="2"
+                                    Margin="{StaticResource GapTopM}"
+                                    Spacing="{StaticResource SpaceS}"
+                                    Visibility="{Binding HasLastEvidence, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Style="{StaticResource FieldLabelText}">
+                                <Run Text="Photos recorded" />
+                                <Run Text="{Binding LastEvidence.Timestamp, Converter={StaticResource RelativeTime}}" />
+                            </TextBlock>
+                            <ItemsRepeater ItemsSource="{Binding LastPhotos}" TabFocusNavigation="Local">
+                                <ItemsRepeater.Layout>
+                                    <StackLayout Orientation="Horizontal" Spacing="{StaticResource SpaceS}" />
+                                </ItemsRepeater.Layout>
+                                <ItemsRepeater.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Style="{StaticResource PhotoButtonStyle}"
+                                                Command="{utu:AncestorBinding AncestorType=Page, Path=DataContext.ViewEvidence}"
+                                                CommandParameter="{Binding}"
+                                                AutomationProperties.Name="{Binding Caption}"
+                                                ToolTipService.ToolTip="{Binding Caption}">
+                                            <!-- xaml-lint: allow card - image clip with a placeholder fill -->
+                                            <Border Width="{StaticResource EvidenceThumbSize}"
+                                                    Height="{StaticResource EvidenceThumbSize}"
+                                                    CornerRadius="{StaticResource SmallRadius}"
+                                                    Background="{ThemeResource SurfaceVariantBrush}">
+                                                <Image Source="{Binding LocalUri}" Stretch="UniformToFill" />
+                                            </Border>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsRepeater.ItemTemplate>
+                            </ItemsRepeater>
                         </StackPanel>
                     </Grid>
                 </Border>
