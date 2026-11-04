@@ -78,3 +78,20 @@ with it. Until then every write is the device's own and syncs as queued.
 
 Applies to: Sync, the transient layers. Source: COMPLETENESS.md Unresolved Question "The sync
 conflict dialog", A pass 2 review.
+
+### D-005 · 2026-11-04 · A gauge icon in place of the Uno template's (proposed)
+
+Decision: the launcher, splash and gallery icon is a gauge (a 270° dial, its needle and hub):
+`Assets/Icons/icon.svg` is the ground in the primary colour, #6EE7AE (`coreColors.primary`,
+`Styles/ColorPaletteOverride.json`), `icon_foreground.svg` the gauge in the dark theme's
+on-primary, #00281A, and `Assets/Splash/splash_screen.svg` the same gauge in the light theme's
+primary, #0B6B47, on the splash's white ground. The template's viewBoxes stay; the gauge fills
+about two thirds of the icon at the desktop, WebAssembly and Windows foreground scale (1.0) and
+sits inside Android's adaptive safe zone at 0.65.
+
+Reason: the owner approved a simple custom icon for the apps that still shipped the template's
+(info file brief). A reading against its band is what a technician does at every point.
+
+Tradeoff: flat and generic; no wordmark, so it does not say "TRACE".
+
+Applies to: every head's icon and splash, `.studiolive/icon.png`. Source: info file brief.
