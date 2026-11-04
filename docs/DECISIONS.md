@@ -95,3 +95,19 @@ Reason: the owner approved a simple custom icon for the apps that still shipped 
 Tradeoff: flat and generic; no wordmark, so it does not say "TRACE".
 
 Applies to: every head's icon and splash, `.studiolive/icon.png`. Source: info file brief.
+
+### D-006 · 2026-11-04 · The showcase info file points at the sample's planned public home (proposed)
+
+Decision: `.studiolive/sample.json` gives its icon and screenshots as absolute URLs under
+`https://raw.githubusercontent.com/unoplatform/Uno.Samples/master/studio/trace/.studiolive/`,
+as the showcase guide's example does. They resolve only once the sample has moved to
+Uno.Samples.
+
+Reason: the guide (Uno.Samples draft PR #967, `studio/README.md`) asks for absolute URLs; the
+Studio team has been asked whether relative paths can be used instead (question 1 in
+uno-private#2444).
+
+Tradeoff: until the move, the gallery card cannot load the icon or the screenshots from this
+repo. If relative paths are allowed, the URLs become `icon.png` and `screenshots/<name>.png`.
+
+Applies to: `.studiolive/sample.json`. Source: info file brief.

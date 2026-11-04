@@ -1,0 +1,18 @@
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": "Build a field app for maintenance technicians who inspect pumps, compressors and air handlers:\n- a Today round of assigned assets, with each one's condition, progress, due time and open findings\n- an asset workspace whose main view is the machine itself, in 3D, with its inspection points pinned to it, plus Overview, History and Documents tabs\n- an inspection point sheet: the last reading and its expected range, a new reading, Pass / Watch / Fail, a note and photos; Fail needs a note or a photo, and an out-of-range reading asks for an explicit call\n- corrective action raised from a failed point, carrying its asset, point and inspection, with priority and assignee\n- Assets search and a Scan screen that opens an asset by tag or typed code\n- an offline sync queue that shows pending, failed and synced work, with retry\n- a supervisor Findings view that dispatches and closes corrective work\n\nUse MVUX, Navigation Extensions, the Uno Toolkit and Material, dark by default for the field. Keep the data on the device, work offline first, and put the camera, the tag scanner, the network and the sync behind interfaces with simulated implementations."
+    },
+    {
+      "role": "assistant",
+      "content": "Here's **TRACE**. It's built and running in the preview: the Today round, the asset workspace with the pump in 3D and its inspection points, the point sheet with readings, photos and Pass/Watch/Fail, corrective actions, Scan, Sync and Findings, all working offline on the device."
+    }
+  ],
+  "suggestedPrompts": [
+    "Add a trend chart of a point's readings to its History",
+    "Let a technician reorder today's round by drag and drop",
+    "Add a fourth piece of equipment with its own inspection points",
+    "Export a finished round as a PDF report"
+  ]
+}
