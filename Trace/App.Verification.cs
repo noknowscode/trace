@@ -1,6 +1,5 @@
 #if DEBUG
 using Microsoft.UI.Xaml.Automation;
-using Microsoft.UI.Xaml.Media;
 using Trace.Infrastructure.Persistence;
 using Trace.Presentation.Controls;
 

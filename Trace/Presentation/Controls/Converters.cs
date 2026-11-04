@@ -1,5 +1,4 @@
 using Microsoft.UI.Xaml.Data;
-using Trace.Domain.Enums;
 
 namespace Trace.Presentation.Controls;
 

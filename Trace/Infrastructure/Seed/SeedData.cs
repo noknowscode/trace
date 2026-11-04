@@ -1,4 +1,3 @@
-using Trace.Domain.Enums;
 using Trace.Domain.Models;
 using Trace.Infrastructure.Persistence;
 

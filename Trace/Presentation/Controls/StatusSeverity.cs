@@ -1,5 +1,3 @@
-using Trace.Domain.Enums;
-
 namespace Trace.Presentation.Controls;
 
 /// <summary>
@@ -54,18 +52,5 @@ public static class StatusSeverityMap
         CorrectivePriority.Critical or CorrectivePriority.High => StatusSeverity.Critical,
         CorrectivePriority.Medium => StatusSeverity.Caution,
         _ => StatusSeverity.Neutral,
-    };
-
-    /// <summary>
-    /// The shape paired with each severity. Status is never carried by colour alone — a
-    /// technician with a colour-vision deficiency, or in direct sun, reads the mark.
-    /// </summary>
-    public static string ToGlyphKey(this StatusSeverity severity) => severity switch
-    {
-        StatusSeverity.Positive => "IconCheck",
-        StatusSeverity.Caution => "IconWatch",
-        StatusSeverity.Critical => "IconFail",
-        StatusSeverity.Info => "IconSync",
-        _ => "IconNote",
     };
 }

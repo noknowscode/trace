@@ -1,4 +1,3 @@
-using System.IO;
 using Trace.Services;
 
 namespace Trace.Infrastructure.Persistence;

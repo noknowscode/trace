@@ -1,5 +1,3 @@
-using Trace.Services;
-
 namespace Trace.Infrastructure.Platform;
 
 /// <summary>

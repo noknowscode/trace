@@ -1,6 +1,4 @@
-using Trace.Domain.Models;
 using Trace.Infrastructure.Persistence;
-using Trace.Services;
 
 namespace Trace.Infrastructure.Repositories;
 
@@ -12,9 +10,6 @@ public sealed class InspectionRepository : IInspectionRepository
 
     public IAsyncEnumerable<IImmutableList<InspectionEvent>> WatchHistory(string assetId, CancellationToken ct) =>
         StoreProjections.ProjectList(_store.Watch(ct), s => Newest(s.Events, e => e.AssetId == assetId), ct);
-
-    public IAsyncEnumerable<IImmutableList<InspectionEvent>> WatchPointHistory(string pointId, CancellationToken ct) =>
-        StoreProjections.ProjectList(_store.Watch(ct), s => Newest(s.Events, e => e.PointId == pointId), ct);
 
     public async ValueTask<IImmutableList<InspectionEvent>> GetHistoryAsync(string assetId, CancellationToken ct) =>
         Newest((await _store.GetAsync(ct)).Events, e => e.AssetId == assetId);

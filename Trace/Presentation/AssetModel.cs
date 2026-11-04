@@ -1,4 +1,3 @@
-using Trace.Domain.Enums;
 using Trace.Domain.Rules;
 using Trace.Services;
 
@@ -83,12 +82,6 @@ public partial record AssetModel
 
     /// <summary>Reads the device's records again after a failed read.</summary>
     public void Retry() => _recovery.Retry();
-
-    public IListFeed<InspectionPoint> Points =>
-        Asset.Select(asset => asset is null
-                ? ImmutableList<InspectionPoint>.Empty as IImmutableList<InspectionPoint>
-                : asset.Points.OrderBy(p => p.Sequence).ToImmutableList())
-            .AsListFeed();
 
     public IFeed<AssetKind> SchematicKind =>
         Asset.Select(asset => asset?.Kind ?? AssetKind.CentrifugalPump);
@@ -375,11 +368,7 @@ public partial record AssetModel
     /// The recovery path from a denied camera. On a device this opens system settings; here
     /// it completes the same round trip so the rest of the flow is exercised end to end.
     /// </summary>
-    public ValueTask GrantCameraFromSettings(CancellationToken ct)
-    {
-        _camera.SetPermission(Services.CameraPermission.Granted);
-        return ValueTask.CompletedTask;
-    }
+    public void GrantCameraFromSettings() => _camera.SetPermission(Services.CameraPermission.Granted);
 
     public void DenyCameraForDemo() => _camera.SetPermission(Services.CameraPermission.Denied);
 

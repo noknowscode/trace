@@ -1,5 +1,3 @@
-using Trace.Domain.Enums;
-
 namespace Trace.Domain.Models;
 
 /// <summary>
@@ -31,11 +29,7 @@ public partial record AssetSummary(
 
     public bool IsScheduled => DueAt is not null;
 
-    public string DueText => DueAt is { } due ? due.ToString("t") : string.Empty;
-
     public string DueLabel => DueAt is { } due ? $"Due {due:t}" : string.Empty;
-
-    public bool IsComplete => PointsTotal > 0 && PointsInspected == PointsTotal;
 
     public bool HasFindings => OpenFindings > 0;
 

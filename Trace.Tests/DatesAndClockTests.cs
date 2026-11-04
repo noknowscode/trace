@@ -43,6 +43,5 @@ public class DatesAndClockTests
         var photo = await harness.Evidence.SavePhotoAsync("P-204-seal", [1, 2, 3], ".png", "Seal", default);
 
         photo.CreatedAt.Should().Be(harness.Time.GetLocalNow());
-        harness.Evidence.CreateNote("Weeping at the gland").CreatedAt.Should().Be(harness.Time.GetLocalNow());
     }
 }

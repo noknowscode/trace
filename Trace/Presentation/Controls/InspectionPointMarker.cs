@@ -1,5 +1,3 @@
-using Trace.Domain.Enums;
-
 namespace Trace.Presentation.Controls;
 
 /// <summary>

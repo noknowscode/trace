@@ -1,5 +1,4 @@
 using System.Text.Json.Serialization;
-using Trace.Domain.Models;
 
 namespace Trace.Infrastructure.Persistence;
 

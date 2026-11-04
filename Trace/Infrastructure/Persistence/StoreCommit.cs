@@ -1,5 +1,3 @@
-using Trace.Domain.Models;
-
 namespace Trace.Infrastructure.Persistence;
 
 /// <summary>

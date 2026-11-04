@@ -1,16 +1,11 @@
-using Microsoft.UI.Input;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
 using SkiaSharp;
 #if WINDOWS
 using SkiaSharp.Views.Windows;
 #endif
-using Trace.Domain.Enums;
 using Trace.Presentation.Scene3D;
-using Uno.Extensions;
 using Uno.WinUI.Graphics2DSK;
 using Windows.Foundation;
-using Windows.Storage;
 
 namespace Trace.Presentation.Controls;
 

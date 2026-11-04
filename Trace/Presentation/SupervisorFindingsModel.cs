@@ -1,4 +1,3 @@
-using Trace.Domain.Enums;
 using Trace.Services;
 
 namespace Trace.Presentation;

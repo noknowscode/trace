@@ -1,4 +1,3 @@
-using Trace.Domain.Enums;
 using Trace.Domain.Models;
 using Trace.Services;
 
@@ -31,7 +30,4 @@ public sealed class LocalEvidenceStore : ILocalEvidenceStore
 
         return new Evidence(id, EvidenceType.Photo, uri, caption, _time.GetLocalNow());
     }
-
-    public Evidence CreateNote(string caption) =>
-        new($"ev-{Guid.NewGuid():N}", EvidenceType.Note, string.Empty, caption, _time.GetLocalNow());
 }

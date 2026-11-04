@@ -2,9 +2,7 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using System.Threading.Channels;
-using Trace.Domain.Models;
 using Trace.Infrastructure.Seed;
-using Trace.Services;
 
 namespace Trace.Infrastructure.Persistence;
 

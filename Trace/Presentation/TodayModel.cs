@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Options;
 using Trace.Services;
 
 namespace Trace.Presentation;
@@ -48,8 +47,6 @@ public partial record TodayModel
     public IFeed<bool> IsOnline => Feed.AsyncEnumerable(_network.Watch);
 
     public IFeed<bool> IsOffline => IsOnline.Select(online => !online);
-
-    public IFeed<string> ConnectionLabel => IsOnline.Select(online => online ? "Online" : "Offline");
 
     public IFeed<int> PendingCount => _recovery.Watch(_sync.WatchPendingCount);
 

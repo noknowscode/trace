@@ -1,5 +1,3 @@
-using Trace.Services;
-
 namespace Trace.Presentation;
 
 /// <summary>
@@ -23,10 +21,6 @@ public partial record ScanModel
     public IState<string> Code => State.Value(this, () => string.Empty);
 
     public IState<ScanResult> Result => State<ScanResult>.Empty(this);
-
-    public IFeed<bool> HasResult => Result.Select(result => result is not null);
-
-    public IFeed<bool> Resolved => Result.Select(result => result?.Found == true);
 
     public IFeed<bool> NotResolved => Result.Select(result => result is not null && !result.Found);
 
