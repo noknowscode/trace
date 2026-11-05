@@ -1,12 +1,8 @@
 <Project Sdk="Uno.Sdk">
   <PropertyGroup>
     <!-- Uno.Sdk skips the heads the build OS can't build (iOS off macOS, WinAppSDK off Windows). -->
-    <TargetFrameworks>net10.0-android;net10.0-ios;net10.0-windows10.0.26100;net10.0-browserwasm;net10.0-desktop;net10.0</TargetFrameworks>
-    <!--
-      App-only override for single-head builds (CI, RID-specific publish, tests without mobile workloads):
-      -p:TraceTargetFrameworks=net10.0-desktop. A global -p:TargetFrameworks would also retarget the test
-      project and silently drop its tests.
-    -->
+    <TargetFrameworks>net10.0-android;net10.0-ios;net10.0-windows10.0.26100;net10.0-browserwasm;net10.0-desktop</TargetFrameworks>
+    <!-- One head at a time (CI, RID-specific publish): -p:TraceTargetFrameworks=net10.0-desktop. -->
     <TargetFrameworks Condition="'$(TraceTargetFrameworks)' != ''">$(TraceTargetFrameworks)</TargetFrameworks>
 
     <OutputType>Exe</OutputType>
@@ -68,11 +64,6 @@
 
   <ItemGroup>
     <PackageReference Include="SharpGLTF.Core" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- The model tests drive the asset workspace's parts and their wiring, which the page keeps internal. -->
-    <InternalsVisibleTo Include="Trace.Tests" />
   </ItemGroup>
 
 </Project>
