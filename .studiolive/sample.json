@@ -10,12 +10,12 @@
     "ios"
   ],
   "sourcePath": "Trace/Trace.csproj",
-  "iconUrl": "https://raw.githubusercontent.com/unoplatform/Uno.Samples/master/studio/trace/.studiolive/icon.png",
+  "iconUrl": "https://raw.githubusercontent.com/noknowscode/trace/studio/.studiolive/icon.png",
   "screenshots": [
-    "https://raw.githubusercontent.com/unoplatform/Uno.Samples/master/studio/trace/.studiolive/screenshots/inspect-desktop.png",
-    "https://raw.githubusercontent.com/unoplatform/Uno.Samples/master/studio/trace/.studiolive/screenshots/today-desktop.png",
-    "https://raw.githubusercontent.com/unoplatform/Uno.Samples/master/studio/trace/.studiolive/screenshots/point-phone.png",
-    "https://raw.githubusercontent.com/unoplatform/Uno.Samples/master/studio/trace/.studiolive/screenshots/today-phone.png"
+    "https://raw.githubusercontent.com/noknowscode/trace/studio/.studiolive/screenshots/inspect-desktop.png",
+    "https://raw.githubusercontent.com/noknowscode/trace/studio/.studiolive/screenshots/today-desktop.png",
+    "https://raw.githubusercontent.com/noknowscode/trace/studio/.studiolive/screenshots/point-phone.png",
+    "https://raw.githubusercontent.com/noknowscode/trace/studio/.studiolive/screenshots/today-phone.png"
   ],
   "showcase": {
     "summary": "Spatial equipment inspection for maintenance technicians: readings, photos and corrective work on a 3D machine, offline first.",
