@@ -2,8 +2,16 @@ using SkiaSharp;
 
 namespace Trace.Presentation.Scene3D;
 
-/// <summary>The colours the scene is lit and grounded with, taken from the app theme.</summary>
-public readonly record struct ScenePalette(SKColor Background, SKColor Ground, SKColor KeyLight, SKColor FillLight)
+/// <summary>
+/// The colours one frame is drawn with, all from the theme: the room (background, ground shadow, key and fill
+/// light) and the equipment's paints, indexed by <see cref="EquipmentPaint"/>.
+/// </summary>
+public readonly record struct ScenePalette(
+    SKColor Background,
+    SKColor Ground,
+    SKColor KeyLight,
+    SKColor FillLight,
+    IReadOnlyList<SKColor> Paints)
 {
     /// <summary>
     /// A theme colour as the renderer needs it, with the brush's own opacity folded into the
@@ -129,7 +137,7 @@ public sealed class SceneRenderer : IDisposable
 
     // The small native objects are created on first use and again after a Dispose, so releasing
     // them on Unloaded never leaves a later frame drawing with a freed paint.
-    private SKPaint MeshPaint => _meshPaint ??= new SKPaint { IsAntialias = false, Color = SKColors.White };
+    private SKPaint MeshPaint => _meshPaint ??= new SKPaint { IsAntialias = false };
 
     private SKPaint BlitPaint => _blitPaint ??= new SKPaint { IsAntialias = true };
 
@@ -256,11 +264,11 @@ public sealed class SceneRenderer : IDisposable
                 _positions[i] = last;
             }
 
-            // Skia combines the vertex colours with the paint through the blend mode:
-            // modulating against white passes them through untouched. Leaving the paint at
-            // its default black draws the whole machine as a silhouette.
+            // Skia blends the vertex colours (the destination) with the paint (the source)
+            // through the blend mode: Dst keeps the lit vertex colours and ignores the paint's
+            // colour. Modulate against the default black would draw a silhouette.
             using var mesh = SKVertices.CreateCopy(SKVertexMode.Triangles, _positions, _colors);
-            canvas.DrawVertices(mesh, SKBlendMode.Modulate, MeshPaint);
+            canvas.DrawVertices(mesh, SKBlendMode.Dst, MeshPaint);
         }
 
         // Anchors are refreshed even when nothing was drawn, or the markers would stay
@@ -368,7 +376,7 @@ public sealed class SceneRenderer : IDisposable
         // A narrow rim along grazing angles reads as the light catching a machined edge.
         var rim = MathF.Pow(1f - MathF.Max(Vec3.Dot(normal, toEye), 0f), 3.2f) * material.Gloss * 0.9f;
 
-        var albedo = material.Albedo;
+        var albedo = material.Albedo ?? palette.Paints[(int)material.Paint];
 
         var r = (albedo.Red * (0.2f + (keyAmount * 0.85f) + sky))
             + (palette.KeyLight.Red * keyAmount * material.Gloss * 0.35f)

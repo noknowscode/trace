@@ -42,6 +42,8 @@
         - Scrim: behind a modal sheet, and the contact shadow under the machine in the equipment view.
         - SceneFillLight: the equipment view's bounce light, a cool neutral: tinting it with Primary would turn every
           machine the brand colour.
+        - Equipment*: the paint and metal of the parametric machines (Scene3D/EquipmentModels), which the view reads
+          for its theme (AssetSceneView). A machine loaded from a glTF file carries its own colours.
 
         Default is Dark: TRACE starts dark (a field-use decision), so a theme the dictionaries do not name falls back
         to the working default.
@@ -58,6 +60,16 @@
           <Color x:Key="OnWatchContainerColor">#271900</Color>
           <Color x:Key="ScrimColor">#000000</Color>
           <Color x:Key="SceneFillLightColor">#7E8C99</Color>
+          <!-- The equipment's paint and metal: what the machine is made of, the same in both themes. -->
+          <Color x:Key="EquipmentCastIronColor">#5E6C68</Color>
+          <Color x:Key="EquipmentSteelColor">#8A9895</Color>
+          <Color x:Key="EquipmentDarkSteelColor">#475350</Color>
+          <Color x:Key="EquipmentSkidColor">#3A4542</Color>
+          <Color x:Key="EquipmentGuardColor">#B78A2E</Color>
+          <Color x:Key="EquipmentPanelColor">#6F7C79</Color>
+          <Color x:Key="EquipmentCopperColor">#9A6B45</Color>
+          <Color x:Key="EquipmentBeltColor">#2B2F2E</Color>
+          <Color x:Key="EquipmentSightGlassColor">#C8B872</Color>
 
           <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
           <SolidColorBrush x:Key="OnSuccessBrush" Color="{StaticResource OnSuccessColor}" />
@@ -84,6 +96,16 @@
           <Color x:Key="OnWatchContainerColor">#FFE0A6</Color>
           <Color x:Key="ScrimColor">#000000</Color>
           <Color x:Key="SceneFillLightColor">#7E8C99</Color>
+          <!-- The equipment's paint and metal: what the machine is made of, the same in both themes. -->
+          <Color x:Key="EquipmentCastIronColor">#5E6C68</Color>
+          <Color x:Key="EquipmentSteelColor">#8A9895</Color>
+          <Color x:Key="EquipmentDarkSteelColor">#475350</Color>
+          <Color x:Key="EquipmentSkidColor">#3A4542</Color>
+          <Color x:Key="EquipmentGuardColor">#B78A2E</Color>
+          <Color x:Key="EquipmentPanelColor">#6F7C79</Color>
+          <Color x:Key="EquipmentCopperColor">#9A6B45</Color>
+          <Color x:Key="EquipmentBeltColor">#2B2F2E</Color>
+          <Color x:Key="EquipmentSightGlassColor">#C8B872</Color>
 
           <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
           <SolidColorBrush x:Key="OnSuccessBrush" Color="{StaticResource OnSuccessColor}" />

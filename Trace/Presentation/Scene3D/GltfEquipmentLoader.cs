@@ -93,18 +93,22 @@ public static class GltfEquipmentLoader
             return null;
         }
 
-        return new MeshPart(vertices, [.. indices], Material.Machined(Albedo(primitive.Material)));
+        return new MeshPart(vertices, [.. indices], MaterialOf(primitive.Material));
     }
 
-    private static SKColor Albedo(SharpGLTF.Schema2.Material? material)
+    private static Material MaterialOf(SharpGLTF.Schema2.Material? material)
     {
         // Textures are not sampled: the renderer flat-shades each face from its material
-        // colour, so the PBR base colour factor is the whole of what it can use.
-        var colour = material?.FindChannel(BaseColorChannel)?.Color ?? new Vector4(0.6f, 0.62f, 0.64f, 1f);
+        // colour, so the PBR base colour factor is the whole of what it can use. A part the
+        // file gives no colour is plain steel, in the app's own steel.
+        if (material?.FindChannel(BaseColorChannel)?.Color is not { } colour)
+        {
+            return Material.Machined(EquipmentPaint.Steel);
+        }
 
-        return new SKColor(
+        return Material.Machined(new SKColor(
             (byte)Math.Clamp(colour.X * 255f, 0f, 255f),
             (byte)Math.Clamp(colour.Y * 255f, 0f, 255f),
-            (byte)Math.Clamp(colour.Z * 255f, 0f, 255f));
+            (byte)Math.Clamp(colour.Z * 255f, 0f, 255f)));
     }
 }

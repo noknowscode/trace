@@ -1,5 +1,3 @@
-using SkiaSharp;
-
 namespace Trace.Presentation.Scene3D;
 
 /// <summary>
@@ -16,16 +14,17 @@ namespace Trace.Presentation.Scene3D;
 /// </remarks>
 public static class EquipmentModels
 {
-    // The equipment's own paint and metal, as a glTF file would carry them: data about the
-    // machine, the same in both themes. The light the machine is seen under comes from the
-    // theme (AssetSceneViewStyle).
-    private static readonly Material CastIron = Material.Painted(new SKColor(0x5E, 0x6C, 0x68));
-    private static readonly Material Steel = Material.Machined(new SKColor(0x8A, 0x98, 0x95));
-    private static readonly Material DarkSteel = Material.Machined(new SKColor(0x47, 0x53, 0x50));
-    private static readonly Material Skid = Material.Matte(new SKColor(0x3A, 0x45, 0x42));
-    private static readonly Material Guard = Material.Painted(new SKColor(0xB7, 0x8A, 0x2E));
-    private static readonly Material Panel = Material.Painted(new SKColor(0x6F, 0x7C, 0x79));
-    private static readonly Material Copper = Material.Machined(new SKColor(0x9A, 0x6B, 0x45));
+    // The equipment's own paint and metal. Their colours are App.xaml's (Equipment{Paint}Color), the same in
+    // both themes; the light the machine is seen under comes from the theme (AssetSceneViewStyle).
+    private static readonly Material CastIron = Material.Painted(EquipmentPaint.CastIron);
+    private static readonly Material Steel = Material.Machined(EquipmentPaint.Steel);
+    private static readonly Material DarkSteel = Material.Machined(EquipmentPaint.DarkSteel);
+    private static readonly Material Skid = Material.Matte(EquipmentPaint.Skid);
+    private static readonly Material Guard = Material.Painted(EquipmentPaint.Guard);
+    private static readonly Material Panel = Material.Painted(EquipmentPaint.Panel);
+    private static readonly Material Copper = Material.Machined(EquipmentPaint.Copper);
+    private static readonly Material Belt = Material.Matte(EquipmentPaint.Belt);
+    private static readonly Material SightGlass = Material.Machined(EquipmentPaint.SightGlass);
 
     private static readonly Dictionary<AssetKind, SceneModel> Cache = [];
     private static readonly Lock Gate = new();
@@ -248,7 +247,7 @@ public static class EquipmentModels
             new Vec3(0, 0, 1),
             [(0f, 0.14f), (0.03f, 0.17f), (0.09f, 0.17f), (0.12f, 0.14f)],
             DarkSteel));
-        parts.Add(MeshBuilder.Box(new Vec3(0.82f, -0.12f, 0.44f), new Vec3(0.04f, 0.5f, 0.03f), Material.Matte(new SKColor(0x2B, 0x2F, 0x2E))));
+        parts.Add(MeshBuilder.Box(new Vec3(0.82f, -0.12f, 0.44f), new Vec3(0.04f, 0.5f, 0.03f), Belt));
 
         // Discharge duct
         parts.Add(MeshBuilder.Box(new Vec3(1.44f, 0.12f, 0f), new Vec3(0.36f, 0.66f, 0.7f), Panel));
@@ -308,7 +307,7 @@ public static class EquipmentModels
             [(0f, 0.1f), (0.06f, 0.22f), (0.14f, 0.25f), (0.86f, 0.25f), (0.94f, 0.21f), (1f, 0.1f)],
             CastIron));
         parts.Add(MeshBuilder.Ring(new Vec3(0.5f, -0.18f, 0f), new Vec3(0, 1, 0), 0.25f, 0.28f, 0.03f, DarkSteel, 26));
-        parts.Add(MeshBuilder.Box(new Vec3(0.5f, -0.14f, 0.26f), new Vec3(0.07f, 0.3f, 0.05f), Material.Machined(new SKColor(0xC8, 0xB8, 0x72))));
+        parts.Add(MeshBuilder.Box(new Vec3(0.5f, -0.14f, 0.26f), new Vec3(0.07f, 0.3f, 0.05f), SightGlass));
 
         // Air receiver, laid on saddles
         parts.Add(MeshBuilder.Revolve(

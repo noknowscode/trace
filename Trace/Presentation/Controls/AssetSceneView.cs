@@ -59,9 +59,17 @@ public sealed partial class AssetSceneView : Grid, IAnchorProjector
     public static readonly DependencyProperty ResetViewCommandProperty = DependencyProperty.Register(
         nameof(ResetViewCommand), typeof(ICommand), typeof(AssetSceneView), new PropertyMetadata(null));
 
+    // App.xaml's no-role colour for each equipment paint, by EquipmentPaint.
+    private static readonly string[] PaintKeys =
+        [.. Enum.GetValues<EquipmentPaint>().Select(paint => $"Equipment{paint}Color")];
+
     private readonly SceneRenderer _renderer = new();
     private readonly SceneCamera _camera = new();
     private readonly ISceneSurface _surface;
+    private readonly SKColor[] _paints = new SKColor[PaintKeys.Length];
+    private readonly Dictionary<DependencyProperty, (SolidColorBrush Brush, long Token)> _watched = [];
+
+    private ElementTheme? _paintsTheme;
 
     private SceneModel? _loadedModel;
     private int _loadVersion;
@@ -85,8 +93,14 @@ public sealed partial class AssetSceneView : Grid, IAnchorProjector
         Children.Add((UIElement)_surface);
 
         // The renderer holds a viewport-sized native surface; it goes when the view does.
-        // It is recreated on the next paint if the view comes back.
-        Unloaded += (_, _) => _renderer.Dispose();
+        // It is recreated on the next paint if the view comes back. The brushes it watches are
+        // the app's and outlive the view, so the view lets go of them too.
+        Unloaded += (_, _) =>
+        {
+            _renderer.Dispose();
+            UnwatchAll();
+        };
+        Loaded += (_, _) => WatchAll();
 
         // Dragging is handled through the pointer events below, so the host must not also
         // interpret a drag as a manipulation.
@@ -180,8 +194,53 @@ public sealed partial class AssetSceneView : Grid, IAnchorProjector
     private static void OnKindChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
         ((AssetSceneView)d).ResetView();
 
-    private static void OnPaletteChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
-        ((AssetSceneView)d).Invalidate();
+    private static void OnPaletteChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var view = (AssetSceneView)d;
+        if (view.IsLoaded)
+        {
+            view.Watch(e.Property, e.NewValue as SolidColorBrush);
+        }
+
+        view.Invalidate();
+    }
+
+    private static readonly DependencyProperty[] PaletteProperties =
+        [SceneBackgroundProperty, GroundShadowProperty, KeyLightProperty, FillLightProperty];
+
+    /// <summary>
+    /// A palette change (Uno Platform Studio's Themes tab, or a new palette assigned to the theme) recolours the
+    /// theme's role brushes in place: the brush in each property stays the same instance, so its property does not
+    /// change. Watching each brush's colour repaints the machine with the new palette.
+    /// </summary>
+    private void Watch(DependencyProperty property, SolidColorBrush? brush)
+    {
+        if (_watched.Remove(property, out var old))
+        {
+            old.Brush.UnregisterPropertyChangedCallback(SolidColorBrush.ColorProperty, old.Token);
+        }
+
+        if (brush is not null)
+        {
+            _watched[property] = (brush, brush.RegisterPropertyChangedCallback(SolidColorBrush.ColorProperty, (_, _) => Invalidate()));
+        }
+    }
+
+    private void WatchAll()
+    {
+        foreach (var property in PaletteProperties)
+        {
+            Watch(property, GetValue(property) as SolidColorBrush);
+        }
+    }
+
+    private void UnwatchAll()
+    {
+        foreach (var property in PaletteProperties)
+        {
+            Watch(property, null);
+        }
+    }
 
     private static void OnModelSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
         _ = ((AssetSceneView)d).LoadModelAsync(e.NewValue as string ?? string.Empty);
@@ -248,7 +307,38 @@ public sealed partial class AssetSceneView : Grid, IAnchorProjector
         Background: Resolve(SceneBackground),
         Ground: Resolve(GroundShadow),
         KeyLight: Resolve(KeyLight),
-        FillLight: Resolve(FillLight));
+        FillLight: Resolve(FillLight),
+        Paints: ReadPaints());
+
+    /// <summary>
+    /// The equipment's paint: App.xaml's no-role colours (<c>Equipment{Paint}Color</c>) for the theme the view is
+    /// drawn in. Code has no <c>{ThemeResource}</c>, and a plain lookup in <see cref="Application"/>.Resources
+    /// answers for the application's theme rather than the view's, so this reads the theme dictionary itself
+    /// (Light, or Default for Dark). They are read again when the view's theme changes, which repaints it.
+    /// </summary>
+    private SKColor[] ReadPaints()
+    {
+        var theme = ActualTheme;
+        if (_paintsTheme == theme)
+        {
+            return _paints;
+        }
+
+        var themes = Application.Current.Resources.ThemeDictionaries;
+        var dictionary = themes.TryGetValue(theme == ElementTheme.Light ? "Light" : "Default", out var found)
+            ? found as ResourceDictionary
+            : null;
+
+        for (var i = 0; i < PaintKeys.Length; i++)
+        {
+            _paints[i] = dictionary is not null && dictionary.TryGetValue(PaintKeys[i], out var value) && value is Windows.UI.Color colour
+                ? new SKColor(colour.R, colour.G, colour.B, colour.A)
+                : SKColors.Transparent;
+        }
+
+        _paintsTheme = theme;
+        return _paints;
+    }
 
     private static SKColor Resolve(Brush? brush) =>
         brush is SolidColorBrush solid

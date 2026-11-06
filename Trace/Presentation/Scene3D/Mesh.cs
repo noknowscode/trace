@@ -2,14 +2,38 @@ using SkiaSharp;
 
 namespace Trace.Presentation.Scene3D;
 
-/// <summary>How a surface takes light. Gloss drives the size and strength of the highlight.</summary>
-public readonly record struct Material(SKColor Albedo, float Gloss)
+/// <summary>
+/// The paint or metal of a part of a parametric machine. Its colour is one of the app's no-role colours,
+/// <c>Equipment{Paint}Color</c> in App.xaml's Light and Default dictionaries, read for the theme the view is
+/// drawn in (<see cref="ScenePalette.Paints"/>).
+/// </summary>
+public enum EquipmentPaint
 {
-    public static Material Painted(SKColor albedo) => new(albedo, 0.18f);
+    CastIron,
+    Steel,
+    DarkSteel,
+    Skid,
+    Guard,
+    Panel,
+    Copper,
+    Belt,
+    SightGlass,
+}
 
-    public static Material Machined(SKColor albedo) => new(albedo, 0.55f);
+/// <summary>
+/// How a surface takes light. Gloss drives the size and strength of the highlight. A parametric part names its
+/// <see cref="Paint"/>; a part read from a glTF file carries the file's own base colour in <see cref="Albedo"/>.
+/// </summary>
+public readonly record struct Material(EquipmentPaint Paint, float Gloss, SKColor? Albedo = null)
+{
+    public static Material Painted(EquipmentPaint paint) => new(paint, 0.18f);
 
-    public static Material Matte(SKColor albedo) => new(albedo, 0.05f);
+    public static Material Machined(EquipmentPaint paint) => new(paint, 0.55f);
+
+    public static Material Matte(EquipmentPaint paint) => new(paint, 0.05f);
+
+    /// <summary>A machined part in the colour an asset file gives it.</summary>
+    public static Material Machined(SKColor albedo) => new(EquipmentPaint.Steel, 0.55f, albedo);
 }
 
 /// <summary>
