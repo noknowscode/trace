@@ -313,7 +313,7 @@
                 <TextBox Text="{Binding ReadingText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                          InputScope="Number"
                          MinHeight="{StaticResource TouchTargetSize}"
-                         FontSize="{StaticResource ReadingFontSize}"
+                         FontSize="{StaticResource TitleLargeFontSize}"
                          AutomationProperties.Name="New reading" />
             </StackPanel>
 
