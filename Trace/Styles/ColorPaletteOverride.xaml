@@ -4,8 +4,10 @@
     ErrorContainerBrush and their Hover/Pressed/Medium/Low… variants), and every Material control and page follows.
     Uno Platform Studio's Themes tab edits this file.
 
-    The design gives every role in both themes, so the whole palette is overridden and no generated colour shows.
-    Light is the office review theme; Default is Dark, TRACE's working default for field use (App.xaml).
+    The design gives every role in both themes, so all 33 keys are set and no generated colour shows. The legacy
+    Material 2 variants take the design's own darker and lighter tones of Primary and Secondary, and the shadow is
+    the design's black at the 20 % the theme's elevation expects. Light is the office review theme; Default is
+    Dark, TRACE's working default for field use (App.xaml).
     Colours with no palette role (the Success and Watch statuses, the scrim, the 3D view's fill light and the
     equipment paint) are App.xaml's, in its Light and Default theme dictionaries.
 -->
@@ -18,10 +20,14 @@
       <Color x:Key="PrimaryContainerColor">#9FF2CB</Color>
       <Color x:Key="OnPrimaryContainerColor">#002517</Color>
       <Color x:Key="PrimaryInverseColor">#6EE7AE</Color>
+      <Color x:Key="PrimaryVariantDarkColor">#002517</Color>
+      <Color x:Key="PrimaryVariantLightColor">#6EE7AE</Color>
       <Color x:Key="SecondaryColor">#00567C</Color>
       <Color x:Key="OnSecondaryColor">#FFFFFF</Color>
       <Color x:Key="SecondaryContainerColor">#C5E7FF</Color>
       <Color x:Key="OnSecondaryContainerColor">#001E2E</Color>
+      <Color x:Key="SecondaryVariantDarkColor">#001E2E</Color>
+      <Color x:Key="SecondaryVariantLightColor">#7FC9FF</Color>
       <Color x:Key="TertiaryColor">#7A5200</Color>
       <Color x:Key="OnTertiaryColor">#FFFFFF</Color>
       <Color x:Key="TertiaryContainerColor">#FFDEA6</Color>
@@ -41,6 +47,7 @@
       <Color x:Key="SurfaceTintColor">#0B6B47</Color>
       <Color x:Key="OutlineColor">#77908A</Color>
       <Color x:Key="OutlineVariantColor">#C7D6D1</Color>
+      <Color x:Key="ShadowColor">#33000000</Color>
     </ResourceDictionary>
     <ResourceDictionary x:Key="Default">
       <Color x:Key="PrimaryColor">#6EE7AE</Color>
@@ -48,10 +55,14 @@
       <Color x:Key="PrimaryContainerColor">#17352C</Color>
       <Color x:Key="OnPrimaryContainerColor">#9DF5CC</Color>
       <Color x:Key="PrimaryInverseColor">#0C6B48</Color>
+      <Color x:Key="PrimaryVariantDarkColor">#0C6B48</Color>
+      <Color x:Key="PrimaryVariantLightColor">#9DF5CC</Color>
       <Color x:Key="SecondaryColor">#7FC9FF</Color>
       <Color x:Key="OnSecondaryColor">#00354F</Color>
       <Color x:Key="SecondaryContainerColor">#123449</Color>
       <Color x:Key="OnSecondaryContainerColor">#C4E5FF</Color>
+      <Color x:Key="SecondaryVariantDarkColor">#00567C</Color>
+      <Color x:Key="SecondaryVariantLightColor">#C4E5FF</Color>
       <Color x:Key="TertiaryColor">#FFC65C</Color>
       <Color x:Key="OnTertiaryColor">#3A2600</Color>
       <Color x:Key="TertiaryContainerColor">#46320A</Color>
@@ -71,6 +82,7 @@
       <Color x:Key="SurfaceTintColor">#6EE7AE</Color>
       <Color x:Key="OutlineColor">#2C403A</Color>
       <Color x:Key="OutlineVariantColor">#1E2E29</Color>
+      <Color x:Key="ShadowColor">#33000000</Color>
     </ResourceDictionary>
   </ResourceDictionary.ThemeDictionaries>
 </ResourceDictionary>
