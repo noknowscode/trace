@@ -29,8 +29,14 @@ The camera, the tag scanner, the network and the sync transport are deterministi
 ## Stack
 
 Uno.Sdk 7.0.0-dev.115 (a preview, pinned in `global.json`), .NET 10, MVUX, Navigation Extensions, the Uno Toolkit,
-Material with a colour override, and SkiaSharp for the equipment view. Heads: desktop (Windows, macOS, Linux),
-WebAssembly, Android, iOS and Windows App SDK.
+and SkiaSharp for the equipment view. Heads: desktop (Windows, macOS, Linux), WebAssembly, Android, iOS and Windows
+App SDK.
+
+The look is Uno.Themes' Material theme (`MaterialToolkitTheme`): the palette is one file,
+`Trace/Styles/ColorPaletteOverride.xaml`, which Uno Platform Studio's Themes tab edits, and every page uses the role
+brushes, type styles and Space, Radius and ControlHeight tokens the theme generates. The colours no palette role
+covers (the Pass and Watch statuses, the scrim, the equipment's paint and fill light) sit in `Trace/App.xaml`'s Light
+and Default dictionaries.
 
 ## Try it
 

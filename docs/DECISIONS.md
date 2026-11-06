@@ -82,8 +82,8 @@ conflict dialog", A pass 2 review.
 ### D-005 · 2026-11-04 · A gauge icon in place of the Uno template's (proposed)
 
 Decision: the launcher, splash and gallery icon is a gauge (a 270° dial, its needle and hub):
-`Assets/Icons/icon.svg` is the ground in the primary colour, #6EE7AE (`coreColors.primary`,
-`Styles/ColorPaletteOverride.json`), `icon_foreground.svg` the gauge in the dark theme's
+`Assets/Icons/icon.svg` is the ground in the primary colour, #6EE7AE (the dark theme's
+`PrimaryColor` in `Styles/ColorPaletteOverride.xaml`), `icon_foreground.svg` the gauge in the dark theme's
 on-primary, #00281A, and `Assets/Splash/splash_screen.svg` the same gauge in the light theme's
 primary, #0B6B47, on the splash's white ground. The template's viewBoxes stay; the gauge fills
 about two thirds of the icon at the desktop, WebAssembly and Windows foreground scale (1.0) and
@@ -111,3 +111,26 @@ Tradeoff: until the move, the gallery card cannot load the icon or the screensho
 repo. If relative paths are allowed, the URLs become `icon.png` and `screenshots/<name>.png`.
 
 Applies to: `.studiolive/sample.json`. Source: info file brief.
+
+### D-007 · 2026-11-06 · The look comes from Uno.Themes; Pass and Watch are the app's own colours (proposed)
+
+Decision: the palette is one hand-owned file, `Styles/ColorPaletteOverride.xaml`, with all 33
+colour keys in Light and Default, read through `MaterialToolkitTheme.Colors`; the DSP JSON and the
+`Dsp` feature are gone. Pages use the role brushes, the Material type styles and the theme's
+Space, Radius, ControlHeight and IconSize tokens. The Pass/success and Watch statuses, which were
+Primary and Tertiary, are App.xaml's `Success*` and `Watch*` colours with the same values; Fail
+stays the Error role and a pending sync the Secondary container. Radii the scale cannot hit take
+the step above (10 → 12, 14 → 16, 18 → 20); the 44 px target is `ControlHeightMediumLarge`, not
+the theme's 48 px `TouchTargetMinSize`.
+
+Reason: Uno Platform Studio's Themes tab edits the palette the theme reads, and app-owned tokens
+outrank it; samples must work in any theme with the least wiring. The DSP generator wrote the Dark
+palette under "Dark", misspelled `OnSurfaceInverseColor`, overwrote hand edits whenever the JSON
+was newer and warned on every build. A status must keep its meaning when the brand colour
+changes.
+
+Tradeoff: corners are 2 px rounder than the design graph's; the reading field is 22 px (Title
+Large) instead of 20; a palette edit no longer goes through Material Theme Builder's JSON.
+
+Applies to: every page, `App.xaml`, `Styles/`, `Themes/`, the equipment view. Source: theme pass
+brief (THEMING-RULES).

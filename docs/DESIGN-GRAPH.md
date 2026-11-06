@@ -97,15 +97,24 @@ The Inspect tab draws a real 3D model of the asset, not an illustration:
 - Surface hierarchy: canvas → raised pane → interactive tile → transient sheet
 - Minimum touch target: 44px
 
-All of these live in `Trace/Themes/Tokens.xaml`; pages and controls reference keys, never
-literal values.
+They map by value to the Material theme's tokens (on this theme `SpaceN00` is N × 8 px and
+`RadiusN00` N × 4 px): spacing 2–24 is `Space025`–`Space300`, page and sheet sides
+`Space200`/`Space300Thickness`, the touch target `ControlHeightMediumLarge` (44). Radii take the
+nearest step above where the scale has no exact one: 8 → `Radius200`, 10 and 12 → `Radius300`,
+14 → `Radius400`, 18 → `Radius500`. `Trace/Themes/Layout.xaml` keeps the widths and part sizes no
+token covers; pages and controls reference keys, never literal values.
 
-Colour comes from the Material theme with a DSP palette override, plus `Themes/ColorTokens.xaml`
-for the scrim and the 3D view's ground shadow and fill light. Both themes are first-class;
+Colour comes from the Material theme: its palette is `Styles/ColorPaletteOverride.xaml` (every
+role in Light and Default; Uno Platform Studio's Themes tab edits it), used through the role
+brushes. Statuses: neutral is `SurfaceVariant`, failure the Error role, syncing the Secondary
+container; success and watch are the app's own colours (App.xaml's `Success*` and `Watch*`), so a
+status keeps its meaning whatever the brand colour. App.xaml also holds the other colours with no
+role: the scrim (behind a sheet, and the 3D view's ground shadow) and the fill light. Both themes are first-class;
 dark is the default for field use (an owner decision: TRACE does not follow the system theme).
 Text roles carry their colour through Style setters rather than local `ThemeResource`
 assignments, which do not re-resolve on a theme change. The equipment's own paint (cast
-iron, steel, the yellow coupling guard) is data in the model, not a theme colour.
+iron, steel, the yellow coupling guard) is App.xaml's `Equipment*Color`, the same in both themes;
+a glTF model carries its own colours.
 
 ## Width categories
 
