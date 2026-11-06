@@ -11,16 +11,16 @@
         ContentMaxWidth.
     -->
     <ScrollViewer>
-        <StackPanel Spacing="{StaticResource SpaceM}">
+        <StackPanel Spacing="{StaticResource Space150}">
             <mvux:FeedView IsTabStop="False" Source="{Binding Asset}"
                            ProgressTemplate="{StaticResource FeedProgressTemplate}"
                            ErrorTemplate="{StaticResource FeedErrorTemplate}">
                 <mvux:FeedView.ValueTemplate>
                     <DataTemplate>
                         <Border Style="{StaticResource CardSurface}">
-                            <StackPanel Spacing="{StaticResource SpaceM}">
+                            <StackPanel Spacing="{StaticResource Space150}">
                                 <TextBlock Text="Condition" Style="{StaticResource SectionHeaderText}" />
-                                <controls:WrapPanel HorizontalSpacing="{StaticResource SpaceS}" VerticalSpacing="{StaticResource SpaceS}">
+                                <controls:WrapPanel HorizontalSpacing="{StaticResource Space100}" VerticalSpacing="{StaticResource Space100}">
                                     <controls:StatusChip
                                         Severity="{Binding Data.Condition, Converter={StaticResource ToSeverity}}"
                                         Text="{Binding Data.Condition}" />
@@ -40,7 +40,7 @@
                 <mvux:FeedView.NoneTemplate>
                     <DataTemplate>
                         <Border Style="{StaticResource CardSurface}">
-                            <StackPanel Spacing="{StaticResource SpaceS}">
+                            <StackPanel Spacing="{StaticResource Space100}">
                                 <controls:StatusChip Severity="Critical" Text="Asset unavailable" />
                                 <TextBlock Style="{StaticResource SupportingText}"
                                            Text="This asset is no longer on the device. It may have been reassigned since your last sync." />
@@ -58,18 +58,18 @@
                     <DataTemplate>
                         <ItemsRepeater ItemsSource="{Binding Data}">
                             <ItemsRepeater.Layout>
-                                <StackLayout Spacing="{StaticResource SpaceS}" />
+                                <StackLayout Spacing="{StaticResource Space100}" />
                             </ItemsRepeater.Layout>
                             <ItemsRepeater.ItemTemplate>
                                 <DataTemplate>
                                     <Border Style="{StaticResource TileSurface}">
-                                        <StackPanel Spacing="{StaticResource SpaceXS}">
+                                        <StackPanel Spacing="{StaticResource Space050}">
                                             <TextBlock Text="{Binding PointLabel}"
                                                        Style="{StaticResource EyebrowText}" />
                                             <TextBlock Text="{Binding Summary}"
                                                        Style="{StaticResource BodyText}"
                                                        TextWrapping="Wrap" />
-                                            <controls:WrapPanel HorizontalSpacing="{StaticResource SpaceS}" VerticalSpacing="{StaticResource SpaceS}">
+                                            <controls:WrapPanel HorizontalSpacing="{StaticResource Space100}" VerticalSpacing="{StaticResource Space100}">
                                                 <controls:StatusChip
                                                     Severity="{Binding Priority, Converter={StaticResource ToSeverity}}"
                                                     Text="{Binding Priority}" />

@@ -20,12 +20,12 @@
                 <ScrollViewer>
                     <ItemsRepeater ItemsSource="{Binding Data}">
                         <ItemsRepeater.Layout>
-                            <StackLayout Spacing="{StaticResource SpaceS}" />
+                            <StackLayout Spacing="{StaticResource Space100}" />
                         </ItemsRepeater.Layout>
                         <ItemsRepeater.ItemTemplate>
                             <DataTemplate>
-                                <Border Style="{StaticResource CardSurface}" Padding="{StaticResource TilePadding}">
-                                    <Grid ColumnSpacing="{StaticResource SpaceM}">
+                                <Border Style="{StaticResource CardSurface}" Padding="{StaticResource Space150Thickness}">
+                                    <Grid ColumnSpacing="{StaticResource Space150}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
@@ -34,7 +34,7 @@
 
                                         <Border Style="{StaticResource TimelineSpine}" />
 
-                                        <StackPanel Grid.Column="1" Spacing="{StaticResource SpaceXS}">
+                                        <StackPanel Grid.Column="1" Spacing="{StaticResource Space050}">
                                             <TextBlock Text="{Binding PointLabel}"
                                                        Style="{StaticResource EyebrowText}" />
                                             <TextBlock Text="{Binding ReadingText}"
@@ -47,7 +47,7 @@
                                                            TabFocusNavigation="Local"
                                                            Visibility="{Binding HasEvidence, Converter={StaticResource BoolToVisibility}}">
                                                 <ItemsRepeater.Layout>
-                                                    <StackLayout Orientation="Horizontal" Spacing="{StaticResource SpaceS}" />
+                                                    <StackLayout Orientation="Horizontal" Spacing="{StaticResource Space100}" />
                                                 </ItemsRepeater.Layout>
                                                 <ItemsRepeater.ItemTemplate>
                                                     <DataTemplate>
@@ -59,7 +59,7 @@
                                                             <!-- xaml-lint: allow card - image clip with a placeholder fill -->
                                                             <Border Width="{StaticResource EvidencePhotoSize}"
                                                                     Height="{StaticResource EvidencePhotoSize}"
-                                                                    CornerRadius="{StaticResource SmallRadius}"
+                                                                    CornerRadius="{StaticResource Radius200CornerRadius}"
                                                                     Background="{ThemeResource SurfaceVariantBrush}">
                                                                 <Image Source="{Binding LocalUri}" Stretch="UniformToFill" />
                                                             </Border>
@@ -67,7 +67,7 @@
                                                     </DataTemplate>
                                                 </ItemsRepeater.ItemTemplate>
                                             </ItemsRepeater>
-                                            <controls:WrapPanel HorizontalSpacing="{StaticResource SpaceS}" VerticalSpacing="{StaticResource SpaceS}">
+                                            <controls:WrapPanel HorizontalSpacing="{StaticResource Space100}" VerticalSpacing="{StaticResource Space100}">
                                                 <controls:StatusChip
                                                     Severity="{Binding Disposition, Converter={StaticResource ToSeverity}}"
                                                     Text="{Binding Disposition}" />
@@ -96,7 +96,7 @@
         <mvux:FeedView.NoneTemplate>
             <DataTemplate>
                 <Border Style="{StaticResource CardSurface}" VerticalAlignment="Top">
-                    <StackPanel Spacing="{StaticResource SpaceS}">
+                    <StackPanel Spacing="{StaticResource Space100}">
                         <TextBlock Text="No inspections recorded"
                                    Style="{StaticResource SectionHeaderText}" />
                         <TextBlock Style="{StaticResource SupportingText}"

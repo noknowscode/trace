@@ -51,7 +51,7 @@
                     AutomationProperties.Name="Destinations"
                     IsTabStop="False"
                     VerticalAlignment="Top"
-                    Margin="{StaticResource GapTopM}"
+                    Margin="{StaticResource Space150TopThickness}"
                     Height="{StaticResource RailHeight}"
                     Style="{StaticResource VerticalTabBarStyle}"
                     uen:Region.Attached="True">

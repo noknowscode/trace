@@ -16,8 +16,8 @@
     -->
     <Grid utu:SafeArea.Insets="VisibleBounds">
         <!-- One column at every width, as on Today: 16 px sides on a phone, 24 from Normal, centred at ContentMaxWidth from Widest. -->
-        <Grid RowSpacing="{StaticResource SpaceL}"
-              Padding="{utu:Responsive Narrow={StaticResource PagePadding}, Normal={StaticResource PagePaddingWide}}"
+        <Grid RowSpacing="{StaticResource Space200}"
+              Padding="{utu:Responsive Narrow={StaticResource Space200Thickness}, Normal={StaticResource Space300Thickness}}"
               MaxWidth="{StaticResource ContentMaxWidth}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -32,7 +32,7 @@
             <TextBox Grid.Row="1"
                      Text="{Binding Query, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      PlaceholderText="Search by tag, name, area or site"
-                     MinHeight="{StaticResource TouchTargetSize}"
+                     MinHeight="{StaticResource ControlHeightMediumLarge}"
                      AutomationProperties.Name="Search assets" />
 
             <mvux:FeedView IsTabStop="False" Grid.Row="2"
@@ -44,7 +44,7 @@
                         <ScrollViewer>
                             <ItemsRepeater ItemsSource="{Binding Data}" TabFocusNavigation="Local">
                                 <ItemsRepeater.Layout>
-                                    <StackLayout Spacing="{StaticResource SpaceM}" />
+                                    <StackLayout Spacing="{StaticResource Space150}" />
                                 </ItemsRepeater.Layout>
                                 <ItemsRepeater.ItemTemplate>
                                     <DataTemplate>
@@ -64,7 +64,7 @@
                 <mvux:FeedView.NoneTemplate>
                     <DataTemplate>
                         <Border Style="{StaticResource CardSurface}" VerticalAlignment="Top">
-                            <StackPanel Spacing="{StaticResource SpaceS}">
+                            <StackPanel Spacing="{StaticResource Space100}">
                                 <TextBlock Text="No matching assets" Style="{StaticResource SectionHeaderText}" />
                                 <TextBlock Style="{StaticResource SupportingText}"
                                            Text="Clear the search, or scan the tag on the machine in front of you." />

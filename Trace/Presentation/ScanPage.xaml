@@ -13,8 +13,8 @@
         destinations' columns.
     -->
     <utu:SafeArea Insets="VisibleBounds,SoftInput" IsTabStop="False">
-            <StackPanel Spacing="{StaticResource SpaceL}"
-                        Padding="{utu:Responsive Narrow={StaticResource PagePadding}, Normal={StaticResource PagePaddingWide}}"
+            <StackPanel Spacing="{StaticResource Space200}"
+                        Padding="{utu:Responsive Narrow={StaticResource Space200Thickness}, Normal={StaticResource Space300Thickness}}"
                         MaxWidth="{StaticResource FormMaxWidth}"
                         HorizontalAlignment="{utu:Responsive Narrow=Stretch, Normal=Left, Widest=Center}">
 
@@ -29,7 +29,7 @@
                     <Grid>
                         <Viewbox Width="{StaticResource ViewfinderGlyphSize}"
                                  Height="{StaticResource ViewfinderGlyphSize}"
-                                 Opacity="{StaticResource ViewfinderGlyphOpacity}">
+                                 Opacity="{StaticResource LowOpacity}">
                             <PathIcon Data="{StaticResource IconScan}" />
                         </Viewbox>
                         <TextBlock Style="{StaticResource SupportingText}"
@@ -42,23 +42,23 @@
 
                 <Button Style="{StaticResource FilledButtonStyle}"
                         HorizontalAlignment="Stretch"
-                        MinHeight="{StaticResource TouchTargetSize}"
+                        MinHeight="{StaticResource ControlHeightMediumLarge}"
                         Command="{Binding ScanTag}"
                         Content="Scan a tag"
                         AutomationProperties.Name="Scan a tag" />
 
                 <Border Style="{StaticResource CardSurface}">
-                    <StackPanel Spacing="{StaticResource SpaceM}">
+                    <StackPanel Spacing="{StaticResource Space150}">
                         <TextBlock Text="Enter a code" Style="{StaticResource SectionHeaderText}" />
                         <TextBlock Style="{StaticResource SupportingText}"
                                    Text="Accepts an asset tag such as P-204, or a full tag payload." />
                         <TextBox Text="{Binding Code, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                  PlaceholderText="P-204"
-                                 MinHeight="{StaticResource TouchTargetSize}"
+                                 MinHeight="{StaticResource ControlHeightMediumLarge}"
                                  AutomationProperties.Name="Asset code" />
                         <Button Style="{StaticResource OutlinedButtonStyle}"
                                 HorizontalAlignment="Stretch"
-                                MinHeight="{StaticResource TouchTargetSize}"
+                                MinHeight="{StaticResource ControlHeightMediumLarge}"
                                 Command="{Binding Lookup}"
                                 Content="Open asset"
                                 AutomationProperties.Name="Open asset" />
@@ -73,7 +73,7 @@
 
                 <Border Style="{StaticResource TileSurface}"
                         Visibility="{Binding NotResolved, Converter={StaticResource BoolToVisibility}}">
-                    <StackPanel Spacing="{StaticResource SpaceS}">
+                    <StackPanel Spacing="{StaticResource Space100}">
                         <controls:StatusChip Severity="Critical" Text="Asset unavailable" />
                         <TextBlock Text="{Binding ResultMessage}" Style="{StaticResource SupportingText}" />
                         <TextBlock Style="{StaticResource SupportingText}"

@@ -4,13 +4,13 @@
              x:Name="Root"
              IsTabStop="False">
 
-    <Grid ColumnSpacing="{StaticResource SpaceL}" Padding="{StaticResource GapBottomXS}">
+    <Grid ColumnSpacing="{StaticResource Space200}" Padding="{StaticResource Space050BottomThickness}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
 
-        <StackPanel Spacing="{StaticResource SpaceXXS}" VerticalAlignment="Center">
+        <StackPanel Spacing="{StaticResource Space025}" VerticalAlignment="Center">
             <TextBlock Text="{Binding Eyebrow, ElementName=Root}"
                        Style="{StaticResource EyebrowText}"
                        Visibility="{Binding HasEyebrow, ElementName=Root}" />
@@ -20,7 +20,7 @@
             <TextBlock Text="{Binding Supporting, ElementName=Root}"
                        Style="{StaticResource SupportingText}"
                        Visibility="{Binding HasSupporting, ElementName=Root}"
-                       Margin="{StaticResource GapTopXXS}" />
+                       Margin="{StaticResource Space025TopThickness}" />
         </StackPanel>
 
         <ContentPresenter Grid.Column="1"

@@ -7,17 +7,17 @@
         A recorded photo, full size, bound to the workspace's EvidenceViewerModel. The asset page
         hosts it in a modal layer over the whole page; the picture scales to fit the height left.
     -->
-    <Grid RowSpacing="{StaticResource SpaceM}">
+    <Grid RowSpacing="{StaticResource Space150}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <Grid ColumnSpacing="{StaticResource SpaceS}">
+        <Grid ColumnSpacing="{StaticResource Space100}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <StackPanel Spacing="{StaticResource SpaceXXS}" VerticalAlignment="Center">
+            <StackPanel Spacing="{StaticResource Space025}" VerticalAlignment="Center">
                 <TextBlock Text="EVIDENCE" Style="{StaticResource EyebrowText}" />
                 <TextBlock Text="{Binding Viewed.Caption}" Style="{StaticResource CardTitleText}" />
                 <TextBlock Text="{Binding Viewed.CreatedAt, Converter={StaticResource RelativeTime}}"
@@ -25,19 +25,19 @@
             </StackPanel>
             <Button x:Name="CloseViewerButton"
                     Grid.Column="1"
-                    Style="{StaticResource IconButtonStyle}"
+                    Style="{StaticResource GlyphButtonStyle}"
                     VerticalAlignment="Top"
                     Command="{Binding Close}"
                     AutomationProperties.Name="Close photo"
                     ToolTipService.ToolTip="Close">
-                <Viewbox Width="{StaticResource IconSizeS}" Height="{StaticResource IconSizeS}">
+                <Viewbox Width="{StaticResource IconSizeSmall}" Height="{StaticResource IconSizeSmall}">
                     <PathIcon Data="{StaticResource IconFail}" />
                 </Viewbox>
             </Button>
         </Grid>
         <!-- xaml-lint: allow card - image clip with a placeholder fill -->
         <Border Grid.Row="1"
-                CornerRadius="{StaticResource SmallRadius}"
+                CornerRadius="{StaticResource Radius200CornerRadius}"
                 Background="{ThemeResource SurfaceVariantBrush}">
             <Image Source="{Binding Viewed.LocalUri}"
                    Stretch="Uniform"

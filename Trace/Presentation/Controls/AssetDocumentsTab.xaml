@@ -16,11 +16,11 @@
                        ErrorTemplate="{StaticResource FeedErrorTemplate}">
             <mvux:FeedView.ValueTemplate>
                 <DataTemplate>
-                    <StackPanel Spacing="{StaticResource SpaceM}">
+                    <StackPanel Spacing="{StaticResource Space150}">
                         <Border Style="{StaticResource CardSurface}">
-                            <StackPanel Spacing="{StaticResource SpaceM}">
+                            <StackPanel Spacing="{StaticResource Space150}">
                                 <TextBlock Text="Nameplate" Style="{StaticResource SectionHeaderText}" />
-                                <Grid ColumnSpacing="{StaticResource SpaceL}" RowSpacing="{StaticResource SpaceS}">
+                                <Grid ColumnSpacing="{StaticResource Space200}" RowSpacing="{StaticResource Space100}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="*" />
@@ -55,15 +55,15 @@
                         <!-- The inspection plan the device holds for this asset: each point,
                              what is read there, the band it is judged against and how. -->
                         <Border Style="{StaticResource CardSurface}">
-                            <StackPanel Spacing="{StaticResource SpaceM}">
+                            <StackPanel Spacing="{StaticResource Space150}">
                                 <TextBlock Text="Inspection plan" Style="{StaticResource SectionHeaderText}" />
                                 <ItemsRepeater ItemsSource="{Binding Data.Points}">
                                     <ItemsRepeater.Layout>
-                                        <StackLayout Spacing="{StaticResource SpaceM}" />
+                                        <StackLayout Spacing="{StaticResource Space150}" />
                                     </ItemsRepeater.Layout>
                                     <ItemsRepeater.ItemTemplate>
                                         <DataTemplate>
-                                            <StackPanel Spacing="{StaticResource SpaceXXS}">
+                                            <StackPanel Spacing="{StaticResource Space025}">
                                                 <TextBlock Style="{StaticResource CardTitleText}">
                                                     <Run Text="{Binding Sequence}" />
                                                     <Run Text="·" />
@@ -87,7 +87,7 @@
             <mvux:FeedView.NoneTemplate>
                 <DataTemplate>
                     <Border Style="{StaticResource CardSurface}">
-                        <StackPanel Spacing="{StaticResource SpaceS}">
+                        <StackPanel Spacing="{StaticResource Space100}">
                             <controls:StatusChip Severity="Critical" Text="Asset unavailable" />
                             <TextBlock Style="{StaticResource SupportingText}"
                                        Text="This asset is no longer on the device, so its nameplate and inspection plan are not either." />

@@ -39,7 +39,7 @@
                                     <VisualState.Setters>
                                         <Setter Target="Disc.Fill" Value="{ThemeResource SurfaceVariantBrush}" />
                                         <Setter Target="Number.Foreground" Value="{ThemeResource OnSurfaceVariantBrush}" />
-                                        <Setter Target="Badge.Background" Value="{ThemeResource SurfaceVariantBrush}" />
+                                        <Setter Target="Badge.Fill" Value="{ThemeResource SurfaceVariantBrush}" />
                                         <Setter Target="NoneMark.Foreground" Value="{ThemeResource OnSurfaceVariantBrush}" />
                                         <Setter Target="NoneMark.Visibility" Value="Visible" />
                                     </VisualState.Setters>
@@ -48,7 +48,7 @@
                                     <VisualState.Setters>
                                         <Setter Target="Disc.Fill" Value="{ThemeResource SuccessBrush}" />
                                         <Setter Target="Number.Foreground" Value="{ThemeResource OnSuccessBrush}" />
-                                        <Setter Target="Badge.Background" Value="{ThemeResource SuccessBrush}" />
+                                        <Setter Target="Badge.Fill" Value="{ThemeResource SuccessBrush}" />
                                         <Setter Target="PassMark.Foreground" Value="{ThemeResource OnSuccessBrush}" />
                                         <Setter Target="PassMark.Visibility" Value="Visible" />
                                     </VisualState.Setters>
@@ -57,7 +57,7 @@
                                     <VisualState.Setters>
                                         <Setter Target="Disc.Fill" Value="{ThemeResource WatchBrush}" />
                                         <Setter Target="Number.Foreground" Value="{ThemeResource OnWatchBrush}" />
-                                        <Setter Target="Badge.Background" Value="{ThemeResource WatchBrush}" />
+                                        <Setter Target="Badge.Fill" Value="{ThemeResource WatchBrush}" />
                                         <Setter Target="WatchMark.Foreground" Value="{ThemeResource OnWatchBrush}" />
                                         <Setter Target="WatchMark.Visibility" Value="Visible" />
                                     </VisualState.Setters>
@@ -66,7 +66,7 @@
                                     <VisualState.Setters>
                                         <Setter Target="Disc.Fill" Value="{ThemeResource ErrorBrush}" />
                                         <Setter Target="Number.Foreground" Value="{ThemeResource OnErrorBrush}" />
-                                        <Setter Target="Badge.Background" Value="{ThemeResource ErrorBrush}" />
+                                        <Setter Target="Badge.Fill" Value="{ThemeResource ErrorBrush}" />
                                         <Setter Target="FailMark.Foreground" Value="{ThemeResource OnErrorBrush}" />
                                         <Setter Target="FailMark.Visibility" Value="Visible" />
                                     </VisualState.Setters>
@@ -88,12 +88,12 @@
                                 <VisualState x:Name="Normal" />
                                 <VisualState x:Name="PointerOver">
                                     <VisualState.Setters>
-                                        <Setter Target="StateOverlay.Opacity" Value="0.1" />
+                                        <Setter Target="StateOverlay.Fill" Value="{ThemeResource OnSurfaceHoverBrush}" />
                                     </VisualState.Setters>
                                 </VisualState>
                                 <VisualState x:Name="Pressed">
                                     <VisualState.Setters>
-                                        <Setter Target="StateOverlay.Opacity" Value="0.16" />
+                                        <Setter Target="StateOverlay.Fill" Value="{ThemeResource OnSurfacePressedBrush}" />
                                         <Setter Target="MarkerScale.ScaleX" Value="0.94" />
                                         <Setter Target="MarkerScale.ScaleY" Value="0.94" />
                                     </VisualState.Setters>
@@ -138,11 +138,10 @@
 
                         <Ellipse x:Name="Disc" Width="44" Height="44" />
 
+                        <!-- The state layer: the OnSurface role's Hover and Pressed brushes, set by state. -->
                         <Ellipse x:Name="StateOverlay"
                                  Width="44"
                                  Height="44"
-                                 Fill="{ThemeResource OnSurfaceBrush}"
-                                 Opacity="0"
                                  IsHitTestVisible="False" />
 
                         <TextBlock x:Name="Number"
@@ -153,16 +152,16 @@
                                    IsHitTestVisible="False" />
 
                         <!-- Disposition mark, so status never rests on colour alone. -->
-                        <Border x:Name="Badge"
-                                Width="20"
-                                Height="20"
-                                CornerRadius="10"
-                                HorizontalAlignment="Right"
-                                VerticalAlignment="Bottom"
-                                Margin="0,0,4,4"
-                                BorderBrush="{ThemeResource BackgroundBrush}"
-                                BorderThickness="2"
-                                IsHitTestVisible="False">
+                        <!-- A disc with a ring in the page ground, 4 px in from the box's corner. -->
+                        <Grid Width="20"
+                              Height="20"
+                              HorizontalAlignment="Right"
+                              VerticalAlignment="Bottom"
+                              Margin="{StaticResource Space050Thickness}"
+                              IsHitTestVisible="False">
+                            <Ellipse x:Name="Badge"
+                                     Stroke="{ThemeResource BackgroundBrush}"
+                                     StrokeThickness="2" />
                             <Viewbox Width="10" Height="10">
                                 <Grid x:Name="Marks" Width="24" Height="24">
                                     <PathIcon x:Name="NoneMark" Data="{StaticResource IconNote}" Visibility="Collapsed" />
@@ -171,7 +170,7 @@
                                     <PathIcon x:Name="FailMark" Data="{StaticResource IconFail}" Visibility="Collapsed" />
                                 </Grid>
                             </Viewbox>
-                        </Border>
+                        </Grid>
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>
@@ -188,10 +187,10 @@
         this one changes fill and mark with its kind and chosen state.
     -->
     <Style x:Key="DispositionButtonStyle" TargetType="controls:DispositionButton">
-        <Setter Property="MinHeight" Value="{StaticResource TouchTargetSize}" />
+        <Setter Property="MinHeight" Value="{StaticResource ControlHeightMediumLarge}" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Setter Property="HorizontalContentAlignment" Value="Center" />
-        <Setter Property="Padding" Value="8,6" />
+        <Setter Property="Padding" Value="{StaticResource Space100HorizontalThickness}" />
         <Setter Property="UseSystemFocusVisuals" Value="False" />
         <Setter Property="Template">
             <Setter.Value>
@@ -263,12 +262,12 @@
                                 <VisualState x:Name="Normal" />
                                 <VisualState x:Name="PointerOver">
                                     <VisualState.Setters>
-                                        <Setter Target="StateOverlay.Opacity" Value="0.08" />
+                                        <Setter Target="StateOverlay.Background" Value="{ThemeResource OnSurfaceHoverBrush}" />
                                     </VisualState.Setters>
                                 </VisualState>
                                 <VisualState x:Name="Pressed">
                                     <VisualState.Setters>
-                                        <Setter Target="StateOverlay.Opacity" Value="0.12" />
+                                        <Setter Target="StateOverlay.Background" Value="{ThemeResource OnSurfacePressedBrush}" />
                                         <Setter Target="PressScale.ScaleX" Value="0.98" />
                                         <Setter Target="PressScale.ScaleY" Value="0.98" />
                                     </VisualState.Setters>
@@ -293,13 +292,13 @@
 
                         <Border x:Name="Fill"
                                 BorderThickness="1"
-                                CornerRadius="{StaticResource ControlRadius}">
+                                CornerRadius="{StaticResource Radius300CornerRadius}">
                             <StackPanel Orientation="Horizontal"
-                                        Spacing="6"
+                                        Spacing="{StaticResource Space075}"
                                         Padding="{TemplateBinding Padding}"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center">
-                                <Viewbox Width="15" Height="15" VerticalAlignment="Center">
+                                <Viewbox Width="{StaticResource IconSizeSmall}" Height="{StaticResource IconSizeSmall}" VerticalAlignment="Center">
                                     <Grid x:Name="Mark" Width="24" Height="24">
                                         <PathIcon x:Name="PassMark" Data="{StaticResource IconCheck}" Visibility="Collapsed" />
                                         <PathIcon x:Name="WatchMark" Data="{StaticResource IconWatch}" Visibility="Collapsed" />
@@ -314,15 +313,13 @@
                         </Border>
 
                         <Border x:Name="StateOverlay"
-                                Background="{ThemeResource OnSurfaceBrush}"
-                                CornerRadius="{StaticResource ControlRadius}"
-                                Opacity="0"
+                                CornerRadius="{StaticResource Radius300CornerRadius}"
                                 IsHitTestVisible="False" />
 
                         <Border x:Name="FocusRing"
                                 BorderBrush="{ThemeResource SecondaryBrush}"
                                 BorderThickness="2"
-                                CornerRadius="{StaticResource ControlRadius}"
+                                CornerRadius="{StaticResource Radius300CornerRadius}"
                                 Margin="-2"
                                 Opacity="0"
                                 IsHitTestVisible="False" />

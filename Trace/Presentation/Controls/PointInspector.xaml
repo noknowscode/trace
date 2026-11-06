@@ -36,13 +36,13 @@
                          content to the viewport, Auto lets it run on. The middle has nothing of
                          its own to scroll in this state. -->
                     <Setter Target="WholePanel.VerticalScrollBarVisibility" Value="Auto" />
-                    <Setter Target="WholePanel.Padding" Value="{StaticResource ScrollBarGutter}" />
+                    <Setter Target="WholePanel.Padding" Value="{StaticResource Space050RightThickness}" />
                     <Setter Target="Body.VerticalScrollBarVisibility" Value="Disabled" />
                 </VisualState.Setters>
             </VisualState>
         </VisualStateGroup>
     </VisualStateManager.VisualStateGroups>
-    <Grid RowSpacing="{StaticResource SpaceM}">
+    <Grid RowSpacing="{StaticResource Space150}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -53,13 +53,13 @@
              The messages under it are often hidden, so each carries its own gap rather than
              the panel's Spacing, which a collapsed child would still be charged. -->
         <StackPanel x:Name="Header" SizeChanged="OnPartResized">
-            <Grid ColumnSpacing="{StaticResource SpaceS}">
+            <Grid ColumnSpacing="{StaticResource Space100}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <StackPanel Spacing="{StaticResource SpaceXXS}">
+                <StackPanel Spacing="{StaticResource Space025}">
                     <TextBlock Text="INSPECTION POINT" Style="{StaticResource EyebrowText}" />
                     <TextBlock Text="{Binding SelectedPoint.Label}"
                                Style="{StaticResource PanelTitleText}"
@@ -68,45 +68,45 @@
                 <Button Grid.Column="1"
                         Style="{StaticResource TextButtonStyle}"
                         VerticalAlignment="Top"
-                        MinHeight="{StaticResource TouchTargetSize}"
+                        MinHeight="{StaticResource ControlHeightMediumLarge}"
                         Command="{Binding AskDiscard}"
                         Content="Discard"
                         Visibility="{Binding CanDiscard, Converter={StaticResource BoolToVisibility}}"
                         AutomationProperties.Name="Discard what was entered at this point" />
                 <Button Grid.Column="2"
-                        Style="{StaticResource IconButtonStyle}"
+                        Style="{StaticResource GlyphButtonStyle}"
                         VerticalAlignment="Top"
                         Command="{Binding Close}"
                         AutomationProperties.Name="Close inspection point"
                         ToolTipService.ToolTip="Close">
-                    <Viewbox Width="{StaticResource IconSizeS}" Height="{StaticResource IconSizeS}">
+                    <Viewbox Width="{StaticResource IconSizeSmall}" Height="{StaticResource IconSizeSmall}">
                         <PathIcon Data="{StaticResource IconFail}" />
                     </Viewbox>
                 </Button>
             </Grid>
 
             <Border Style="{StaticResource TileSurface}"
-                    Margin="{StaticResource GapTopS}"
+                    Margin="{StaticResource Space100TopThickness}"
                     AutomationProperties.LiveSetting="Polite"
                     Visibility="{Binding IsDiscardPending, Converter={StaticResource BoolToVisibility}}">
-                <StackPanel Spacing="{StaticResource SpaceS}">
+                <StackPanel Spacing="{StaticResource Space100}">
                     <TextBlock Style="{StaticResource SupportingText}"
                                Text="Discard what you entered here? The reading, the call, the note and any photos are removed from this device." />
-                    <Grid ColumnSpacing="{StaticResource SpaceS}">
+                    <Grid ColumnSpacing="{StaticResource Space100}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <Button Style="{StaticResource OutlinedButtonStyle}"
                                 HorizontalAlignment="Stretch"
-                                MinHeight="{StaticResource TouchTargetSize}"
+                                MinHeight="{StaticResource ControlHeightMediumLarge}"
                                 Command="{Binding KeepDraft}"
                                 Content="Keep"
                                 AutomationProperties.Name="Keep what was entered" />
                         <Button Grid.Column="1"
                                 Style="{StaticResource FilledButtonStyle}"
                                 HorizontalAlignment="Stretch"
-                                MinHeight="{StaticResource TouchTargetSize}"
+                                MinHeight="{StaticResource ControlHeightMediumLarge}"
                                 Command="{Binding DiscardDraft}"
                                 Content="Discard"
                                 AutomationProperties.Name="Confirm discard" />
@@ -117,20 +117,20 @@
             <!-- The draft is not on the device: it could not be read, saved or discarded there. -->
             <TextBlock Text="{Binding DraftError}"
                        Style="{StaticResource ErrorText}"
-                       Margin="{StaticResource GapTopS}"
+                       Margin="{StaticResource Space100TopThickness}"
                        AutomationProperties.LiveSetting="Assertive"
                        Visibility="{Binding DraftError, Converter={StaticResource StringToVisibility}}" />
         </StackPanel>
 
-        <ScrollViewer x:Name="Body" Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="{StaticResource ScrollBarGutter}">
-            <StackPanel Spacing="{StaticResource SpaceM}">
+        <ScrollViewer x:Name="Body" Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="{StaticResource Space050RightThickness}">
+            <StackPanel Spacing="{StaticResource Space150}">
 
                 <TextBlock Text="{Binding SelectedPoint.Guidance}"
                            Style="{StaticResource SupportingText}" />
 
                 <!-- Last reading and the band it is judged against, and the photos last recorded here -->
                 <Border Style="{StaticResource TileSurface}">
-                    <Grid ColumnSpacing="{StaticResource SpaceM}">
+                    <Grid ColumnSpacing="{StaticResource Space150}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
@@ -139,15 +139,15 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
-                        <StackPanel Orientation="Horizontal" Spacing="{StaticResource SpaceXS}" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space050}" VerticalAlignment="Center">
                             <TextBlock Text="{Binding SelectedPoint.LatestReadingText}"
                                        Style="{StaticResource MetricLargeText}" />
                             <TextBlock Text="{Binding SelectedPoint.Unit}"
                                        Style="{StaticResource MetricSmallUnitText}"
                                        VerticalAlignment="Bottom"
-                                       Margin="{StaticResource UnitBaselineGap}" />
+                                       Margin="{StaticResource Space050BottomThickness}" />
                         </StackPanel>
-                        <StackPanel Grid.Column="1" Spacing="{StaticResource SpaceXXS}" VerticalAlignment="Center">
+                        <StackPanel Grid.Column="1" Spacing="{StaticResource Space025}" VerticalAlignment="Center">
                             <TextBlock Text="{Binding SelectedPoint.ReadingType}"
                                        Style="{StaticResource FieldLabelText}" />
                             <TextBlock Style="{StaticResource SupportingText}">
@@ -160,8 +160,8 @@
                         <StackPanel x:Name="RecordedPhotos"
                                     DataContext="{Binding Evidence}"
                                     Grid.Row="1" Grid.ColumnSpan="2"
-                                    Margin="{StaticResource GapTopM}"
-                                    Spacing="{StaticResource SpaceS}"
+                                    Margin="{StaticResource Space150TopThickness}"
+                                    Spacing="{StaticResource Space100}"
                                     Visibility="{Binding HasLastEvidence, Converter={StaticResource BoolToVisibility}}">
                             <TextBlock Style="{StaticResource FieldLabelText}">
                                 <Run Text="Photos recorded" />
@@ -169,7 +169,7 @@
                             </TextBlock>
                             <ItemsRepeater ItemsSource="{Binding LastPhotos}" TabFocusNavigation="Local">
                                 <ItemsRepeater.Layout>
-                                    <StackLayout Orientation="Horizontal" Spacing="{StaticResource SpaceS}" />
+                                    <StackLayout Orientation="Horizontal" Spacing="{StaticResource Space100}" />
                                 </ItemsRepeater.Layout>
                                 <ItemsRepeater.ItemTemplate>
                                     <DataTemplate>
@@ -181,7 +181,7 @@
                                             <!-- xaml-lint: allow card - image clip with a placeholder fill -->
                                             <Border Width="{StaticResource EvidenceThumbSize}"
                                                     Height="{StaticResource EvidenceThumbSize}"
-                                                    CornerRadius="{StaticResource SmallRadius}"
+                                                    CornerRadius="{StaticResource Radius200CornerRadius}"
                                                     Background="{ThemeResource SurfaceVariantBrush}">
                                                 <Image Source="{Binding LocalUri}" Stretch="UniformToFill" />
                                             </Border>
@@ -193,7 +193,7 @@
                     </Grid>
                 </Border>
 
-                <StackPanel Spacing="{StaticResource SpaceS}">
+                <StackPanel Spacing="{StaticResource Space100}">
                     <TextBlock Text="Notes" Style="{StaticResource FieldLabelText}" />
                     <TextBox Text="{Binding NoteText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                              AcceptsReturn="True"
@@ -204,7 +204,7 @@
                              AutomationProperties.Name="Inspection notes" />
                 </StackPanel>
 
-                <StackPanel x:Name="EvidenceSection" DataContext="{Binding Evidence}" Spacing="{StaticResource SpaceS}">
+                <StackPanel x:Name="EvidenceSection" DataContext="{Binding Evidence}" Spacing="{StaticResource Space100}">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -212,17 +212,17 @@
                         </Grid.RowDefinitions>
                         <TextBlock Text="Evidence" Style="{StaticResource FieldLabelText}"
                                    VerticalAlignment="Center" />
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="{StaticResource SpaceXS}">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="{StaticResource Space050}">
                             <!-- No hardware here to refuse the app, so the denial a real
                                  device would produce is reachable on demand. -->
                             <Button Style="{StaticResource TextButtonStyle}"
-                                    MinHeight="{StaticResource TouchTargetSize}"
+                                    MinHeight="{StaticResource ControlHeightMediumLarge}"
                                     Command="{Binding DenyCameraForDemo}"
                                     Content="Simulate denial"
                                     Visibility="{Binding IsCameraDenied, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}"
                                     AutomationProperties.Name="Simulate denial of camera access" />
                             <Button Style="{StaticResource TextButtonStyle}"
-                                    MinHeight="{StaticResource TouchTargetSize}"
+                                    MinHeight="{StaticResource ControlHeightMediumLarge}"
                                     Command="{Binding AttachPhoto}"
                                     Content="Add photo"
                                     AutomationProperties.Name="Add photo evidence" />
@@ -239,13 +239,13 @@
                     <!-- Camera denied: the only way back on a real device is settings. -->
                     <Border Style="{StaticResource TileSurface}"
                             Visibility="{Binding IsCameraDenied, Converter={StaticResource BoolToVisibility}}">
-                        <StackPanel Spacing="{StaticResource SpaceS}">
+                        <StackPanel Spacing="{StaticResource Space100}">
                             <controls:StatusChip Severity="Critical" Text="Camera access denied" />
                             <TextBlock Style="{StaticResource SupportingText}"
                                        Text="TRACE cannot open the camera. Photos are optional — a written note also satisfies a failed point — but to attach one, allow camera access for TRACE in system settings." />
                             <Button Style="{StaticResource OutlinedButtonStyle}"
                                     HorizontalAlignment="Left"
-                                    MinHeight="{StaticResource TouchTargetSize}"
+                                    MinHeight="{StaticResource ControlHeightMediumLarge}"
                                     Command="{Binding GrantCameraFromSettings}"
                                     Content="Open settings"
                                     AutomationProperties.Name="Open settings for camera access" />
@@ -254,12 +254,12 @@
 
                     <ItemsRepeater ItemsSource="{Binding Photos}">
                         <ItemsRepeater.Layout>
-                            <StackLayout Spacing="{StaticResource SpaceS}" />
+                            <StackLayout Spacing="{StaticResource Space100}" />
                         </ItemsRepeater.Layout>
                         <ItemsRepeater.ItemTemplate>
                             <DataTemplate>
-                                <Border Style="{StaticResource TileSurface}" Padding="{StaticResource InsetS}">
-                                    <Grid ColumnSpacing="{StaticResource SpaceM}">
+                                <Border Style="{StaticResource TileSurface}" Padding="{StaticResource Space100Thickness}">
+                                    <Grid ColumnSpacing="{StaticResource Space150}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
@@ -268,13 +268,13 @@
                                         <!-- xaml-lint: allow card - image clip with a placeholder fill -->
                                         <Border Width="{StaticResource EvidenceThumbSize}"
                                                 Height="{StaticResource EvidenceThumbSize}"
-                                                CornerRadius="{StaticResource SmallRadius}"
+                                                CornerRadius="{StaticResource Radius200CornerRadius}"
                                                 Background="{ThemeResource SurfaceBrush}">
                                             <Image Source="{Binding LocalUri}"
                                                    Stretch="UniformToFill"
                                                    AutomationProperties.Name="{Binding Caption}" />
                                         </Border>
-                                        <StackPanel Grid.Column="1" Spacing="{StaticResource SpaceXXS}" VerticalAlignment="Center">
+                                        <StackPanel Grid.Column="1" Spacing="{StaticResource Space025}" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding Caption}"
                                                        Style="{StaticResource BodyText}"
                                                        TextWrapping="Wrap" />
@@ -284,7 +284,7 @@
                                         <Button Grid.Column="2"
                                                 Style="{StaticResource TextButtonStyle}"
                                                 VerticalAlignment="Center"
-                                                MinHeight="{StaticResource TouchTargetSize}"
+                                                MinHeight="{StaticResource ControlHeightMediumLarge}"
                                                 Command="{Binding DataContext.RemovePhoto, ElementName=EvidenceSection}"
                                                 CommandParameter="{Binding Id}"
                                                 Content="Remove"
@@ -306,18 +306,18 @@
         </ScrollViewer>
 
         <!-- Enter, decide, commit: always on screen. -->
-        <StackPanel x:Name="Footer" Grid.Row="2" Spacing="{StaticResource SpaceM}" SizeChanged="OnPartResized">
+        <StackPanel x:Name="Footer" Grid.Row="2" Spacing="{StaticResource Space150}" SizeChanged="OnPartResized">
 
-            <StackPanel Spacing="{StaticResource SpaceS}">
+            <StackPanel Spacing="{StaticResource Space100}">
                 <TextBlock Text="New reading" Style="{StaticResource FieldLabelText}" />
                 <TextBox Text="{Binding ReadingText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                          InputScope="Number"
-                         MinHeight="{StaticResource TouchTargetSize}"
+                         MinHeight="{StaticResource ControlHeightMediumLarge}"
                          FontSize="{StaticResource TitleLargeFontSize}"
                          AutomationProperties.Name="New reading" />
             </StackPanel>
 
-            <Grid ColumnSpacing="{StaticResource SpaceS}">
+            <Grid ColumnSpacing="{StaticResource Space100}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
@@ -353,7 +353,7 @@
             <Border Style="{StaticResource ConfirmationSurface}"
                     AutomationProperties.LiveSetting="Polite"
                     Visibility="{Binding HasConfirmation, Converter={StaticResource BoolToVisibility}}">
-                <Grid ColumnSpacing="{StaticResource SpaceS}">
+                <Grid ColumnSpacing="{StaticResource Space100}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
@@ -364,7 +364,7 @@
                                VerticalAlignment="Center" />
                     <Button Grid.Column="1"
                             Style="{StaticResource TextButtonStyle}"
-                            MinHeight="{StaticResource TouchTargetSize}"
+                            MinHeight="{StaticResource ControlHeightMediumLarge}"
                             Command="{Binding DismissConfirmation}"
                             Content="Dismiss"
                             AutomationProperties.Name="Dismiss confirmation" />
@@ -374,8 +374,8 @@
             <Border Style="{StaticResource TileSurface}"
                     AutomationProperties.LiveSetting="Polite"
                     Visibility="{Binding ValidationMessage, Converter={StaticResource StringToVisibility}}">
-                <StackPanel Spacing="{StaticResource SpaceS}">
-                    <controls:WrapPanel HorizontalSpacing="{StaticResource SpaceS}" VerticalSpacing="{StaticResource SpaceS}">
+                <StackPanel Spacing="{StaticResource Space100}">
+                    <controls:WrapPanel HorizontalSpacing="{StaticResource Space100}" VerticalSpacing="{StaticResource Space100}">
                         <controls:StatusChip Severity="Critical" Text="Fix this"
                                              Visibility="{Binding HasBlocker, Converter={StaticResource BoolToVisibility}}" />
                         <controls:StatusChip Severity="Caution" Text="Out of range"
@@ -395,7 +395,7 @@
 
             <Button Style="{StaticResource FilledButtonStyle}"
                     HorizontalAlignment="Stretch"
-                    MinHeight="{StaticResource TouchTargetSize}"
+                    MinHeight="{StaticResource ControlHeightMediumLarge}"
                     IsEnabled="{Binding CanComplete}"
                     Command="{Binding CompletePoint}"
                     Content="Complete point"
@@ -403,7 +403,7 @@
 
             <Button Style="{StaticResource OutlinedButtonStyle}"
                     HorizontalAlignment="Stretch"
-                    MinHeight="{StaticResource TouchTargetSize}"
+                    MinHeight="{StaticResource ControlHeightMediumLarge}"
                     Command="{Binding OpenActionSheet}"
                     Content="Create corrective action"
                     Visibility="{Binding CanRaiseAction, Converter={StaticResource BoolToVisibility}}"

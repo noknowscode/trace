@@ -11,15 +11,15 @@
     -->
     <!-- A StackPanel rather than a three-row Grid: a Grid keeps the gap around an empty Reason
          row, which left assets off today's round with a double gap. -->
-    <StackPanel Spacing="{StaticResource SpaceM}">
+    <StackPanel Spacing="{StaticResource Space150}">
 
-        <Grid ColumnSpacing="{StaticResource SpaceM}">
+        <Grid ColumnSpacing="{StaticResource Space150}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <StackPanel Spacing="{StaticResource SpaceXXS}">
+            <StackPanel Spacing="{StaticResource Space025}">
                 <TextBlock Text="{Binding Designation}" Style="{StaticResource EyebrowText}" />
                 <TextBlock Text="{Binding AssetName}"
                            Style="{StaticResource CardTitleText}"
@@ -37,7 +37,7 @@
                    Style="{StaticResource SupportingText}"
                    Visibility="{Binding Reason, Converter={StaticResource StringToVisibility}}" />
 
-        <controls:WrapPanel HorizontalSpacing="{StaticResource SpaceS}" VerticalSpacing="{StaticResource SpaceS}">
+        <controls:WrapPanel HorizontalSpacing="{StaticResource Space100}" VerticalSpacing="{StaticResource Space100}">
             <Border Style="{StaticResource ValueChip}">
                 <TextBlock Text="{Binding Converter={StaticResource AssetCardText}, ConverterParameter=Progress}" Style="{StaticResource ChipValueText}" />
             </Border>

@@ -24,7 +24,7 @@
 
         <!-- TRACE's layout values the theme has no token for, then its shared styles. Merged after the theme so
              they can build on it. -->
-        <ResourceDictionary Source="ms-appx:///Themes/Tokens.xaml" />
+        <ResourceDictionary Source="ms-appx:///Themes/Layout.xaml" />
         <ResourceDictionary Source="ms-appx:///Themes/Icons.xaml" />
         <ResourceDictionary Source="ms-appx:///Themes/Converters.xaml" />
         <ResourceDictionary Source="ms-appx:///Themes/Styles.xaml" />

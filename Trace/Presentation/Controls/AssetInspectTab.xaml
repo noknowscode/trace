@@ -35,7 +35,7 @@
             <mvux:FeedView.NoneTemplate>
                 <DataTemplate>
                     <Border Style="{StaticResource CardSurface}" VerticalAlignment="Top">
-                        <StackPanel Spacing="{StaticResource SpaceS}">
+                        <StackPanel Spacing="{StaticResource Space100}">
                             <controls:StatusChip Severity="Critical" Text="Asset unavailable" />
                             <TextBlock Style="{StaticResource SupportingText}"
                                        Text="This asset is no longer on the device, so its inspection points are not either. It may have been reassigned since your last sync." />
@@ -48,13 +48,13 @@
         <!-- The gap opens only when the inspector docks: a sheet spans both columns, and an
              empty column must not shave the machine. -->
         <Grid Visibility="{Binding ShowsMachine, Converter={StaticResource BoolToVisibility}}"
-              ColumnSpacing="{utu:Responsive Narrow=0, Wide={StaticResource SpaceM}}">
+              ColumnSpacing="{utu:Responsive Narrow=0, Wide={StaticResource Space150}}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition x:Name="InspectorColumn" Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <Grid x:Name="SceneStack" RowSpacing="{StaticResource SpaceM}">
+            <Grid x:Name="SceneStack" RowSpacing="{StaticResource Space150}">
                 <Grid.RowDefinitions>
                     <RowDefinition x:Name="SceneRow" Height="*" />
                     <RowDefinition Height="Auto" />
@@ -65,7 +65,7 @@
                      aspect the workspace has. -->
                 <Border x:Name="SceneCard"
                         Style="{StaticResource CardSurface}"
-                        Padding="{StaticResource TilePadding}"
+                        Padding="{StaticResource Space150Thickness}"
                         MinHeight="{StaticResource SceneMinHeight}">
                     <Grid>
                         <controls:AssetSceneView x:Name="Scene"
@@ -111,7 +111,7 @@
                         </Border>
 
                         <!-- How to turn the machine and how to put it back, together along the bottom. -->
-                        <Grid VerticalAlignment="Bottom" ColumnSpacing="{StaticResource SpaceS}">
+                        <Grid VerticalAlignment="Bottom" ColumnSpacing="{StaticResource Space100}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
@@ -126,7 +126,7 @@
                             <!-- An elevated button brings its own surface, like the hint's plate: over the machine a bare label is hard to read. -->
                             <Button Grid.Column="1"
                                     Style="{StaticResource ElevatedButtonStyle}"
-                                    MinHeight="{StaticResource TouchTargetSize}"
+                                    MinHeight="{StaticResource ControlHeightMediumLarge}"
                                     Command="{Binding ResetViewCommand, ElementName=Scene}"
                                     Content="Reset view"
                                     AutomationProperties.Name="Reset view" />
@@ -138,7 +138,7 @@
                      not a usable target for a screen reader or a keyboard. -->
                 <StackPanel x:Name="PointListPanel"
                             Grid.Row="1"
-                            Spacing="{StaticResource SpaceS}"
+                            Spacing="{StaticResource Space100}"
                             SizeChanged="OnWorkspaceResized">
                     <TextBlock Text="Inspection points" Style="{StaticResource FieldLabelText}" />
                     <!-- A strip rather than a wrap: on a phone four points do not
@@ -150,7 +150,7 @@
                                   VerticalScrollMode="Disabled">
                         <ItemsRepeater ItemsSource="{Binding Markers}" TabFocusNavigation="Local">
                             <ItemsRepeater.Layout>
-                                <StackLayout Orientation="Horizontal" Spacing="{StaticResource SpaceS}" />
+                                <StackLayout Orientation="Horizontal" Spacing="{StaticResource Space100}" />
                             </ItemsRepeater.Layout>
                             <ItemsRepeater.ItemTemplate>
                                 <DataTemplate>
@@ -160,10 +160,10 @@
                                             Command="{Binding DataContext.SelectMarker, ElementName=InspectRoot}"
                                             CommandParameter="{Binding}"
                                             AutomationProperties.Name="{Binding Point.Label}">
-                                        <StackPanel Spacing="{StaticResource SpaceXS}">
+                                        <StackPanel Spacing="{StaticResource Space050}">
                                             <TextBlock Text="{Binding Point.Label}"
                                                        Style="{StaticResource CardTitleText}" />
-                                            <StackPanel Orientation="Horizontal" Spacing="{StaticResource SpaceS}">
+                                            <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space100}">
                                                 <TextBlock Style="{StaticResource SupportingText}">
                                                     <Run Text="{Binding Point.LatestReadingText}" />
                                                     <Run Text="{Binding Point.Unit}" />
@@ -190,8 +190,8 @@
                     Grid.ColumnSpan="{utu:Responsive Narrow=2, Wide=1}"
                     VerticalAlignment="{utu:Responsive Narrow=Bottom, Wide=Stretch}"
                     Width="{utu:Responsive Narrow=NaN, Wide={StaticResource InspectorWidthWide}, Widest={StaticResource InspectorWidthWidest}}"
-                    CornerRadius="{utu:Responsive Narrow={StaticResource SheetRadius}, Wide={StaticResource CardRadius}}"
-                    Padding="{utu:Responsive Narrow={StaticResource SheetPadding}, Normal={StaticResource SheetPaddingWide}}"
+                    CornerRadius="{utu:Responsive Narrow={StaticResource Radius400CornerRadius}, Wide={StaticResource Radius500CornerRadius}}"
+                    Padding="{utu:Responsive Narrow={StaticResource Space200Thickness}, Normal={StaticResource Space300Thickness}}"
                     Visibility="{Binding Inspector.IsOpen, Converter={StaticResource BoolToVisibility}}">
                 <controls:PointInspector DataContext="{Binding Inspector}" />
             </Border>

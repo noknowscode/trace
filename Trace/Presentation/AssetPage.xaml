@@ -29,9 +29,9 @@
     <utu:SafeArea x:Name="KeyboardArea" Insets="SoftInput" IsTabStop="False" SizeChanged="OnKeyboardAreaResized">
     <Grid x:Name="PageFrame">
         <Grid x:Name="PageRoot"
-              Padding="{utu:Responsive Narrow={StaticResource PagePadding}, Normal={StaticResource PagePaddingWide}}"
+              Padding="{utu:Responsive Narrow={StaticResource Space200Thickness}, Normal={StaticResource Space300Thickness}}"
               MaxWidth="{StaticResource WorkspaceMaxWidth}"
-              RowSpacing="{StaticResource SpaceM}">
+              RowSpacing="{StaticResource Space150}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -43,8 +43,8 @@
                 the equipment view, where it labels the machine instead of sitting in a band above
                 it. Connection state stays here because it is true of every tab.
             -->
-            <Grid ColumnSpacing="{StaticResource SpaceS}"
-                  RowSpacing="{utu:Responsive Narrow={StaticResource SpaceXS}, Normal=0}">
+            <Grid ColumnSpacing="{StaticResource Space100}"
+                  RowSpacing="{utu:Responsive Narrow={StaticResource Space050}, Normal=0}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
@@ -55,12 +55,12 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <Button Style="{StaticResource IconButtonStyle}"
+                <Button Style="{StaticResource GlyphButtonStyle}"
                         VerticalAlignment="Center"
                         Command="{Binding Back}"
                         AutomationProperties.Name="Back"
                         ToolTipService.ToolTip="Back">
-                    <Viewbox Width="{StaticResource IconSizeM}" Height="{StaticResource IconSizeM}">
+                    <Viewbox Width="{StaticResource IconSizeSmall}" Height="{StaticResource IconSizeSmall}">
                         <PathIcon Data="{StaticResource IconBack}" />
                     </Viewbox>
                 </Button>
@@ -136,8 +136,8 @@
                     MaxWidth="{StaticResource DialogMaxWidth}"
                     VerticalAlignment="Center"
                     HorizontalAlignment="Center"
-                    Margin="{StaticResource InsetL}"
-                    Padding="{utu:Responsive Narrow={StaticResource SheetPadding}, Normal={StaticResource SheetPaddingWide}}">
+                    Margin="{StaticResource Space200Thickness}"
+                    Padding="{utu:Responsive Narrow={StaticResource Space200Thickness}, Normal={StaticResource Space300Thickness}}">
                 <controls:CorrectiveActionSheet x:Name="ActionSheetForm" />
             </Border>
         </Grid>
@@ -155,8 +155,8 @@
                     MaxWidth="{StaticResource ViewerMaxWidth}"
                     VerticalAlignment="Center"
                     HorizontalAlignment="Center"
-                    Margin="{StaticResource InsetL}"
-                    Padding="{utu:Responsive Narrow={StaticResource SheetPadding}, Normal={StaticResource SheetPaddingWide}}">
+                    Margin="{StaticResource Space200Thickness}"
+                    Padding="{utu:Responsive Narrow={StaticResource Space200Thickness}, Normal={StaticResource Space300Thickness}}">
                 <controls:EvidenceViewer x:Name="ViewerForm" />
             </Border>
         </Grid>

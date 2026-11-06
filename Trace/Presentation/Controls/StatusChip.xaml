@@ -14,7 +14,7 @@
     -->
     <!-- xaml-lint: allow card - a status pill, not a card: utu:Chip is a toggle button that takes focus and announces as one, and the severity states repaint this shell. -->
     <Border x:Name="Shell"
-            CornerRadius="{StaticResource ChipRadius}"
+            CornerRadius="{StaticResource Radius300CornerRadius}"
             Padding="{StaticResource ChipPadding}"
             MinHeight="{StaticResource ChipMinHeight}"
             VerticalAlignment="Center"
@@ -64,8 +64,8 @@
             </VisualStateGroup>
         </VisualStateManager.VisualStateGroups>
 
-        <StackPanel Orientation="Horizontal" Spacing="{StaticResource SpaceXS}" VerticalAlignment="Center">
-            <Viewbox Width="{StaticResource IconSizeXS}" Height="{StaticResource IconSizeXS}" VerticalAlignment="Center">
+        <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space050}" VerticalAlignment="Center">
+            <Viewbox Width="{StaticResource ChipGlyphSize}" Height="{StaticResource ChipGlyphSize}" VerticalAlignment="Center">
                 <Grid x:Name="Marks" Width="24" Height="24">
                     <PathIcon x:Name="NeutralMark" Data="{StaticResource IconNote}" Visibility="Collapsed" />
                     <PathIcon x:Name="PositiveMark" Data="{StaticResource IconCheck}" Visibility="Collapsed" />

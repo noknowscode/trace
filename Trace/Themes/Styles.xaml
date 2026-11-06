@@ -15,24 +15,24 @@
         <Setter Property="Background" Value="{ThemeResource SurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{ThemeResource OutlineVariantBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="{StaticResource CardRadius}" />
-        <Setter Property="Padding" Value="{StaticResource CardPadding}" />
+        <Setter Property="CornerRadius" Value="{StaticResource Radius500CornerRadius}" />
+        <Setter Property="Padding" Value="{StaticResource Space200Thickness}" />
     </Style>
 
     <Style x:Key="TileSurface" TargetType="Border">
         <Setter Property="Background" Value="{ThemeResource SurfaceVariantBrush}" />
         <Setter Property="BorderBrush" Value="{ThemeResource OutlineVariantBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="{StaticResource ControlRadius}" />
-        <Setter Property="Padding" Value="{StaticResource TilePadding}" />
+        <Setter Property="CornerRadius" Value="{StaticResource Radius300CornerRadius}" />
+        <Setter Property="Padding" Value="{StaticResource Space150Thickness}" />
     </Style>
 
     <Style x:Key="SheetSurface" TargetType="Border">
         <Setter Property="Background" Value="{ThemeResource SurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{ThemeResource OutlineBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="{StaticResource SheetRadius}" />
-        <Setter Property="Padding" Value="{StaticResource SheetPadding}" />
+        <Setter Property="CornerRadius" Value="{StaticResource Radius400CornerRadius}" />
+        <Setter Property="Padding" Value="{StaticResource Space200Thickness}" />
     </Style>
 
     <!--
@@ -118,12 +118,12 @@
         <Setter Property="Background" Value="{ThemeResource SurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{ThemeResource OutlineVariantBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="{StaticResource CardRadius}" />
-        <Setter Property="Padding" Value="{StaticResource CardPadding}" />
+        <Setter Property="CornerRadius" Value="{StaticResource Radius500CornerRadius}" />
+        <Setter Property="Padding" Value="{StaticResource Space200Thickness}" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="VerticalContentAlignment" Value="Stretch" />
-        <Setter Property="MinHeight" Value="{StaticResource TouchTargetSize}" />
+        <Setter Property="MinHeight" Value="{StaticResource ControlHeightMediumLarge}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -137,12 +137,12 @@
                                 <VisualState x:Name="Normal" />
                                 <VisualState x:Name="PointerOver">
                                     <VisualState.Setters>
-                                        <Setter Target="StateOverlay.Opacity" Value="0.08" />
+                                        <Setter Target="StateOverlay.Background" Value="{ThemeResource OnSurfaceHoverBrush}" />
                                     </VisualState.Setters>
                                 </VisualState>
                                 <VisualState x:Name="Pressed">
                                     <VisualState.Setters>
-                                        <Setter Target="StateOverlay.Opacity" Value="0.12" />
+                                        <Setter Target="StateOverlay.Background" Value="{ThemeResource OnSurfacePressedBrush}" />
                                         <Setter Target="PressScale.ScaleX" Value="0.98" />
                                         <Setter Target="PressScale.ScaleY" Value="0.98" />
                                     </VisualState.Setters>
@@ -175,10 +175,9 @@
                                               VerticalContentAlignment="Stretch" />
                         </Border>
 
+                        <!-- The state layer: the OnSurface role's Hover and Pressed brushes, set by state. -->
                         <Border x:Name="StateOverlay"
-                                Background="{ThemeResource OnSurfaceBrush}"
                                 CornerRadius="{TemplateBinding CornerRadius}"
-                                Opacity="0"
                                 IsHitTestVisible="False" />
 
                         <Border x:Name="FocusRing"
@@ -201,7 +200,7 @@
     <Style x:Key="PhotoButtonStyle" TargetType="Button" BasedOn="{StaticResource CardButtonStyle}">
         <Setter Property="Padding" Value="0" />
         <Setter Property="HorizontalAlignment" Value="Left" />
-        <Setter Property="CornerRadius" Value="{StaticResource SmallRadius}" />
+        <Setter Property="CornerRadius" Value="{StaticResource Radius200CornerRadius}" />
     </Style>
 
     <!--
@@ -224,9 +223,9 @@
     -->
     <DataTemplate x:Key="FeedProgressTemplate">
         <ProgressRing IsActive="True"
-                      Width="{StaticResource ProgressSize}"
-                      Height="{StaticResource ProgressSize}"
-                      Margin="{StaticResource InsetL}"
+                      Width="{StaticResource IconSizeLarge}"
+                      Height="{StaticResource IconSizeLarge}"
+                      Margin="{StaticResource Space200Thickness}"
                       HorizontalAlignment="Center"
                       VerticalAlignment="Top"
                       AutomationProperties.Name="Loading" />
@@ -234,13 +233,13 @@
 
     <DataTemplate x:Key="FeedErrorTemplate">
         <Border Style="{StaticResource CardSurface}" VerticalAlignment="Top">
-            <StackPanel Spacing="{StaticResource SpaceS}">
+            <StackPanel Spacing="{StaticResource Space100}">
                 <controls:StatusChip Severity="Critical" Text="Could not read this device's records" />
                 <TextBlock Style="{StaticResource SupportingText}"
                            Text="Nothing was changed. Try again; if it keeps failing, restart TRACE." />
                 <Button Style="{StaticResource OutlinedButtonStyle}"
                         HorizontalAlignment="Left"
-                        MinHeight="{StaticResource TouchTargetSize}"
+                        MinHeight="{StaticResource ControlHeightMediumLarge}"
                         Content="Try again"
                         Command="{utu:AncestorBinding AncestorType=mvux:FeedView, Path=DataContext.Retry}"
                         AutomationProperties.Name="Try again to read the records" />
@@ -257,7 +256,7 @@
     <!-- A plate laid over the equipment view: the nameplate and the drag hint. -->
     <Style x:Key="ScenePlate" TargetType="Border">
         <Setter Property="Background" Value="{ThemeResource SurfaceBrush}" />
-        <Setter Property="CornerRadius" Value="{StaticResource ControlRadius}" />
+        <Setter Property="CornerRadius" Value="{StaticResource Radius300CornerRadius}" />
         <Setter Property="Padding" Value="{StaticResource CompactCardPadding}" />
         <Setter Property="IsHitTestVisible" Value="False" />
     </Style>
@@ -267,21 +266,25 @@
         <Setter Property="Background" Value="{ThemeResource PrimaryContainerBrush}" />
         <Setter Property="BorderBrush" Value="{ThemeResource PrimaryBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="{StaticResource ControlRadius}" />
-        <Setter Property="Padding" Value="{StaticResource TilePadding}" />
+        <Setter Property="CornerRadius" Value="{StaticResource Radius300CornerRadius}" />
+        <Setter Property="Padding" Value="{StaticResource Space150Thickness}" />
     </Style>
 
     <!-- The spine down the left of a history entry. -->
     <Style x:Key="TimelineSpine" TargetType="Border">
         <Setter Property="Width" Value="4" />
-        <Setter Property="CornerRadius" Value="{StaticResource SpineRadius}" />
+        <Setter Property="CornerRadius" Value="{StaticResource Radius050CornerRadius}" />
         <Setter Property="Background" Value="{ThemeResource OutlineBrush}" />
     </Style>
 
-    <!-- An icon-only button: a glyph in a square gloved-hand target. -->
-    <Style x:Key="IconButtonStyle" TargetType="Button" BasedOn="{StaticResource TextButtonStyle}">
-        <Setter Property="Width" Value="{StaticResource TouchTargetSize}" />
-        <Setter Property="Height" Value="{StaticResource TouchTargetSize}" />
+    <!--
+        An icon-only button: a glyph in the Primary colour, in a square gloved-hand target. Its own key: the theme's
+        IconButtonStyle is a different (OnSurfaceVariant, 40 px) button, and redefining that key would replace it
+        app-wide.
+    -->
+    <Style x:Key="GlyphButtonStyle" TargetType="Button" BasedOn="{StaticResource TextButtonStyle}">
+        <Setter Property="Width" Value="{StaticResource ControlHeightMediumLarge}" />
+        <Setter Property="Height" Value="{StaticResource ControlHeightMediumLarge}" />
         <Setter Property="Padding" Value="0" />
     </Style>
 

@@ -9,8 +9,8 @@
 
     <utu:SafeArea Insets="VisibleBounds" IsTabStop="False">
         <!-- One column, as on Today: 16 px sides on a phone, 24 from Normal, centred at ContentMaxWidth from Widest. -->
-        <Grid RowSpacing="{StaticResource SpaceL}"
-              Padding="{utu:Responsive Narrow={StaticResource PagePadding}, Normal={StaticResource PagePaddingWide}}"
+        <Grid RowSpacing="{StaticResource Space200}"
+              Padding="{utu:Responsive Narrow={StaticResource Space200Thickness}, Normal={StaticResource Space300Thickness}}"
               MaxWidth="{StaticResource ContentMaxWidth}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -23,8 +23,8 @@
                                  Supporting="{Binding PendingLabel}" />
 
             <Border Grid.Row="1" Style="{StaticResource CardSurface}">
-                <StackPanel Spacing="{StaticResource SpaceM}">
-                    <controls:WrapPanel HorizontalSpacing="{StaticResource SpaceS}" VerticalSpacing="{StaticResource SpaceS}">
+                <StackPanel Spacing="{StaticResource Space150}">
+                    <controls:WrapPanel HorizontalSpacing="{StaticResource Space100}" VerticalSpacing="{StaticResource Space100}">
                         <controls:StatusChip Severity="Positive" Text="Online"
                                              Visibility="{Binding IsOnline, Converter={StaticResource BoolToVisibility}}" />
                         <controls:StatusChip Severity="Caution" Text="Offline"
@@ -41,7 +41,7 @@
                     <Border Style="{StaticResource TileSurface}"
                             AutomationProperties.LiveSetting="Polite"
                             Visibility="{Binding HasSetAside, Converter={StaticResource BoolToVisibility}}">
-                        <StackPanel Spacing="{StaticResource SpaceS}">
+                        <StackPanel Spacing="{StaticResource Space100}">
                             <controls:StatusChip Severity="Critical" Text="Records set aside" />
                             <TextBlock Style="{StaticResource SupportingText}"
                                        Text="{Binding SetAsideWarning}" />
@@ -49,21 +49,21 @@
                     </Border>
 
                     <!-- Wraps on a phone: three buttons do not fit across 328 px. -->
-                    <controls:WrapPanel HorizontalSpacing="{StaticResource SpaceS}" VerticalSpacing="{StaticResource SpaceS}">
+                    <controls:WrapPanel HorizontalSpacing="{StaticResource Space100}" VerticalSpacing="{StaticResource Space100}">
                         <Button Style="{StaticResource FilledButtonStyle}"
-                                MinHeight="{StaticResource TouchTargetSize}"
+                                MinHeight="{StaticResource ControlHeightMediumLarge}"
                                 Command="{Binding SyncNow}"
                                 IsEnabled="{Binding IsOnline}"
                                 Content="Sync now"
                                 AutomationProperties.Name="Sync now" />
                         <Button Style="{StaticResource OutlinedButtonStyle}"
-                                MinHeight="{StaticResource TouchTargetSize}"
+                                MinHeight="{StaticResource ControlHeightMediumLarge}"
                                 Command="{Binding RetryFailed}"
                                 Content="Retry failed uploads"
                                 AutomationProperties.Name="Retry failed uploads"
                                 Visibility="{Binding HasFailures, Converter={StaticResource BoolToVisibility}}" />
                         <Button Style="{StaticResource TextButtonStyle}"
-                                MinHeight="{StaticResource TouchTargetSize}"
+                                MinHeight="{StaticResource ControlHeightMediumLarge}"
                                 Command="{Binding ToggleConnection}"
                                 Content="{Binding ConnectionAction}"
                                 AutomationProperties.Name="{Binding ConnectionAction}" />
@@ -84,17 +84,17 @@
                         <ScrollViewer>
                             <ItemsRepeater ItemsSource="{Binding Data}">
                                 <ItemsRepeater.Layout>
-                                    <StackLayout Spacing="{StaticResource SpaceS}" />
+                                    <StackLayout Spacing="{StaticResource Space100}" />
                                 </ItemsRepeater.Layout>
                                 <ItemsRepeater.ItemTemplate>
                                     <DataTemplate>
                                         <Border Style="{StaticResource TileSurface}">
-                                            <Grid ColumnSpacing="{StaticResource SpaceM}">
+                                            <Grid ColumnSpacing="{StaticResource Space150}">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="*" />
                                                     <ColumnDefinition Width="Auto" />
                                                 </Grid.ColumnDefinitions>
-                                                <StackPanel Spacing="{StaticResource SpaceXS}">
+                                                <StackPanel Spacing="{StaticResource Space050}">
                                                     <TextBlock Text="{Binding Converter={StaticResource SyncKind}}"
                                                                Style="{StaticResource EyebrowText}" />
                                                     <TextBlock Text="{Binding Description}"
@@ -120,7 +120,7 @@
                 <mvux:FeedView.NoneTemplate>
                     <DataTemplate>
                         <Border Style="{StaticResource CardSurface}" VerticalAlignment="Top">
-                            <StackPanel Spacing="{StaticResource SpaceS}">
+                            <StackPanel Spacing="{StaticResource Space100}">
                                 <TextBlock Text="Nothing waiting to sync" Style="{StaticResource SectionHeaderText}" />
                                 <TextBlock Style="{StaticResource SupportingText}"
                                            Text="Completed inspections and corrective actions appear here until the server confirms them." />

@@ -14,8 +14,8 @@
             from Normal). Widest is the supervisor's desk: corrective work and the assets behind
             it sit side by side, in a wider column that stops at ReviewMaxWidth and centres.
         -->
-        <Grid RowSpacing="{StaticResource SpaceL}"
-              Padding="{utu:Responsive Narrow={StaticResource PagePadding}, Normal={StaticResource PagePaddingWide}}"
+        <Grid RowSpacing="{StaticResource Space200}"
+              Padding="{utu:Responsive Narrow={StaticResource Space200Thickness}, Normal={StaticResource Space300Thickness}}"
               MaxWidth="{utu:Responsive Narrow={StaticResource ContentMaxWidth}, Widest={StaticResource ReviewMaxWidth}}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -29,14 +29,14 @@
                 <!-- A Dispatch or Close the device could not write. -->
                 <TextBlock Text="{Binding DispatchError}"
                            Style="{StaticResource ErrorText}"
-                           Margin="{StaticResource GapTopS}"
+                           Margin="{StaticResource Space100TopThickness}"
                            AutomationProperties.LiveSetting="Assertive"
                            Visibility="{Binding DispatchError, Converter={StaticResource StringToVisibility}}" />
             </StackPanel>
 
             <ScrollViewer Grid.Row="1">
-                <Grid RowSpacing="{utu:Responsive Narrow={StaticResource SpaceXL}, Widest=0}"
-                      ColumnSpacing="{utu:Responsive Narrow=0, Widest={StaticResource SpaceXL}}">
+                <Grid RowSpacing="{utu:Responsive Narrow={StaticResource Space300}, Widest=0}"
+                      ColumnSpacing="{utu:Responsive Narrow=0, Widest={StaticResource Space300}}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
@@ -46,7 +46,7 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <StackPanel Spacing="{StaticResource SpaceM}"
+                    <StackPanel Spacing="{StaticResource Space150}"
                                 Grid.ColumnSpan="{utu:Responsive Narrow=2, Widest=1}">
                         <TextBlock Text="Corrective work" Style="{StaticResource SectionHeaderText}" />
 
@@ -57,12 +57,12 @@
                                 <DataTemplate>
                                     <ItemsRepeater ItemsSource="{Binding Data}" TabFocusNavigation="Local">
                                         <ItemsRepeater.Layout>
-                                            <StackLayout Spacing="{StaticResource SpaceM}" />
+                                            <StackLayout Spacing="{StaticResource Space150}" />
                                         </ItemsRepeater.Layout>
                                         <ItemsRepeater.ItemTemplate>
                                             <DataTemplate>
                                                 <Border Style="{StaticResource CardSurface}">
-                                                    <Grid ColumnSpacing="{StaticResource SpaceM}" RowSpacing="{StaticResource SpaceS}">
+                                                    <Grid ColumnSpacing="{StaticResource Space150}" RowSpacing="{StaticResource Space100}">
                                                         <Grid.ColumnDefinitions>
                                                             <ColumnDefinition Width="*" />
                                                             <ColumnDefinition Width="Auto" />
@@ -74,7 +74,7 @@
 
                                                         <!-- Origin, what to do, and the supervisor's next step with it:
                                                              Dispatch an open action, Close a dispatched one. -->
-                                                        <StackPanel Spacing="{StaticResource SpaceXS}">
+                                                        <StackPanel Spacing="{StaticResource Space050}">
                                                             <TextBlock Text="{Binding Origin}"
                                                                        Style="{StaticResource EyebrowText}" />
                                                             <TextBlock Text="{Binding Summary}"
@@ -89,8 +89,8 @@
 
                                                         <controls:WrapPanel Grid.Row="1"
                                                                             VerticalAlignment="Center"
-                                                                            HorizontalSpacing="{StaticResource SpaceS}"
-                                                                            VerticalSpacing="{StaticResource SpaceS}">
+                                                                            HorizontalSpacing="{StaticResource Space100}"
+                                                                            VerticalSpacing="{StaticResource Space100}">
                                                             <controls:StatusChip
                                                                 Severity="{Binding Status, Converter={StaticResource ToSeverity}}"
                                                                 Text="{Binding Status}" />
@@ -107,7 +107,7 @@
                                                         <Button Grid.Row="1" Grid.Column="1"
                                                                 Style="{StaticResource OutlinedButtonStyle}"
                                                                 VerticalAlignment="Bottom"
-                                                                MinHeight="{StaticResource TouchTargetSize}"
+                                                                MinHeight="{StaticResource ControlHeightMediumLarge}"
                                                                 Content="{Binding Converter={StaticResource NextStep}}"
                                                                 Command="{utu:AncestorBinding AncestorType=mvux:FeedView, Path=DataContext.Advance}"
                                                                 CommandParameter="{Binding}"
@@ -124,7 +124,7 @@
                             <mvux:FeedView.NoneTemplate>
                                 <DataTemplate>
                                     <Border Style="{StaticResource CardSurface}">
-                                        <StackPanel Spacing="{StaticResource SpaceS}">
+                                        <StackPanel Spacing="{StaticResource Space100}">
                                             <TextBlock Text="No corrective work raised"
                                                        Style="{StaticResource SectionHeaderText}" />
                                             <TextBlock Style="{StaticResource SupportingText}"
@@ -136,7 +136,7 @@
                         </mvux:FeedView>
                     </StackPanel>
 
-                    <StackPanel Spacing="{StaticResource SpaceM}"
+                    <StackPanel Spacing="{StaticResource Space150}"
                                 Grid.Row="{utu:Responsive Narrow=1, Widest=0}"
                                 Grid.Column="{utu:Responsive Narrow=0, Widest=1}"
                                 Grid.ColumnSpan="{utu:Responsive Narrow=2, Widest=1}">
@@ -149,7 +149,7 @@
                                 <DataTemplate>
                                     <ItemsRepeater ItemsSource="{Binding Data}" TabFocusNavigation="Local">
                                         <ItemsRepeater.Layout>
-                                            <StackLayout Spacing="{StaticResource SpaceM}" />
+                                            <StackLayout Spacing="{StaticResource Space150}" />
                                         </ItemsRepeater.Layout>
                                         <ItemsRepeater.ItemTemplate>
                                             <DataTemplate>
