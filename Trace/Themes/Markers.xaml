@@ -46,19 +46,19 @@
                                 </VisualState>
                                 <VisualState x:Name="Pass">
                                     <VisualState.Setters>
-                                        <Setter Target="Disc.Fill" Value="{ThemeResource PrimaryBrush}" />
-                                        <Setter Target="Number.Foreground" Value="{ThemeResource OnPrimaryBrush}" />
-                                        <Setter Target="Badge.Background" Value="{ThemeResource PrimaryBrush}" />
-                                        <Setter Target="PassMark.Foreground" Value="{ThemeResource OnPrimaryBrush}" />
+                                        <Setter Target="Disc.Fill" Value="{ThemeResource SuccessBrush}" />
+                                        <Setter Target="Number.Foreground" Value="{ThemeResource OnSuccessBrush}" />
+                                        <Setter Target="Badge.Background" Value="{ThemeResource SuccessBrush}" />
+                                        <Setter Target="PassMark.Foreground" Value="{ThemeResource OnSuccessBrush}" />
                                         <Setter Target="PassMark.Visibility" Value="Visible" />
                                     </VisualState.Setters>
                                 </VisualState>
                                 <VisualState x:Name="Watch">
                                     <VisualState.Setters>
-                                        <Setter Target="Disc.Fill" Value="{ThemeResource TertiaryBrush}" />
-                                        <Setter Target="Number.Foreground" Value="{ThemeResource OnTertiaryBrush}" />
-                                        <Setter Target="Badge.Background" Value="{ThemeResource TertiaryBrush}" />
-                                        <Setter Target="WatchMark.Foreground" Value="{ThemeResource OnTertiaryBrush}" />
+                                        <Setter Target="Disc.Fill" Value="{ThemeResource WatchBrush}" />
+                                        <Setter Target="Number.Foreground" Value="{ThemeResource OnWatchBrush}" />
+                                        <Setter Target="Badge.Background" Value="{ThemeResource WatchBrush}" />
+                                        <Setter Target="WatchMark.Foreground" Value="{ThemeResource OnWatchBrush}" />
                                         <Setter Target="WatchMark.Visibility" Value="Visible" />
                                     </VisualState.Setters>
                                 </VisualState>
@@ -214,10 +214,10 @@
                                 </VisualState>
                                 <VisualState x:Name="PassChosen">
                                     <VisualState.Setters>
-                                        <Setter Target="Fill.Background" Value="{ThemeResource PrimaryBrush}" />
-                                        <Setter Target="Fill.BorderBrush" Value="{ThemeResource PrimaryBrush}" />
-                                        <Setter Target="Caption.Foreground" Value="{ThemeResource OnPrimaryBrush}" />
-                                        <Setter Target="PassMark.Foreground" Value="{ThemeResource OnPrimaryBrush}" />
+                                        <Setter Target="Fill.Background" Value="{ThemeResource SuccessBrush}" />
+                                        <Setter Target="Fill.BorderBrush" Value="{ThemeResource SuccessBrush}" />
+                                        <Setter Target="Caption.Foreground" Value="{ThemeResource OnSuccessBrush}" />
+                                        <Setter Target="PassMark.Foreground" Value="{ThemeResource OnSuccessBrush}" />
                                         <Setter Target="PassMark.Visibility" Value="Visible" />
                                     </VisualState.Setters>
                                 </VisualState>
@@ -232,10 +232,10 @@
                                 </VisualState>
                                 <VisualState x:Name="WatchChosen">
                                     <VisualState.Setters>
-                                        <Setter Target="Fill.Background" Value="{ThemeResource TertiaryBrush}" />
-                                        <Setter Target="Fill.BorderBrush" Value="{ThemeResource TertiaryBrush}" />
-                                        <Setter Target="Caption.Foreground" Value="{ThemeResource OnTertiaryBrush}" />
-                                        <Setter Target="WatchMark.Foreground" Value="{ThemeResource OnTertiaryBrush}" />
+                                        <Setter Target="Fill.Background" Value="{ThemeResource WatchBrush}" />
+                                        <Setter Target="Fill.BorderBrush" Value="{ThemeResource WatchBrush}" />
+                                        <Setter Target="Caption.Foreground" Value="{ThemeResource OnWatchBrush}" />
+                                        <Setter Target="WatchMark.Foreground" Value="{ThemeResource OnWatchBrush}" />
                                         <Setter Target="WatchMark.Visibility" Value="Visible" />
                                     </VisualState.Setters>
                                 </VisualState>

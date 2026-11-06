@@ -29,7 +29,6 @@
     <UnoFeatures>
       Material;
       Skia;
-      Dsp;
       Hosting;
       Toolkit;
       Logging;

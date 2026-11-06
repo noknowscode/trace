@@ -31,17 +31,17 @@
                 </VisualState>
                 <VisualState x:Name="Positive">
                     <VisualState.Setters>
-                        <Setter Target="Shell.Background" Value="{ThemeResource PrimaryContainerBrush}" />
-                        <Setter Target="Label.Foreground" Value="{ThemeResource OnPrimaryContainerBrush}" />
-                        <Setter Target="PositiveMark.Foreground" Value="{ThemeResource OnPrimaryContainerBrush}" />
+                        <Setter Target="Shell.Background" Value="{ThemeResource SuccessContainerBrush}" />
+                        <Setter Target="Label.Foreground" Value="{ThemeResource OnSuccessContainerBrush}" />
+                        <Setter Target="PositiveMark.Foreground" Value="{ThemeResource OnSuccessContainerBrush}" />
                         <Setter Target="PositiveMark.Visibility" Value="Visible" />
                     </VisualState.Setters>
                 </VisualState>
                 <VisualState x:Name="Caution">
                     <VisualState.Setters>
-                        <Setter Target="Shell.Background" Value="{ThemeResource TertiaryContainerBrush}" />
-                        <Setter Target="Label.Foreground" Value="{ThemeResource OnTertiaryContainerBrush}" />
-                        <Setter Target="CautionMark.Foreground" Value="{ThemeResource OnTertiaryContainerBrush}" />
+                        <Setter Target="Shell.Background" Value="{ThemeResource WatchContainerBrush}" />
+                        <Setter Target="Label.Foreground" Value="{ThemeResource OnWatchContainerBrush}" />
+                        <Setter Target="CautionMark.Foreground" Value="{ThemeResource OnWatchContainerBrush}" />
                         <Setter Target="CautionMark.Visibility" Value="Visible" />
                     </VisualState.Setters>
                 </VisualState>

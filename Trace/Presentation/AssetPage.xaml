@@ -71,14 +71,14 @@
                             MaxWidth="{StaticResource AssetTabsMaxWidth}"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Center"
-                            Style="{StaticResource MaterialTopTabBarStyle}"
+                            Style="{StaticResource TopTabBarStyle}"
                             IsTabStop="False"
                             AutomationProperties.Name="Asset sections"
                             SelectedIndex="{Binding TabIndex, Mode=TwoWay}">
-                    <utu:TabBarItem Content="Overview" AutomationProperties.Name="Overview" Style="{StaticResource MaterialTopTabBarItemStyle}" />
-                    <utu:TabBarItem Content="Inspect" AutomationProperties.Name="Inspect" Style="{StaticResource MaterialTopTabBarItemStyle}" />
-                    <utu:TabBarItem Content="History" AutomationProperties.Name="History" Style="{StaticResource MaterialTopTabBarItemStyle}" />
-                    <utu:TabBarItem Content="Documents" AutomationProperties.Name="Documents" Style="{StaticResource MaterialTopTabBarItemStyle}" />
+                    <utu:TabBarItem Content="Overview" AutomationProperties.Name="Overview" Style="{StaticResource TopTabBarItemStyle}" />
+                    <utu:TabBarItem Content="Inspect" AutomationProperties.Name="Inspect" Style="{StaticResource TopTabBarItemStyle}" />
+                    <utu:TabBarItem Content="History" AutomationProperties.Name="History" Style="{StaticResource TopTabBarItemStyle}" />
+                    <utu:TabBarItem Content="Documents" AutomationProperties.Name="Documents" Style="{StaticResource TopTabBarItemStyle}" />
                 </utu:TabBar>
 
                 <controls:StatusChip Grid.Column="2"

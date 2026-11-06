@@ -53,12 +53,12 @@
                     VerticalAlignment="Top"
                     Margin="{StaticResource GapTopM}"
                     Height="{StaticResource RailHeight}"
-                    Style="{StaticResource MaterialVerticalTabBarStyle}"
+                    Style="{StaticResource VerticalTabBarStyle}"
                     uen:Region.Attached="True">
             <utu:TabBarItem uen:Region.Name="Today"
                             Content="Today"
                             AutomationProperties.Name="Today"
-                            Style="{StaticResource MaterialVerticalTabBarItemStyle}">
+                            Style="{StaticResource VerticalTabBarItemStyle}">
                 <utu:TabBarItem.Icon>
                     <PathIcon Data="{StaticResource IconToday}" />
                 </utu:TabBarItem.Icon>
@@ -66,7 +66,7 @@
             <utu:TabBarItem uen:Region.Name="Assets"
                             Content="Assets"
                             AutomationProperties.Name="Assets"
-                            Style="{StaticResource MaterialVerticalTabBarItemStyle}">
+                            Style="{StaticResource VerticalTabBarItemStyle}">
                 <utu:TabBarItem.Icon>
                     <PathIcon Data="{StaticResource IconAssets}" />
                 </utu:TabBarItem.Icon>
@@ -74,7 +74,7 @@
             <utu:TabBarItem uen:Region.Name="Scan"
                             Content="Scan"
                             AutomationProperties.Name="Scan"
-                            Style="{StaticResource MaterialVerticalTabBarItemStyle}">
+                            Style="{StaticResource VerticalTabBarItemStyle}">
                 <utu:TabBarItem.Icon>
                     <PathIcon Data="{StaticResource IconScan}" />
                 </utu:TabBarItem.Icon>
@@ -84,7 +84,7 @@
                             AutomationProperties.Name="Sync"
                             BadgeValue="{Binding PendingCount}"
                             BadgeVisibility="{Binding HasPending, Converter={StaticResource BoolToVisibility}}"
-                            Style="{StaticResource MaterialVerticalTabBarItemStyle}">
+                            Style="{StaticResource VerticalTabBarItemStyle}">
                 <utu:TabBarItem.Icon>
                     <PathIcon Data="{StaticResource IconSync}" />
                 </utu:TabBarItem.Icon>
@@ -92,7 +92,7 @@
             <utu:TabBarItem uen:Region.Name="Findings"
                             Content="Findings"
                             AutomationProperties.Name="Findings"
-                            Style="{StaticResource MaterialVerticalTabBarItemStyle}">
+                            Style="{StaticResource VerticalTabBarItemStyle}">
                 <utu:TabBarItem.Icon>
                     <PathIcon Data="{StaticResource IconFindings}" />
                 </utu:TabBarItem.Icon>
@@ -140,13 +140,13 @@
                     Grid.ColumnSpan="2"
                     VerticalAlignment="Bottom"
                     Visibility="{utu:Responsive Narrow=Visible, Normal=Collapsed}"
-                    Style="{StaticResource MaterialBottomTabBarStyle}"
+                    Style="{StaticResource BottomTabBarStyle}"
                     utu:SafeArea.Insets="Bottom"
                     uen:Region.Attached="True">
             <utu:TabBarItem uen:Region.Name="Today"
                             Content="Today"
                             AutomationProperties.Name="Today"
-                            Style="{StaticResource MaterialBottomTabBarItemStyle}">
+                            Style="{StaticResource BottomTabBarItemStyle}">
                 <utu:TabBarItem.Icon>
                     <PathIcon Data="{StaticResource IconToday}" />
                 </utu:TabBarItem.Icon>
@@ -154,7 +154,7 @@
             <utu:TabBarItem uen:Region.Name="Assets"
                             Content="Assets"
                             AutomationProperties.Name="Assets"
-                            Style="{StaticResource MaterialBottomTabBarItemStyle}">
+                            Style="{StaticResource BottomTabBarItemStyle}">
                 <utu:TabBarItem.Icon>
                     <PathIcon Data="{StaticResource IconAssets}" />
                 </utu:TabBarItem.Icon>
@@ -162,7 +162,7 @@
             <utu:TabBarItem uen:Region.Name="Scan"
                             Content="Scan"
                             AutomationProperties.Name="Scan"
-                            Style="{StaticResource MaterialBottomTabBarItemStyle}">
+                            Style="{StaticResource BottomTabBarItemStyle}">
                 <utu:TabBarItem.Icon>
                     <PathIcon Data="{StaticResource IconScan}" />
                 </utu:TabBarItem.Icon>
@@ -172,7 +172,7 @@
                             AutomationProperties.Name="Sync"
                             BadgeValue="{Binding PendingCount}"
                             BadgeVisibility="{Binding HasPending, Converter={StaticResource BoolToVisibility}}"
-                            Style="{StaticResource MaterialBottomTabBarItemStyle}">
+                            Style="{StaticResource BottomTabBarItemStyle}">
                 <utu:TabBarItem.Icon>
                     <PathIcon Data="{StaticResource IconSync}" />
                 </utu:TabBarItem.Icon>
@@ -180,7 +180,7 @@
             <utu:TabBarItem uen:Region.Name="Findings"
                             Content="Findings"
                             AutomationProperties.Name="Findings"
-                            Style="{StaticResource MaterialBottomTabBarItemStyle}">
+                            Style="{StaticResource BottomTabBarItemStyle}">
                 <utu:TabBarItem.Icon>
                     <PathIcon Data="{StaticResource IconFindings}" />
                 </utu:TabBarItem.Icon>

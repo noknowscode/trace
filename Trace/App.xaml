@@ -1,29 +1,103 @@
 <Application x:Class="Trace.App"
        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+       xmlns:ut="using:Uno.Themes"
+       xmlns:utum="using:Uno.Toolkit.UI.Material"
        RequestedTheme="Dark">
 
   <Application.Resources>
     <ResourceDictionary>
       <ResourceDictionary.MergedDictionaries>
         <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
-        <utum:MaterialToolkitTheme
-          xmlns:utum="using:Uno.Toolkit.UI.Material"
-          xmlns:ut="using:Uno.Themes">
-          <!-- Uno Themes 9: colour overrides live on Colors (ColorOverrideSource is deprecated). -->
+        <!--
+          The look comes from Material with the Toolkit. The palette, Styles/ColorPaletteOverride.xaml, is the one
+          place brand colours live (Uno Platform Studio's Themes tab edits it); pages and controls use the role
+          brushes the theme generates from it (OnSurfaceBrush, PrimaryBrush, OutlineVariantBrush…), the Material
+          type styles, and the theme's Space*, Radius*, ControlHeight* and IconSize* tokens. On this theme
+          SpaceN00 is N × 8 px (Space050 = 4, Space150 = 12, Space300 = 24) and RadiusN00 is N × 4 px.
+        -->
+        <utum:MaterialToolkitTheme>
           <utum:MaterialToolkitTheme.Colors>
             <ut:ThemeColors OverrideSource="ms-appx:///Styles/ColorPaletteOverride.xaml" />
           </utum:MaterialToolkitTheme.Colors>
         </utum:MaterialToolkitTheme>
 
-        <!-- TRACE tokens and shared surfaces. Merged after Material so they can build on it. -->
+        <!-- TRACE's layout values the theme has no token for, then its shared styles. Merged after the theme so
+             they can build on it. -->
         <ResourceDictionary Source="ms-appx:///Themes/Tokens.xaml" />
-        <ResourceDictionary Source="ms-appx:///Themes/ColorTokens.xaml" />
         <ResourceDictionary Source="ms-appx:///Themes/Icons.xaml" />
         <ResourceDictionary Source="ms-appx:///Themes/Converters.xaml" />
         <ResourceDictionary Source="ms-appx:///Themes/Styles.xaml" />
         <ResourceDictionary Source="ms-appx:///Themes/Markers.xaml" />
       </ResourceDictionary.MergedDictionaries>
+
+      <!--
+        The colours no palette role covers. Every colour with a role (text, page, panels, accent, alert, borders,
+        the Info status) is the palette's, used through the role's brush; these are the rest, per theme. Reference
+        them with ThemeResource so a Light/Dark switch re-resolves them.
+
+        - Success and Watch: the Pass and Watch statuses (a marker's disc, a chosen disposition, a status chip).
+          A status keeps its meaning whatever the brand colour is, so neither is Primary or Tertiary. A failure is
+          the Error role.
+        - Scrim: behind a modal sheet, and the contact shadow under the machine in the equipment view.
+        - SceneFillLight: the equipment view's bounce light, a cool neutral: tinting it with Primary would turn every
+          machine the brand colour.
+
+        Default is Dark: TRACE starts dark (a field-use decision), so a theme the dictionaries do not name falls back
+        to the working default.
+      -->
+      <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Light">
+          <Color x:Key="SuccessColor">#0B6B47</Color>
+          <Color x:Key="OnSuccessColor">#FFFFFF</Color>
+          <Color x:Key="SuccessContainerColor">#9FF2CB</Color>
+          <Color x:Key="OnSuccessContainerColor">#002517</Color>
+          <Color x:Key="WatchColor">#7A5200</Color>
+          <Color x:Key="OnWatchColor">#FFFFFF</Color>
+          <Color x:Key="WatchContainerColor">#FFDEA6</Color>
+          <Color x:Key="OnWatchContainerColor">#271900</Color>
+          <Color x:Key="ScrimColor">#000000</Color>
+          <Color x:Key="SceneFillLightColor">#7E8C99</Color>
+
+          <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
+          <SolidColorBrush x:Key="OnSuccessBrush" Color="{StaticResource OnSuccessColor}" />
+          <SolidColorBrush x:Key="SuccessContainerBrush" Color="{StaticResource SuccessContainerColor}" />
+          <SolidColorBrush x:Key="OnSuccessContainerBrush" Color="{StaticResource OnSuccessContainerColor}" />
+          <SolidColorBrush x:Key="WatchBrush" Color="{StaticResource WatchColor}" />
+          <SolidColorBrush x:Key="OnWatchBrush" Color="{StaticResource OnWatchColor}" />
+          <SolidColorBrush x:Key="WatchContainerBrush" Color="{StaticResource WatchContainerColor}" />
+          <SolidColorBrush x:Key="OnWatchContainerBrush" Color="{StaticResource OnWatchContainerColor}" />
+          <!-- The page recedes behind a sheet without disappearing. -->
+          <SolidColorBrush x:Key="SheetScrimBrush" Color="{StaticResource ScrimColor}" Opacity="0.6" />
+          <!-- The renderer takes colour and opacity from the brush. -->
+          <SolidColorBrush x:Key="SceneGroundShadowBrush" Color="{StaticResource ScrimColor}" Opacity="0.35" />
+          <SolidColorBrush x:Key="SceneFillLightBrush" Color="{StaticResource SceneFillLightColor}" />
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Default">
+          <Color x:Key="SuccessColor">#6EE7AE</Color>
+          <Color x:Key="OnSuccessColor">#00281A</Color>
+          <Color x:Key="SuccessContainerColor">#17352C</Color>
+          <Color x:Key="OnSuccessContainerColor">#9DF5CC</Color>
+          <Color x:Key="WatchColor">#FFC65C</Color>
+          <Color x:Key="OnWatchColor">#3A2600</Color>
+          <Color x:Key="WatchContainerColor">#46320A</Color>
+          <Color x:Key="OnWatchContainerColor">#FFE0A6</Color>
+          <Color x:Key="ScrimColor">#000000</Color>
+          <Color x:Key="SceneFillLightColor">#7E8C99</Color>
+
+          <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
+          <SolidColorBrush x:Key="OnSuccessBrush" Color="{StaticResource OnSuccessColor}" />
+          <SolidColorBrush x:Key="SuccessContainerBrush" Color="{StaticResource SuccessContainerColor}" />
+          <SolidColorBrush x:Key="OnSuccessContainerBrush" Color="{StaticResource OnSuccessContainerColor}" />
+          <SolidColorBrush x:Key="WatchBrush" Color="{StaticResource WatchColor}" />
+          <SolidColorBrush x:Key="OnWatchBrush" Color="{StaticResource OnWatchColor}" />
+          <SolidColorBrush x:Key="WatchContainerBrush" Color="{StaticResource WatchContainerColor}" />
+          <SolidColorBrush x:Key="OnWatchContainerBrush" Color="{StaticResource OnWatchContainerColor}" />
+          <SolidColorBrush x:Key="SheetScrimBrush" Color="{StaticResource ScrimColor}" Opacity="0.6" />
+          <SolidColorBrush x:Key="SceneGroundShadowBrush" Color="{StaticResource ScrimColor}" Opacity="0.35" />
+          <SolidColorBrush x:Key="SceneFillLightBrush" Color="{StaticResource SceneFillLightColor}" />
+        </ResourceDictionary>
+      </ResourceDictionary.ThemeDictionaries>
     </ResourceDictionary>
   </Application.Resources>
 
