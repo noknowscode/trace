@@ -1,0 +1,27 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>focus-pump</title>
+<link rel="stylesheet" href="frames.css">
+<style>
+  /* P-204, the CPU-rendered 3D centrifugal pump (Dark, Inspect tab, default view) with its four inspection points:
+     1 Motor body Pass, 3 Coupling Watch, 4 Drive-end bearing Pass, 2 Seal housing Fail. The scene's own ground
+     (Surface #101A18) is the centre of the backdrop, so the crop's edges dissolve into the night Background #08100F;
+     a surveyor's grid in OutlineVariant #1E2E29 and a PrimaryContainer #17352C glow sit behind it. */
+  .stage { background:
+      radial-gradient(62% 66% at 52% 52%, #101A18 0%, #101A18 38%, rgba(16,26,24,0) 82%),
+      radial-gradient(80% 90% at 50% 50%, #0E1916 0%, #08100F 100%); --grain: .05; }
+  .glow { position: absolute; left: 180px; right: 160px; top: 110px; bottom: 50px; border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(23,53,44,.85), rgba(23,53,44,0)); filter: blur(30px); }
+  .survey { --gs: 24px; --gc: rgba(44,64,58,.34); --gc2: rgba(30,46,41,.30);
+    --gm: radial-gradient(75% 80% at 50% 50%, rgba(0,0,0,.0) 30%, rgba(0,0,0,.9) 70%, #000 100%); }
+  .plane { position: absolute; left: 100px; top: 44px; width: 1000px; height: 530px; transform-origin: 50% 70%;
+    transform: perspective(1800px) rotateX(9deg);
+    -webkit-mask-image: radial-gradient(60% 66% at 52% 50%, #000 62%, rgba(0,0,0,.55) 80%, transparent 100%),
+                        linear-gradient(180deg, transparent 0%, #000 16%, #000 78%, transparent 100%);
+    -webkit-mask-composite: source-in; mask-composite: intersect; }
+  .plane img { width: 100%; height: 100%; }
+</style></head>
+<body><div class="stage grain">
+  <div class="survey"></div>
+  <div class="glow"></div>
+  <div class="plane"><img src="cap/dark-pump-scene@3x.png"></div>
+</div></body></html>

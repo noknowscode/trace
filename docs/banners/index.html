@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TRACE banners</title>
+<style>
+  /* Contact sheet for the TRACE banners. Colours: TRACE's palette (Light Background #EFF4F1, Surface #FFFFFF,
+     OnSurface #111C19, Primary #0B6B47; Dark Background #08100F, Surface #101A18, OnSurface #E8F3EE, Primary #6EE7AE). */
+  :root { --bg: #EFF4F1; --surface: #FFFFFF; --ink: #111C19; --muted: #47605A; --line: rgba(17,28,25,.10); --accent: #0B6B47; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #08100F; --surface: #101A18; --ink: #E8F3EE; --muted: #9CB2AB; --line: rgba(232,243,238,.10); --accent: #6EE7AE; } }
+  :root[data-theme="dark"] { --bg: #08100F; --surface: #101A18; --ink: #E8F3EE; --muted: #9CB2AB; --line: rgba(232,243,238,.10); --accent: #6EE7AE; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 Roboto, system-ui, sans-serif; }
+  main { max-width: 1320px; margin: 0 auto; padding: 40px 16px 64px; }
+  h1 { font-size: 28px; margin: 0 0 4px; letter-spacing: -.01em; }
+  .lede { color: var(--muted); margin: 0 0 32px; max-width: 70ch; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); margin: 36px 0 12px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr)); gap: 20px; }
+  figure { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  figure img { display: block; width: 100%; height: auto; aspect-ratio: 1200 / 630; background: var(--line); }
+  figure.hero img { aspect-ratio: 16 / 9; }
+  figcaption { padding: 12px 14px 14px; display: grid; gap: 2px; }
+  figcaption b { font-weight: 600; font-size: 14px; }
+  figcaption span { color: var(--muted); font-size: 13px; }
+</style></head>
+<body><main>
+  <h1>TRACE banners</h1>
+  <p class="lede">Real captures of the Release WebAssembly build, one session at DPR 3. Each image opens its 2x export (or the hero). Picks: focus-pump and stylized-split.</p>
+  <h2>Showcase</h2>
+  <div class="grid">
+    <figure><a href="finals/showcase-desk@2x.png"><img src="finals/showcase-desk@1x.png" alt="Desk and phones" loading="lazy"></a>
+      <figcaption><b>showcase-desk</b><span>P-204&#x27;s Inspect tab with the seal housing reading ready (Dark window) between Today and the Motor body point sheet (Light phones).</span></figcaption></figure>
+    <figure><a href="finals/showcase-phones@2x.png"><img src="finals/showcase-phones@1x.png" alt="Three phones" loading="lazy"></a>
+      <figcaption><b>showcase-phones</b><span>After the round: Today with five changes waiting (Dark), the Sync queue (Light, centre) and Findings (Dark), on field green.</span></figcaption></figure>
+    <figure><a href="finals/showcase-daynight@2x.png"><img src="finals/showcase-daynight@1x.png" alt="Day and night tablets" loading="lazy"></a>
+      <figcaption><b>showcase-daynight</b><span>Today&#x27;s round on a Light tablet and the pump inspection on a Dark tablet, on a day-to-night green.</span></figcaption></figure>
+  </div>
+  <h2>Focused</h2>
+  <div class="grid">
+    <figure><a href="finals/focus-pump@2x.png"><img src="finals/focus-pump@1x.png" alt="The pump in 3D" loading="lazy"></a>
+      <figcaption><b>focus-pump · pick</b><span>P-204, the CPU-drawn 3D centrifugal pump, with its four inspection points: Pass, Fail, Watch and Pass.</span></figcaption></figure>
+    <figure><a href="finals/focus-inspector@2x.png"><img src="finals/focus-inspector@1x.png" alt="The call" loading="lazy"></a>
+      <figcaption><b>focus-inspector</b><span>The point inspector at the moment of the call: 7.6 mm/s, out of range, Fail, a note and a photo, the pump blurred behind.</span></figcaption></figure>
+    <figure><a href="finals/focus-findings@2x.png"><img src="finals/focus-findings@1x.png" alt="Corrective work" loading="lazy"></a>
+      <figcaption><b>focus-findings</b><span>Findings: the new High action raised from the seal housing, ready to dispatch, above yesterday&#x27;s, ready to close.</span></figcaption></figure>
+    <figure><a href="finals/focus-sync@2x.png"><img src="finals/focus-sync@1x.png" alt="Offline queue" loading="lazy"></a>
+      <figcaption><b>focus-sync</b><span>The Sync queue: four inspections and a corrective action saved on the device, each Pending.</span></figcaption></figure>
+  </div>
+  <h2>Stylized</h2>
+  <div class="grid">
+    <figure><a href="finals/stylized-split@2x.png"><img src="finals/stylized-split@1x.png" alt="Light and Dark split" loading="lazy"></a>
+      <figcaption><b>stylized-split · pick</b><span>One inspection in Dark and Light, cut on a single diagonal through window and backdrop.</span></figcaption></figure>
+    <figure><a href="finals/stylized-fleet@2x.png"><img src="finals/stylized-fleet@1x.png" alt="Three machines" loading="lazy"></a>
+      <figcaption><b>stylized-fleet</b><span>The round&#x27;s three machines in 3D: the compressor and the air handler turned away, the pump in front.</span></figcaption></figure>
+    <figure><a href="finals/stylized-flow@2x.png"><img src="finals/stylized-flow@1x.png" alt="The round, phone by phone" loading="lazy"></a>
+      <figcaption><b>stylized-flow</b><span>Today, a point, Sync, Findings and Today again at phone width, Light and Dark alternating, on one turned plane.</span></figcaption></figure>
+  </div>
+  <h2>Titled (optional)</h2>
+  <div class="grid">
+    <figure><a href="finals/focus-pump-titled@2x.png"><img src="finals/focus-pump-titled@1x.png" alt="Pump, titled" loading="lazy"></a>
+      <figcaption><b>focus-pump-titled</b><span>The 3D pump banner with the TRACE name in Roboto Medium (optional).</span></figcaption></figure>
+  </div>
+  <h2>Heroes</h2>
+  <div class="grid">
+    <figure class="hero"><a href="finals/focus-pump-hero.png"><img src="finals/focus-pump-hero.png" alt="The pump in 3D" loading="lazy"></a>
+      <figcaption><b>focus-pump-hero · 1920 × 1080</b><span>P-204, the CPU-drawn 3D centrifugal pump, with its four inspection points: Pass, Fail, Watch and Pass.</span></figcaption></figure>
+    <figure class="hero"><a href="finals/stylized-split-hero.png"><img src="finals/stylized-split-hero.png" alt="Light and Dark split" loading="lazy"></a>
+      <figcaption><b>stylized-split-hero · 1920 × 1080</b><span>One inspection in Dark and Light, cut on a single diagonal through window and backdrop.</span></figcaption></figure>
+  </div>
+</main></body></html>

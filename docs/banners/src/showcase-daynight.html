@@ -1,0 +1,27 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>showcase-daynight</title>
+<link rel="stylesheet" href="frames.css">
+<style>
+  /* Two field tablets, day and night, turned toward each other: Today's round in Light (P-204 failing, AHU-12 and C-07
+     on watch), and P-204's Inspect tab in Dark with the Seal housing reading ready to complete. Same session, before
+     the round was completed. The backdrop runs from the day Background #EFF4F1 and PrimaryContainer #9FF2CB to the
+     night Background #08100F through PrimaryContainer #9FF2CB (softened), PrimaryVariantDark #0C6B48 and Dark
+     PrimaryContainer #17352C, so the turn from day to night stays green, never grey. */
+  .stage { background:
+      radial-gradient(45% 70% at 22% 40%, rgba(159,242,203,.55) 0%, rgba(159,242,203,0) 70%),
+      radial-gradient(45% 70% at 80% 60%, rgba(12,107,72,.45) 0%, rgba(12,107,72,0) 70%),
+      linear-gradient(100deg, #EEF4F1 0%, #E1ECE6 36%, #9FD7BC 45%, #0C6B48 53%, #17352C 62%, #0B1513 82%, #08100F 100%); --grain: .05; }
+  .row { position: absolute; inset: 0; perspective: 2400px; }
+  .t { --bezel: 12px; --r: 26px; width: 560px; height: 424px; }
+  .tl { left: 62px; top: 56px; transform: rotateY(7deg); transform-origin: 100% 50%; }
+  .tr { left: 578px; top: 150px; transform: rotateY(-7deg); transform-origin: 0% 50%; }
+  .floor { position: absolute; left: 10%; right: 6%; bottom: 14px; height: 50px; border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(0,0,0,.28), rgba(0,0,0,0)); filter: blur(10px); }
+</style></head>
+<body><div class="stage grain on-night">
+  <div class="floor"></div>
+  <div class="row">
+    <div class="device t tl"><div class="screen"><img src="cap/light-tab-today@2x.png"></div></div>
+    <div class="device t tr"><div class="screen"><img src="cap/dark-tab-inspect@2x.png"></div></div>
+  </div>
+</div></body></html>

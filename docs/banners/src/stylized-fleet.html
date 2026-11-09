@@ -1,0 +1,34 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>stylized-fleet</title>
+<link rel="stylesheet" href="frames.css">
+<style>
+  /* Today's round as three machines, each the asset's own 3D Inspect card (Dark): C-07 the rotary screw compressor (left),
+     AHU-12 the air handler (right) and, in front, P-204 the centrifugal pump, every inspection point pinned to its
+     machine. The cards stand like a cover flow: the pump faces the viewer, the other two turn away on either side. Night Background #08100F, the
+     surveyor's grid on the floor plane in OutlineVariant #1E2E29, a Primary #6EE7AE floor light. */
+  .stage { background:
+      radial-gradient(60% 55% at 50% 40%, #0F1C19 0%, #08100F 75%); --grain: .05; }
+  .floor { position: absolute; left: -300px; right: -300px; top: 330px; height: 600px; transform-origin: 50% 0;
+    transform: perspective(700px) rotateX(62deg);
+    background-image: linear-gradient(rgba(44,64,58,.8) 1px, transparent 1px), linear-gradient(90deg, rgba(44,64,58,.8) 1px, transparent 1px);
+    background-size: 48px 48px;
+    -webkit-mask-image: radial-gradient(50% 70% at 50% 0%, #000 0%, rgba(0,0,0,.4) 50%, transparent 85%); }
+  .pool { position: absolute; left: 160px; right: 160px; top: 400px; height: 170px; border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(110,231,174,.16), rgba(110,231,174,0)); filter: blur(16px); }
+  .shelf { position: absolute; inset: 0; perspective: 1600px; }
+  .card { position: absolute; width: 560px; height: 299px; border-radius: 14px; overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(232,243,238,.08), 0 30px 50px -16px rgba(0,0,0,.75); transform-origin: 50% 100%; }
+  .card img { width: 100%; height: 100%; }
+  .c1 { left: 64px;  top: 92px; width: 500px; height: 267px; transform: rotateY(42deg); transform-origin: 0% 100%; filter: brightness(.82); }
+  .c2 { left: 636px; top: 92px; width: 500px; height: 267px; transform: rotateY(-42deg); transform-origin: 100% 100%; filter: brightness(.82); }
+  .c3 { left: 290px; top: 180px; width: 620px; height: 331px; }
+</style></head>
+<body><div class="stage grain on-night">
+  <div class="floor"></div>
+  <div class="pool"></div>
+  <div class="shelf">
+    <div class="card c1"><img src="cap/dark-c07-card@2x.png"></div>
+    <div class="card c2"><img src="cap/dark-ahu-card@2x.png"></div>
+    <div class="card c3"><img src="cap/dark-pump-card@2x.png"></div>
+  </div>
+</div></body></html>

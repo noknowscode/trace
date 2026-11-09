@@ -1,0 +1,29 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>stylized-flow</title>
+<link rel="stylesheet" href="frames.css">
+<style>
+  /* One round, left to right, at phone width and alternating Light and Dark: Today's assigned work, the Motor body
+     point with 73 °C and Pass, the Sync queue holding the round, Findings with the new corrective action, and Today
+     again with five changes waiting to sync. One session. The phones stand on one plane, the round's end nearest the viewer.
+     Backdrop from the Secondary family (the queue's colour): OnSecondaryContainer #001E2E into SecondaryContainer
+     (Dark) #123449, lit by Secondary (Dark) #7FC9FF and Primary (Dark) #6EE7AE. */
+  .stage { background:
+      radial-gradient(50% 60% at 30% 40%, rgba(127,201,255,.22) 0%, rgba(127,201,255,0) 70%),
+      radial-gradient(45% 55% at 78% 70%, rgba(110,231,174,.14) 0%, rgba(110,231,174,0) 70%),
+      linear-gradient(160deg, #123449 0%, #0B2738 45%, #001E2E 75%, #08100F 100%); --grain: .06; }
+  .survey { --gs: 24px; --gc: rgba(127,201,255,.08); --gc2: rgba(127,201,255,.04);
+    --gm: radial-gradient(75% 85% at 45% 45%, #000 0%, rgba(0,0,0,.5) 60%, transparent 100%); }
+  .plane { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform-style: preserve-3d;
+    transform: perspective(1600px) rotateY(-22deg) rotateX(5deg) translateX(-62px); }
+  .device { width: 206px; height: 432px; --bezel: 8px; --r: 32px; top: -216px; }
+</style></head>
+<body><div class="stage grain on-night">
+  <div class="survey"></div>
+  <div class="plane">
+    <div class="device" style="left:-584px"><div class="screen"><img src="cap/light-phone-today@2x.png"></div></div>
+    <div class="device" style="left:-352px"><div class="screen"><img src="cap/dark-phone-point@2x.png"></div></div>
+    <div class="device" style="left:-120px"><div class="screen"><img src="cap/light-phone-sync@2x.png"></div></div>
+    <div class="device" style="left:112px"><div class="screen"><img src="cap/dark-phone-findings@2x.png"></div></div>
+    <div class="device" style="left:344px"><div class="screen"><img src="cap/light-phone-today-after@2x.png"></div></div>
+  </div>
+</div></body></html>
