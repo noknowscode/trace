@@ -33,7 +33,7 @@ Written specs win over the prototype. Complete Must Have before Nice to Have.
 
 ## Project Structure
 
-- `Trace/` — single-project Uno app (Uno.Sdk 7.0.0-dev.115, pinned in `global.json`)
+- `Trace/` — single-project Uno app (Uno.Sdk 7.0.5, pinned in `global.json`)
   - `Trace/Domain/` — `Models/` (immutable records: Asset, Assignment, InspectionPoint, InspectionEvent, Evidence, CorrectiveAction, SyncOperation), `Enums/` (Disposition, SyncState, EvidenceType, CorrectivePriority, ActionStatus), `Rules/` (reading validation, Fail-requires-evidence, idempotent completion)
   - `Trace/Services/` — application service interfaces + simulated implementations (IAssetRepository, IInspectionRepository, ISyncQueue, INetworkStatusService, ICameraService, IAssetScanService, …)
   - `Trace/Infrastructure/` — `Persistence/`, `Repositories/`, `Platform/`, `Seed/` (P-204 pump scenario per UNO-BUILD-SPEC). The store keeps one JSON file per section under `LocalFolder/trace`; a mutation that changes several sections goes through a journal (`commit.json`, `StoreCommit`) so it lands whole, and a file that cannot be read is renamed `<file>.unreadable-<time>`, kept, and reported on Sync. Evidence photos are referenced as `ms-appdata:///local/trace/…`. `CrashReporter` logs what nothing else caught (the launch, the UI thread, the process, unobserved tasks) to the app log and `crash.log` in the local folder.
