@@ -25,47 +25,34 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <VisualStateManager.VisualStateGroups>
-            <VisualStateGroup x:Name="FormFactorStates">
-                <VisualState x:Name="Handheld">
-                    <VisualState.StateTriggers>
-                        <AdaptiveTrigger MinWindowWidth="0" />
-                    </VisualState.StateTriggers>
-                    <VisualState.Setters>
-                        <Setter Target="RailHost.Visibility" Value="Collapsed" />
-                        <Setter Target="BottomNavigation.Visibility" Value="Visible" />
-                    </VisualState.Setters>
-                </VisualState>
-                <VisualState x:Name="Workstation">
-                    <VisualState.StateTriggers>
-                        <AdaptiveTrigger MinWindowWidth="900" />
-                    </VisualState.StateTriggers>
-                    <VisualState.Setters>
-                        <Setter Target="RailHost.Visibility" Value="Visible" />
-                        <Setter Target="BottomNavigation.Visibility" Value="Collapsed" />
-                    </VisualState.Setters>
-                </VisualState>
-            </VisualStateGroup>
-        </VisualStateManager.VisualStateGroups>
-
         <!--
-            Wide form factors: a persistent left rail. The bar is hosted inside a
-            fixed-height host because the vertical style divides whatever height it is given
-            equally between its items: unbounded it collapses, stretched it spreads five
-            destinations across the whole window. 360 gives each of the five a 72 high slot.
+            Navigation follows the width category (utu:Responsive, Toolkit default breakpoints):
+            Narrow (a phone, below 600) gets the bottom bar within thumb reach; Normal, Wide and
+            Widest (tablets and workstations) get a persistent left rail, so the content keeps
+            its full height.
+
+            The rail's bar is hosted inside a fixed-height host because the vertical style
+            divides whatever height it is given equally between its items: unbounded it
+            collapses, stretched it spreads five destinations across the whole window. The bar
+            paints Material's tinted navigation surface (Surface under NavigationTabBarTintBrush);
+            the host paints the same two layers for the full window height, or the rail's surface
+            would stop where its items do.
         -->
-        <Border x:Name="RailHost"
-                Grid.Row="0"
-                Grid.RowSpan="2"
-                Grid.Column="0"
-                Visibility="Collapsed"
-                Background="{ThemeResource SurfaceBrush}"
-                BorderBrush="{ThemeResource OutlineVariantBrush}"
-                BorderThickness="0,0,1,0">
+        <Grid x:Name="RailHost"
+              Grid.Row="0"
+              Grid.RowSpan="2"
+              Grid.Column="0"
+              Visibility="{utu:Responsive Narrow=Collapsed, Normal=Visible}"
+              Background="{ThemeResource SurfaceBrush}"
+              BorderBrush="{ThemeResource OutlineVariantBrush}"
+              BorderThickness="{StaticResource DividerEnd}">
+        <Border Background="{ThemeResource NavigationTabBarTintBrush}" />
         <utu:TabBar x:Name="NavigationRail"
+                    AutomationProperties.Name="Destinations"
+                    IsTabStop="False"
                     VerticalAlignment="Top"
-                    Margin="0,12,0,0"
-                    Height="360"
+                    Margin="{StaticResource GapTopM}"
+                    Height="{StaticResource RailHeight}"
                     Style="{StaticResource MaterialVerticalTabBarStyle}"
                     uen:Region.Attached="True">
             <utu:TabBarItem uen:Region.Name="Today"
@@ -111,7 +98,7 @@
                 </utu:TabBarItem.Icon>
             </utu:TabBarItem>
         </utu:TabBar>
-        </Border>
+        </Grid>
 
         <!-- Destinations. All start collapsed; the Visibility navigator reveals one. -->
         <Grid Grid.Row="0"
@@ -133,17 +120,26 @@
             <Grid uen:Region.Name="Findings" Visibility="Collapsed">
                 <local:SupervisorFindingsPage />
             </Grid>
-            <Grid uen:Region.Name="Asset" Visibility="Collapsed">
+            <!--
+                The navigator keeps the view model it finds on a child it shows again, so every
+                asset after the first would open on the first one's workspace. MainPage drops the
+                asset's model when this region is hidden (code-behind), and the next request
+                builds one from the asset it carries.
+            -->
+            <Grid x:Name="AssetRegion" uen:Region.Name="Asset" Visibility="Collapsed">
                 <local:AssetPage />
             </Grid>
         </Grid>
 
-        <!-- Handheld: a bottom bar within thumb reach. -->
+        <!-- Narrow: a bottom bar within thumb reach. -->
         <utu:TabBar x:Name="BottomNavigation"
+                    AutomationProperties.Name="Destinations"
+                    IsTabStop="False"
                     Grid.Row="1"
                     Grid.Column="0"
                     Grid.ColumnSpan="2"
                     VerticalAlignment="Bottom"
+                    Visibility="{utu:Responsive Narrow=Visible, Normal=Collapsed}"
                     Style="{StaticResource MaterialBottomTabBarStyle}"
                     utu:SafeArea.Insets="Bottom"
                     uen:Region.Attached="True">

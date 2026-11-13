@@ -82,8 +82,9 @@ public sealed class SceneModel
         // mostly empty; a box is tighter but its diagonal corners still project well
         // outside the silhouette, which costs almost as much. Every eighth vertex tracks
         // the real outline closely enough to frame against and keeps the per-frame fit
-        // cheap.
-        FramingPoints = [.. parts.SelectMany(part => part.Vertices).Where((_, i) => i % 8 == 0)];
+        // cheap. An array rather than a collection expression: the WinAppSDK build rejects
+        // one that targets IReadOnlyList<T> (CsWinRT1032).
+        FramingPoints = parts.SelectMany(part => part.Vertices).Where((_, i) => i % 8 == 0).ToArray();
     }
 
     /// <summary>A decimated vertex set the camera fits the viewport around.</summary>

@@ -1,4 +1,6 @@
-namespace Trace.Presentation.Controls;
+using Microsoft.UI.Xaml.Automation;
+
+﻿namespace Trace.Presentation.Controls;
 
 /// <summary>
 /// The common heading for every destination: where you are, what it is, and the controls
@@ -11,7 +13,8 @@ public sealed partial class PageHeader : UserControl
         new PropertyMetadata(string.Empty, (d, e) => ((PageHeader)d).HasEyebrow = Show(e.NewValue)));
 
     public static readonly DependencyProperty TitleProperty = DependencyProperty.Register(
-        nameof(Title), typeof(string), typeof(PageHeader), new PropertyMetadata(string.Empty));
+        nameof(Title), typeof(string), typeof(PageHeader),
+        new PropertyMetadata(string.Empty, (d, e) => AutomationProperties.SetName(d, e.NewValue as string ?? string.Empty)));
 
     public static readonly DependencyProperty SupportingProperty = DependencyProperty.Register(
         nameof(Supporting), typeof(string), typeof(PageHeader),

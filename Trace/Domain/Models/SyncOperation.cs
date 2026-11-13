@@ -1,5 +1,3 @@
-using Trace.Domain.Enums;
-
 namespace Trace.Domain.Models;
 
 /// <summary>
@@ -16,9 +14,4 @@ public partial record SyncOperation(
     SyncState Status,
     int AttemptCount,
     bool HasAttachments,
-    string? Error)
-{
-    public bool IsRetryable => Status == SyncState.Failed;
-
-    public bool HasError => !string.IsNullOrWhiteSpace(Error);
-}
+    string? Error);

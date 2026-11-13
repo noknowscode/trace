@@ -1,0 +1,43 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>stylized-split-hero</title>
+<link rel="stylesheet" href="frames.css">
+<style>
+  /* Hero (1920 x 1080) of stylized-split. One inspection, one moment, both themes: P-204's Inspect tab with the Seal housing point ready to complete
+     (7.6 mm/s, Fail, a note and a photo), captured in Dark, then in Light after the switch on Today; the draft is the
+     same one, so every value agrees. Cut on one diagonal through backdrop and window: Dark on the machine side,
+     Light on the inspector side. Night Background #08100F with the surveyor's grid; day Background #EFF4F1 into
+     PrimaryContainer #9FF2CB; the seam is Dark Primary #6EE7AE. The window shows the whole page down to the Complete point button (the last 10 CSS px of empty page are cut). */
+  .layer { position: absolute; inset: 0; }
+  .night { background:
+      radial-gradient(70% 80% at 22% 40%, #13211D 0%, rgba(19,33,29,0) 70%),
+      linear-gradient(180deg, #0B1513 0%, #08100F 100%); }
+  .night .survey { --gs: 22px; --gc: rgba(44,64,58,.30); --gc2: rgba(30,46,41,.28);
+    --gm: linear-gradient(180deg, #000 0%, rgba(0,0,0,.4) 100%); }
+  .layer.day { background:
+      radial-gradient(70% 80% at 85% 25%, rgba(159,242,203,.55) 0%, rgba(159,242,203,0) 70%),
+      linear-gradient(180deg, #F4F8F6 0%, #E4ECE8 100%);
+    clip-path: polygon(var(--x1) 0, 100% 0, 100% 100%, var(--x2) 100%); }
+  .stage { --x1: 1216px; --x2: 944px; }
+  .win { left: 224px; top: 66px; width: 1472px; --bar: 36px; border-radius: 18px; }
+  .win .view { height: 911px; overflow: hidden; }
+  .win .bar { padding: 0 18px; gap: 9px; } .win .bar i { width: 12px; height: 12px; } .win .bar b { height: 18px; border-radius: 9px; }
+  .night .survey { --gs: 32px; }
+  .seam { position: absolute; inset: 0; pointer-events: none; }
+</style></head>
+<body><div class="stage">
+  <div class="layer night grain">
+    <div class="survey"></div>
+    <div class="win night"><div class="bar"><i></i><i></i><i></i><b></b></div><div class="view"><img src="cap/dark-desk-inspect@2x.png"></div></div>
+  </div>
+  <div class="layer day grain" style="--grain:.04">
+    <div class="win"><div class="bar"><i></i><i></i><i></i><b></b></div><div class="view"><img src="cap/light-desk-inspect@2x.png"></div></div>
+  </div>
+  <svg class="seam" width="1920" height="1080" viewBox="0 0 1920 1080">
+    <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6EE7AE" stop-opacity="0"/><stop offset=".15" stop-color="#6EE7AE" stop-opacity=".95"/>
+      <stop offset=".85" stop-color="#6EE7AE" stop-opacity=".95"/><stop offset="1" stop-color="#6EE7AE" stop-opacity="0"/></linearGradient>
+      <filter id="b" x="-50%" y="-10%" width="200%" height="120%"><feGaussianBlur stdDeviation="6"/></filter></defs>
+    <line x1="1216" y1="0" x2="944" y2="1080" stroke="url(#g)" stroke-width="9" filter="url(#b)" opacity=".5"/>
+    <line x1="1216" y1="0" x2="944" y2="1080" stroke="url(#g)" stroke-width="1.8"/>
+  </svg>
+</div></body></html>

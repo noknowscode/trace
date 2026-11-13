@@ -1,0 +1,100 @@
+﻿<UserControl x:Class="Trace.Presentation.Controls.AssetOverviewTab"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:Trace.Presentation.Controls"
+             xmlns:mvux="using:Uno.Extensions.Reactive.UI"
+             IsTabStop="False">
+
+    <!--
+        The asset's Overview tab, bound to the workspace (AssetModel): its condition and the
+        corrective work still open on it. One column at every width; the page caps it at
+        ContentMaxWidth.
+    -->
+    <ScrollViewer>
+        <StackPanel Spacing="{StaticResource SpaceM}">
+            <mvux:FeedView IsTabStop="False" Source="{Binding Asset}"
+                           ProgressTemplate="{StaticResource FeedProgressTemplate}"
+                           ErrorTemplate="{StaticResource FeedErrorTemplate}">
+                <mvux:FeedView.ValueTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource CardSurface}">
+                            <StackPanel Spacing="{StaticResource SpaceM}">
+                                <TextBlock Text="Condition" Style="{StaticResource SectionHeaderText}" />
+                                <controls:WrapPanel HorizontalSpacing="{StaticResource SpaceS}" VerticalSpacing="{StaticResource SpaceS}">
+                                    <controls:StatusChip
+                                        Severity="{Binding Data.Condition, Converter={StaticResource ToSeverity}}"
+                                        Text="{Binding Data.Condition}" />
+                                    <Border Style="{StaticResource ValueChip}">
+                                        <TextBlock Style="{StaticResource ChipValueText}">
+                                            <Run Text="{Binding Data.InspectedPointCount}" />
+                                            <Run Text="of" />
+                                            <Run Text="{Binding Data.PointCount}" />
+                                            <Run Text="points inspected" />
+                                        </TextBlock>
+                                    </Border>
+                                </controls:WrapPanel>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </mvux:FeedView.ValueTemplate>
+                <mvux:FeedView.NoneTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource CardSurface}">
+                            <StackPanel Spacing="{StaticResource SpaceS}">
+                                <controls:StatusChip Severity="Critical" Text="Asset unavailable" />
+                                <TextBlock Style="{StaticResource SupportingText}"
+                                           Text="This asset is no longer on the device. It may have been reassigned since your last sync." />
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </mvux:FeedView.NoneTemplate>
+            </mvux:FeedView>
+
+            <TextBlock Text="Open findings" Style="{StaticResource SectionHeaderText}" />
+            <mvux:FeedView IsTabStop="False" Source="{Binding Findings}"
+                           ProgressTemplate="{StaticResource FeedProgressTemplate}"
+                           ErrorTemplate="{StaticResource FeedErrorTemplate}">
+                <mvux:FeedView.ValueTemplate>
+                    <DataTemplate>
+                        <ItemsRepeater ItemsSource="{Binding Data}">
+                            <ItemsRepeater.Layout>
+                                <StackLayout Spacing="{StaticResource SpaceS}" />
+                            </ItemsRepeater.Layout>
+                            <ItemsRepeater.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Style="{StaticResource TileSurface}">
+                                        <StackPanel Spacing="{StaticResource SpaceXS}">
+                                            <TextBlock Text="{Binding PointLabel}"
+                                                       Style="{StaticResource EyebrowText}" />
+                                            <TextBlock Text="{Binding Summary}"
+                                                       Style="{StaticResource BodyText}"
+                                                       TextWrapping="Wrap" />
+                                            <controls:WrapPanel HorizontalSpacing="{StaticResource SpaceS}" VerticalSpacing="{StaticResource SpaceS}">
+                                                <controls:StatusChip
+                                                    Severity="{Binding Priority, Converter={StaticResource ToSeverity}}"
+                                                    Text="{Binding Priority}" />
+                                                <controls:StatusChip
+                                                    Severity="{Binding Status, Converter={StaticResource ToSeverity}}"
+                                                    Text="{Binding Status}" />
+                                                <controls:StatusChip Severity="Neutral"
+                                                                     Text="{Binding Assignee}" />
+                                            </controls:WrapPanel>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsRepeater.ItemTemplate>
+                        </ItemsRepeater>
+                    </DataTemplate>
+                </mvux:FeedView.ValueTemplate>
+                <mvux:FeedView.NoneTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource TileSurface}">
+                            <TextBlock Style="{StaticResource SupportingText}"
+                                       Text="No corrective work is open on this asset." />
+                        </Border>
+                    </DataTemplate>
+                </mvux:FeedView.NoneTemplate>
+            </mvux:FeedView>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

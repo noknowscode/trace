@@ -52,11 +52,12 @@ anchor contract, and the renderer changes that let it scale.
   depth buffer. That sets the asset budget: roughly 8–15k triangles, parts kept convex
   and non-interpenetrating. Real assets must be prepared to that budget; the pipeline
   does not decimate.
-- The view draws through `SKCanvasElement` where `IsSupportedOnCurrentPlatform()` is
-  true (desktop; Android with `SkiaRenderer`) and through `SKXamlCanvas` on the WinAppSDK
-  head. `SKCanvasElement` hands over the window canvas in logical units with the display
-  scale already applied, so the renderer takes a pixel-density argument and sizes its
-  supersampled surface for real pixels; `SKXamlCanvas` reports device pixels directly.
+- The view draws through `SKCanvasElement` on every Skia-rendered head (desktop, Android,
+  iOS, WebAssembly) and through `SKXamlCanvas` on the WinAppSDK head, the only build that
+  compiles that fallback in. `SKCanvasElement` hands over the window canvas in logical
+  units with the display scale already applied, so the renderer takes a pixel-density
+  argument and sizes its supersampled surface for real pixels; `SKXamlCanvas` reports
+  device pixels directly.
 
 **Testing**
 - Round trip: export the parametric pump through the glTF writer, import it, and assert
@@ -142,7 +143,9 @@ Implemented and verified on the desktop head (2026-09-12):
   pipeline; who prepares them, and under what licence for a public sample repo?
 - Should the loader read glTF roughness/metallic into `Material.Gloss`, or is a per-part
   constant enough for the flat-shaded look?
-- The Android head has not been built here. SharpGLTF's reflection-based JSON path needs
-  a trimming run before it ships.
-- The WinAppSDK fallback (`SKXamlCanvas`) compiles but has not been run here; it is the
-  path that was in use before the switch, unchanged apart from the plumbing.
+- The Android and WebAssembly heads build, but the loader has not been run on them.
+  SharpGLTF.Core reports trim warnings (IL2104) in the WebAssembly publish, so the
+  WebAssembly linker config keeps it whole; Android has not had a trimmed runtime check.
+- The WinAppSDK fallback (`SKXamlCanvas`) is compiled by CI's WinAppSDK build check but
+  has not been run; it is the path that was in use before the switch, unchanged apart
+  from the plumbing.

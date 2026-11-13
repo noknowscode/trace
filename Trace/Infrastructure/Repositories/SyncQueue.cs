@@ -1,7 +1,4 @@
-using Trace.Domain.Enums;
-using Trace.Domain.Models;
 using Trace.Infrastructure.Persistence;
-using Trace.Services;
 
 namespace Trace.Infrastructure.Repositories;
 
@@ -15,6 +12,10 @@ namespace Trace.Infrastructure.Repositories;
 /// actually happens — and succeeds on retry. Everything else succeeds immediately. That
 /// makes the failed and retry states reachable in a demo without pretending a network
 /// round-trip took place.
+///
+/// Order holds as it would against a server: inspections are sent first, corrective work only
+/// once the inspection it came from has gone, and a record's later change only after its earlier
+/// one. Work that has to wait stays Pending, unattempted.
 /// </remarks>
 public sealed class SyncQueue : ISyncQueue
 {
@@ -44,6 +45,9 @@ public sealed class SyncQueue : ISyncQueue
     public IAsyncEnumerable<int> WatchPendingCount(CancellationToken ct) =>
         StoreProjections.Project(_store.Watch(ct), s => s.PendingSyncCount, ct);
 
+    public IAsyncEnumerable<IImmutableList<string>> WatchSetAside(CancellationToken ct) =>
+        StoreProjections.ProjectList(_store.Watch(ct), s => s.SetAside, ct);
+
     public async ValueTask<SyncResult> SyncAsync(CancellationToken ct)
     {
         if (!_network.IsOnline)
@@ -53,18 +57,34 @@ public sealed class SyncQueue : ISyncQueue
 
         var succeeded = 0;
         var failed = 0;
+        var held = 0;
 
         await _store.MutateAsync(
             snapshot =>
             {
-                var settledEventIds = new List<string>();
+                // What each inspection's own record says after this pass: Synced once its upload
+                // went, Failed while it did not, so History never shows a failed upload as Pending.
+                var eventStates = new Dictionary<string, SyncState>();
                 var queue = snapshot.Queue.ToList();
 
-                for (var i = 0; i < queue.Count; i++)
+                // Inspections go first: corrective work refers to the inspection it came from, so
+                // it may leave the device only after that inspection has (OrderBy is stable).
+                var order = Enumerable.Range(0, queue.Count)
+                    .OrderBy(i => queue[i].EntityType == nameof(InspectionEvent) ? 0 : 1)
+                    .ToList();
+
+                foreach (var i in order)
                 {
                     var operation = queue[i];
                     if (operation.Status is not (SyncState.Pending or SyncState.Failed))
                     {
+                        continue;
+                    }
+
+                    if (WaitsForEarlierWork(i, queue, snapshot.Actions))
+                    {
+                        // Not attempted: it stays Pending and goes on a later pass.
+                        held++;
                         continue;
                     }
 
@@ -79,6 +99,7 @@ public sealed class SyncQueue : ISyncQueue
                             AttemptCount = attempt,
                             Error = "Evidence upload interrupted. Retry when the signal improves.",
                         };
+                        Settle(operation, SyncState.Failed);
                         continue;
                     }
 
@@ -89,11 +110,7 @@ public sealed class SyncQueue : ISyncQueue
                         AttemptCount = attempt,
                         Error = null,
                     };
-
-                    if (operation.EntityType == nameof(InspectionEvent))
-                    {
-                        settledEventIds.Add(operation.EntityId);
-                    }
+                    Settle(operation, SyncState.Synced);
                 }
 
                 if (succeeded == 0 && failed == 0)
@@ -101,48 +118,91 @@ public sealed class SyncQueue : ISyncQueue
                     return snapshot;
                 }
 
-                var trimmed = Trim(queue.ToImmutableList());
-                var events = settledEventIds.Count == 0
-                    ? snapshot.Events
-                    : snapshot.Events
-                        .Select(e => settledEventIds.Contains(e.Id)
-                            ? e with { SyncState = SyncState.Synced }
-                            : e)
-                        .ToImmutableList();
+                return snapshot with
+                {
+                    Queue = Trim(queue.ToImmutableList()),
+                    Events = WithSyncStates(snapshot.Events, eventStates),
+                };
 
-                return snapshot with { Queue = trimmed, Events = events };
+                void Settle(SyncOperation operation, SyncState state)
+                {
+                    if (operation.EntityType == nameof(InspectionEvent))
+                    {
+                        eventStates[operation.EntityId] = state;
+                    }
+                }
             },
             ct);
 
-        _log.LogInformation("Sync pass finished: {Succeeded} succeeded, {Failed} failed.", succeeded, failed);
-        return new SyncResult(succeeded, failed, WasOffline: false);
+        _log.LogInformation(
+            "Sync pass finished: {Succeeded} succeeded, {Failed} failed, {Held} held for their inspection.",
+            succeeded, failed, held);
+        return new SyncResult(succeeded, failed, WasOffline: false, Held: held);
     }
-
-    public async ValueTask RetryAsync(string operationId, CancellationToken ct) =>
-        await _store.MutateAsync(
-            snapshot => snapshot with
-            {
-                Queue = snapshot.Queue
-                    .Select(o => o.Id == operationId && o.Status == SyncState.Failed
-                        ? o with { Status = SyncState.Pending, Error = null }
-                        : o)
-                    .ToImmutableList(),
-            },
-            ct);
 
     public async ValueTask RetryAllFailedAsync(CancellationToken ct) =>
         await _store.MutateAsync(
-            snapshot => snapshot.Queue.Any(o => o.Status == SyncState.Failed)
-                ? snapshot with
+            snapshot =>
+            {
+                var retried = snapshot.Queue.Where(o => o.Status == SyncState.Failed).ToList();
+                if (retried.Count == 0)
+                {
+                    return snapshot;
+                }
+
+                // A failed inspection is queued again, and its record says so.
+                var events = retried
+                    .Where(o => o.EntityType == nameof(InspectionEvent))
+                    .ToDictionary(o => o.EntityId, _ => SyncState.Pending);
+
+                return snapshot with
                 {
                     Queue = snapshot.Queue
                         .Select(o => o.Status == SyncState.Failed
                             ? o with { Status = SyncState.Pending, Error = null }
                             : o)
                         .ToImmutableList(),
-                }
-                : snapshot,
+                    Events = WithSyncStates(snapshot.Events, events),
+                };
+            },
             ct);
+
+    /// <summary>
+    /// True when the operation at <paramref name="index"/> must wait: an earlier change to the same
+    /// record has not synced yet (an action's status update waits for the action), or it is
+    /// corrective work whose source inspection is still pending or failed.
+    /// </summary>
+    private static bool WaitsForEarlierWork(int index, List<SyncOperation> queue, IImmutableList<CorrectiveAction> actions)
+    {
+        var operation = queue[index];
+
+        if (queue.Take(index).Any(o => IsOutstanding(o) && o.EntityType == operation.EntityType && o.EntityId == operation.EntityId))
+        {
+            return true;
+        }
+
+        if (operation.EntityType != nameof(CorrectiveAction)
+            || actions.FirstOrDefault(a => a.Id == operation.EntityId) is not { } action)
+        {
+            return false;
+        }
+
+        return queue.Any(o => IsOutstanding(o)
+            && o.EntityType == nameof(InspectionEvent)
+            && o.EntityId == action.SourceInspectionEventId);
+    }
+
+    private static bool IsOutstanding(SyncOperation operation) =>
+        operation.Status is SyncState.Pending or SyncState.Failed;
+
+    private static IImmutableList<InspectionEvent> WithSyncStates(
+        IImmutableList<InspectionEvent> events,
+        IReadOnlyDictionary<string, SyncState> states) =>
+        states.Count == 0
+            ? events
+            : events
+                .Select(e => states.TryGetValue(e.Id, out var state) && e.SyncState != state ? e with { SyncState = state } : e)
+                .ToImmutableList();
 
     /// <summary>
     /// Enqueues a write. Called from the inspection workflow inside the same store mutation

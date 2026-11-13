@@ -1,0 +1,28 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>focus-sync</title>
+<link rel="stylesheet" href="frames.css">
+<style>
+  /* The offline queue (Dark): the round saved on the device first, five changes waiting to reach the server: four
+     inspections and the corrective action raised from the failed seal housing, each Pending. The page is laid back
+     from its bottom edge and turned a little; its own ground (Background #08100F) is the backdrop, so the crop has no
+     edge. SecondaryContainer #123449 (the Pending chips' colour) and PrimaryContainer #17352C glow behind it; the
+     surveyor's grid (OutlineVariant #1E2E29) shows only at the margins. */
+  .stage { background: #08100F; --grain: .05; }
+  /* the light falls on page and backdrop alike, so the crop has no edge */
+  .light { position: absolute; inset: 0; pointer-events: none; mix-blend-mode: screen; background:
+      radial-gradient(42% 50% at 74% 64%, rgba(18,52,73,.80) 0%, rgba(18,52,73,0) 75%),
+      radial-gradient(45% 55% at 26% 28%, rgba(23,53,44,.70) 0%, rgba(23,53,44,0) 75%); }
+  .survey { --gs: 22px; --gc: rgba(44,64,58,.30); --gc2: rgba(30,46,41,.26);
+    --gm: radial-gradient(80% 85% at 50% 50%, transparent 55%, rgba(0,0,0,.8) 85%, #000 100%); }
+  .list { position: absolute; left: 140px; top: 52px; width: 920px; height: 541px; transform-origin: 50% 100%;
+    transform: perspective(1800px) rotateX(15deg) rotateZ(-3deg);
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 3%, #000 97%, transparent 100%),
+                        linear-gradient(180deg, transparent 0%, #000 3%, #000 84%, transparent 100%);
+    -webkit-mask-composite: source-in; mask-composite: intersect; }
+  .list img { width: 100%; height: 100%; }
+</style></head>
+<body><div class="stage grain">
+  <div class="survey"></div>
+  <div class="list"><img src="cap/dark-sync-list@3x.png"></div>
+  <div class="light"></div>
+</div></body></html>

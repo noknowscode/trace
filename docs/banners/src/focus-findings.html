@@ -1,0 +1,33 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>focus-findings</title>
+<link rel="stylesheet" href="frames.css">
+<style>
+  /* Findings (Light), the supervisor's view: the corrective work raised from P-204's seal housing. The new action
+     (High, Open, Mechanical Team, ready to Dispatch) above yesterday's (High, Dispatched, ready to Close). The
+     column turns toward the viewer; "Assets needing attention", the column beside it, sits behind it out of focus.
+     Day Background #EFF4F1 as the ground, lit with WatchContainer #FFDEA6 (the Open chip) and ErrorContainer #FFDAD5
+     (the High chips); the surveyor's grid is OutlineVariant #C7D6D1. */
+  .stage { background: #EFF4F1; --grain: .045; }
+  .survey { --gs: 20px; --gc: rgba(199,214,209,.60); --gc2: rgba(199,214,209,.30);
+    --gm: radial-gradient(85% 90% at 50% 50%, transparent 60%, rgba(0,0,0,.8) 88%, #000 100%); }
+  .back { position: absolute; left: 700px; top: 96px; width: 450px; height: 323px; border-radius: 14px; overflow: hidden;
+    filter: blur(2.5px); transform: perspective(1400px) rotateY(-16deg) scale(.95); transform-origin: 100% 50%;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 8%, #000 100%); }
+  .back img { width: 100%; height: 100%; }
+  .front { position: absolute; left: 92px; top: 52px; width: 808px; height: 512px; transform-origin: 30% 50%;
+    transform: perspective(1900px) rotateY(12deg) rotateX(3deg);
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 2.5%, #000 97%, transparent 100%),
+                        linear-gradient(180deg, transparent 0%, #000 3%, #000 95%, transparent 100%);
+    -webkit-mask-composite: source-in; mask-composite: intersect; }
+  .front img { width: 100%; height: 100%; }
+  /* the light falls on the backdrop only, so the cards keep their own colours */
+  .light { position: absolute; inset: 0; pointer-events: none; background:
+      radial-gradient(34% 40% at 8% 100%, rgba(255,222,166,.6) 0%, rgba(255,222,166,0) 75%),
+      radial-gradient(36% 46% at 96% 96%, rgba(255,218,213,.7) 0%, rgba(255,218,213,0) 75%); }
+</style></head>
+<body><div class="stage grain">
+  <div class="survey"></div>
+  <div class="light"></div>
+  <div class="back"><img src="cap/light-findings-assets@2x.png"></div>
+  <div class="front"><img src="cap/light-findings-work@3x.png"></div>
+</div></body></html>

@@ -1,9 +1,4 @@
-using Microsoft.Extensions.Options;
-using Trace.Domain.Enums;
-using Trace.Domain.Models;
-using Trace.Domain.Rules;
 using Trace.Infrastructure.Persistence;
-using Trace.Services;
 
 namespace Trace.Infrastructure.Repositories;
 
@@ -11,9 +6,10 @@ namespace Trace.Infrastructure.Repositories;
 /// Applies the completion rules and commits the result.
 /// </summary>
 /// <remarks>
-/// Every write happens inside a single store mutation, so an inspection can never exist
-/// without the point move and the outbox entry that belong with it — including when the
-/// device is offline, where the local commit is the whole of the transaction.
+/// Every write happens inside a single store mutation, and the store commits a mutation whole
+/// (through its journal, see <see cref="StoreCommit"/>), so an inspection can never exist
+/// without the point move and the outbox entry that belong with it, not even after a crash
+/// halfway through the write. Offline, the local commit is the whole of the transaction.
 /// </remarks>
 public sealed class InspectionWorkflow : IInspectionWorkflow
 {
@@ -40,23 +36,33 @@ public sealed class InspectionWorkflow : IInspectionWorkflow
         InspectionPoint point,
         CancellationToken ct)
     {
-        var draft = InspectionDraft.For(point);
-
         // The lookup has to happen inside the mutation. Checking first and adding after
         // leaves a window where two openings of the same point each add a draft, and the
         // editor then saves into one row and resumes from another — each with its own
         // client token, so the idempotency guard on completion no longer matches either.
+        // A new draft starts from the point as stored, so straight after a completion it
+        // carries the reading just recorded rather than the one the caller last saw.
         var committed = await _store.MutateAsync(
-            s => s.FindDraft(point.Id) is null ? s with { Drafts = s.Drafts.Add(draft) } : s,
+            s => s.FindDraft(point.Id) is null
+                ? s with { Drafts = s.Drafts.Add(InspectionDraft.For(s.FindAsset(point.AssetId)?.FindPoint(point.Id) ?? point)) }
+                : s,
             ct);
 
-        return committed.FindDraft(point.Id) ?? draft;
+        return committed.FindDraft(point.Id) ?? InspectionDraft.For(point);
     }
 
     public async ValueTask SaveDraftAsync(InspectionDraft draft, CancellationToken ct) =>
         await _store.MutateAsync(
             s =>
             {
+                // A draft whose token already produced an event is finished work. Saving it
+                // again would park that token on the point, and every later Complete there
+                // would resolve to the old event as a duplicate and record nothing.
+                if (s.Events.Any(e => e.ClientToken == draft.ClientToken))
+                {
+                    return s;
+                }
+
                 var existing = s.Drafts.FirstOrDefault(d => d.PointId == draft.PointId);
 
                 if (existing is null)
@@ -96,9 +102,11 @@ public sealed class InspectionWorkflow : IInspectionWorkflow
         }
 
         // A repeated submission of the same draft resolves to the event it already produced.
-        // Nothing is written, and the caller sees the same outcome as the first tap.
+        // No second event is written, and the caller sees the same outcome as the first tap.
+        // A draft still holding that token is cleared, so the point takes new work again.
         if (snapshot.Events.FirstOrDefault(e => e.ClientToken == draft.ClientToken) is { } already)
         {
+            await _store.MutateAsync(s => WithoutDraft(s, draft.ClientToken), ct);
             return new CompletionOutcome(true, already, InspectionRules.Validate(point, draft), true, true);
         }
 
@@ -139,7 +147,7 @@ public sealed class InspectionWorkflow : IInspectionWorkflow
                 // read above and this mutation.
                 if (s.Events.Any(e => e.ClientToken == draft.ClientToken))
                 {
-                    return s;
+                    return WithoutDraft(s, draft.ClientToken);
                 }
 
                 var current = s.FindAsset(asset.Id);
@@ -190,6 +198,17 @@ public sealed class InspectionWorkflow : IInspectionWorkflow
         return new CompletionOutcome(true, stored, validation, WasQueued: !duplicate, WasDuplicate: duplicate);
     }
 
+    public async ValueTask<InspectionEvent?> FindFailureAwaitingActionAsync(string pointId, CancellationToken ct)
+    {
+        var snapshot = await _store.GetAsync(ct);
+        return InspectionRules.FailureAwaitingAction(snapshot.Events, snapshot.Actions, pointId);
+    }
+
+    private static TraceSnapshot WithoutDraft(TraceSnapshot s, string clientToken) =>
+        s.Drafts.Any(d => d.ClientToken == clientToken)
+            ? s with { Drafts = s.Drafts.RemoveAll(d => d.ClientToken == clientToken) }
+            : s;
+
     public async ValueTask<CorrectiveActionOutcome> RaiseCorrectiveActionAsync(
         CorrectiveActionRequest request,
         CancellationToken ct)
@@ -210,6 +229,27 @@ public sealed class InspectionWorkflow : IInspectionWorkflow
                 "The originating inspection is no longer available on the device.");
         }
 
+        // The action inherits its asset, point and source event, so all three must be the
+        // same inspection: work raised at one point must not carry another point's event.
+        if (source.AssetId != asset.Id || source.PointId != point.Id)
+        {
+            return CorrectiveActionOutcome.Rejected(
+                "That inspection was recorded at another point. Raise the action from the point that failed.");
+        }
+
+        if (source.Disposition != Disposition.Fail)
+        {
+            return CorrectiveActionOutcome.Rejected(
+                "Corrective work can only be raised from an inspection recorded as Fail.");
+        }
+
+        // One inspection, one action: a second Create, or a retry after a write that did land,
+        // resolves to the action already raised instead of queuing a duplicate.
+        if (snapshot.Actions.FirstOrDefault(a => a.SourceInspectionEventId == source.Id) is { } raised)
+        {
+            return new CorrectiveActionOutcome(true, raised, null, WasDuplicate: true);
+        }
+
         var now = _time.GetLocalNow();
         var action = InspectionRules.CreateCorrectiveAction(
             asset,
@@ -221,23 +261,32 @@ public sealed class InspectionWorkflow : IInspectionWorkflow
             now,
             $"ca-{Guid.NewGuid():N}");
 
-        await _store.MutateAsync(
-            s => s with
-            {
-                Actions = s.Actions.Add(action),
-                Queue = SyncQueue.Enqueue(
-                    s.Queue,
-                    nameof(CorrectiveAction),
-                    action.Id,
-                    "create",
-                    $"{action.Priority} · {action.Summary}",
-                    hasAttachments: false,
-                    now),
-            },
+        var committed = await _store.MutateAsync(
+            s => s.Actions.Any(a => a.SourceInspectionEventId == source.Id)
+                // Re-checked inside the lock: another request may have landed since the read.
+                ? s
+                : s with
+                {
+                    Actions = s.Actions.Add(action),
+                    Queue = SyncQueue.Enqueue(
+                        s.Queue,
+                        nameof(CorrectiveAction),
+                        action.Id,
+                        "create",
+                        $"{action.Priority} · {action.Summary}",
+                        hasAttachments: false,
+                        now),
+                },
             ct);
 
-        _log.LogInformation("Corrective action {ActionId} raised from {EventId}.", action.Id, source.Id);
+        var stored = committed.Actions.First(a => a.SourceInspectionEventId == source.Id);
+        var duplicate = !ReferenceEquals(stored, action);
 
-        return new CorrectiveActionOutcome(true, action, null);
+        if (!duplicate)
+        {
+            _log.LogInformation("Corrective action {ActionId} raised from {EventId}.", action.Id, source.Id);
+        }
+
+        return new CorrectiveActionOutcome(true, stored, null, duplicate);
     }
 }

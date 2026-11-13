@@ -1,8 +1,5 @@
-using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading.Channels;
-using Trace.Services;
-using Windows.Storage;
 
 namespace Trace.Infrastructure.Platform;
 

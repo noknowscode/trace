@@ -1,29 +1,24 @@
 <Application x:Class="Trace.App"
        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-       xmlns:um="using:Uno.Material"
        RequestedTheme="Dark">
 
   <Application.Resources>
     <ResourceDictionary>
       <ResourceDictionary.MergedDictionaries>
-        <!-- Load WinUI resources -->
         <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
         <utum:MaterialToolkitTheme
           xmlns:utum="using:Uno.Toolkit.UI.Material"
-          ColorOverrideSource="ms-appx:///Styles/ColorPaletteOverride.xaml">
-          <!-- NOTE: You can override the default Roboto font by providing your font assets here. -->
-          <!-- <utum:MaterialToolkitTheme.FontOverrideDictionary>
-            <ResourceDictionary>
-              <FontFamily x:Key="MaterialLightFontFamily">ms-appx:///Uno.Fonts.Roboto/Fonts/Roboto-Light.ttf#Roboto</FontFamily>
-              <FontFamily x:Key="MaterialMediumFontFamily">ms-appx:///Uno.Fonts.Roboto/Fonts/Roboto-Medium.ttf#Roboto</FontFamily>
-              <FontFamily x:Key="MaterialRegularFontFamily">ms-appx:///Uno.Fonts.Roboto/Fonts/Roboto-Regular.ttf#Roboto</FontFamily>
-            </ResourceDictionary>
-          </utum:MaterialToolkitTheme.FontOverrideDictionary> -->
+          xmlns:ut="using:Uno.Themes">
+          <!-- Uno Themes 9: colour overrides live on Colors (ColorOverrideSource is deprecated). -->
+          <utum:MaterialToolkitTheme.Colors>
+            <ut:ThemeColors OverrideSource="ms-appx:///Styles/ColorPaletteOverride.xaml" />
+          </utum:MaterialToolkitTheme.Colors>
         </utum:MaterialToolkitTheme>
 
         <!-- TRACE tokens and shared surfaces. Merged after Material so they can build on it. -->
         <ResourceDictionary Source="ms-appx:///Themes/Tokens.xaml" />
+        <ResourceDictionary Source="ms-appx:///Themes/ColorTokens.xaml" />
         <ResourceDictionary Source="ms-appx:///Themes/Icons.xaml" />
         <ResourceDictionary Source="ms-appx:///Themes/Converters.xaml" />
         <ResourceDictionary Source="ms-appx:///Themes/Styles.xaml" />

@@ -1,6 +1,4 @@
-using Trace.Domain.Models;
 using Trace.Infrastructure.Persistence;
-using Trace.Services;
 
 namespace Trace.Infrastructure.Repositories;
 

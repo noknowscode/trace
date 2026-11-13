@@ -7,6 +7,4 @@ namespace Trace.Services;
 public interface ILocalEvidenceStore
 {
     ValueTask<Evidence> SavePhotoAsync(string pointId, byte[] content, string extension, string caption, CancellationToken ct);
-
-    Evidence CreateNote(string caption);
 }

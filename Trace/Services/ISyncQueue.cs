@@ -1,5 +1,3 @@
-using Trace.Domain.Models;
-
 namespace Trace.Services;
 
 /// <summary>
@@ -12,16 +10,23 @@ public interface ISyncQueue
 
     IAsyncEnumerable<int> WatchPendingCount(CancellationToken ct);
 
-    /// <summary>Attempts every pending and failed operation. Returns the number that succeeded.</summary>
+    /// <summary>
+    /// The files of this device's records that could not be read at launch and were set aside.
+    /// While there are any, an empty queue does not mean everything reached the server.
+    /// </summary>
+    IAsyncEnumerable<IImmutableList<string>> WatchSetAside(CancellationToken ct);
+
+    /// <summary>
+    /// Attempts every pending and failed operation whose earlier work has synced, and says how
+    /// many went, failed, and waited for their inspection.
+    /// </summary>
     ValueTask<SyncResult> SyncAsync(CancellationToken ct);
 
-    /// <summary>Moves one failed operation back to pending so the next pass retries it.</summary>
-    ValueTask RetryAsync(string operationId, CancellationToken ct);
-
+    /// <summary>Moves every failed operation back to pending, with its inspection, for the next pass.</summary>
     ValueTask RetryAllFailedAsync(CancellationToken ct);
 }
 
-public sealed record SyncResult(int Succeeded, int Failed, bool WasOffline)
-{
-    public bool AnyAttempted => Succeeded + Failed > 0;
-}
+/// <param name="Held">
+/// Corrective work left pending because the inspection it came from has not synced yet.
+/// </param>
+public sealed record SyncResult(int Succeeded, int Failed, bool WasOffline, int Held = 0);

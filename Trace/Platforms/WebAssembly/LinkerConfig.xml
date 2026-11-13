@@ -1,0 +1,9 @@
+<linker>
+  <assembly fullname="Trace" />
+
+  <!--
+    The glTF loader behind the equipment view. SharpGLTF.Core reports trim warnings (IL2104), so it is kept whole
+    rather than trimmed into a loader that fails at runtime. The view would still fall back to the parametric model.
+  -->
+  <assembly fullname="SharpGLTF.Core" />
+</linker>

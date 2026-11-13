@@ -1,0 +1,26 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>showcase-desk</title>
+<link rel="stylesheet" href="frames.css">
+<style>
+  /* House style: phone, desktop window, phone, all before the round is completed. Today (Light), P-204's Inspect
+     tab with the Seal housing reading ready to complete (Dark), and the Motor body point sheet with 73 °C and Pass
+     (Light). Day backdrop: Background #EFF4F1 into SurfaceVariant #E4ECE8, a PrimaryContainer #9FF2CB glow and the
+     surveyor's grid in OutlineVariant #C7D6D1. */
+  .stage { background:
+      radial-gradient(60% 70% at 50% 34%, rgba(159,242,203,.42) 0%, rgba(159,242,203,0) 70%),
+      linear-gradient(180deg, #F2F6F4 0%, #E9F0EC 60%, #DFE8E3 100%); --grain: .05; }
+  .survey { --gs: 20px; --gc: rgba(199,214,209,.75); --gc2: rgba(199,214,209,.38);
+    --gm: radial-gradient(70% 75% at 50% 45%, #000 0%, rgba(0,0,0,.5) 55%, transparent 95%); }
+  .floor { position: absolute; left: 8%; right: 8%; bottom: 18px; height: 60px; border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(0,37,23,.20), rgba(0,37,23,0)); filter: blur(6px); }
+  .win { left: 232px; top: 52px; width: 720px; --bar: 22px; }
+  .p1 { left: 40px; top: 160px; width: 214px; height: 444px; --bezel: 8px; --r: 34px; }
+  .p2 { left: 944px; top: 160px; width: 214px; height: 444px; --bezel: 8px; --r: 34px; }
+</style></head>
+<body><div class="stage grain">
+  <div class="survey"></div>
+  <div class="floor"></div>
+  <div class="win night"><div class="bar"><i></i><i></i><i></i><b></b></div><img src="cap/dark-desk-inspect@2x.png"></div>
+  <div class="device p1"><div class="screen"><img src="cap/light-phone-today@2x.png"></div></div>
+  <div class="device p2"><div class="screen"><img src="cap/light-phone-point@2x.png"></div></div>
+</div></body></html>

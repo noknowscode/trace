@@ -172,17 +172,21 @@ public static class MeshBuilder
     /// A solid of revolution from a profile of (distance along axis, radius) pairs. This is
     /// what gives a pump volute or a receiver its shouldered, cast look.
     /// </summary>
+    /// <remarks>
+    /// The profile is an array so the collection expressions at the call sites build arrays:
+    /// the WinAppSDK build rejects one that targets <c>IReadOnlyList&lt;T&gt;</c> (CsWinRT1032).
+    /// </remarks>
     public static MeshPart Revolve(
         Vec3 origin,
         Vec3 axis,
-        IReadOnlyList<(float Along, float Radius)> profile,
+        (float Along, float Radius)[] profile,
         Material material,
         int segments = 28)
     {
         var direction = axis.Normalized;
         var parts = new List<MeshPart>();
 
-        for (var i = 0; i < profile.Count - 1; i++)
+        for (var i = 0; i < profile.Length - 1; i++)
         {
             var (a, ra) = profile[i];
             var (b, rb) = profile[i + 1];
@@ -195,7 +199,7 @@ public static class MeshBuilder
                 material,
                 segments,
                 capStart: i == 0,
-                capEnd: i == profile.Count - 2));
+                capEnd: i == profile.Length - 2));
         }
 
         return Combine(parts, material);

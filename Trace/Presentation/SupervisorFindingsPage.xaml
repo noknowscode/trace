@@ -8,34 +8,61 @@
       NavigationCacheMode="Required"
       Background="{ThemeResource BackgroundBrush}">
 
-    <utu:SafeArea Insets="VisibleBounds">
-        <Grid RowSpacing="16" Padding="{StaticResource PagePadding}">
+    <utu:SafeArea Insets="VisibleBounds" IsTabStop="False">
+        <!--
+            Narrow, Normal and Wide stack the two lists in one column (16 px sides on a phone, 24
+            from Normal). Widest is the supervisor's desk: corrective work and the assets behind
+            it sit side by side, in a wider column that stops at ReviewMaxWidth and centres.
+        -->
+        <Grid RowSpacing="{StaticResource SpaceL}"
+              Padding="{utu:Responsive Narrow={StaticResource PagePadding}, Normal={StaticResource PagePaddingWide}}"
+              MaxWidth="{utu:Responsive Narrow={StaticResource ContentMaxWidth}, Widest={StaticResource ReviewMaxWidth}}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <controls:PageHeader Eyebrow="REVIEW"
-                                 Title="Findings"
-                                 Supporting="{Binding Headline}" />
+            <StackPanel>
+                <controls:PageHeader Eyebrow="REVIEW"
+                                     Title="Findings"
+                                     Supporting="{Binding Headline}" />
+                <!-- A Dispatch or Close the device could not write. -->
+                <TextBlock Text="{Binding DispatchError}"
+                           Style="{StaticResource ErrorText}"
+                           Margin="{StaticResource GapTopS}"
+                           AutomationProperties.LiveSetting="Assertive"
+                           Visibility="{Binding DispatchError, Converter={StaticResource StringToVisibility}}" />
+            </StackPanel>
 
             <ScrollViewer Grid.Row="1">
-                <StackPanel Spacing="20">
+                <Grid RowSpacing="{utu:Responsive Narrow={StaticResource SpaceXL}, Widest=0}"
+                      ColumnSpacing="{utu:Responsive Narrow=0, Widest={StaticResource SpaceXL}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
 
-                    <StackPanel Spacing="10">
+                    <StackPanel Spacing="{StaticResource SpaceM}"
+                                Grid.ColumnSpan="{utu:Responsive Narrow=2, Widest=1}">
                         <TextBlock Text="Corrective work" Style="{StaticResource SectionHeaderText}" />
 
-                        <mvux:FeedView Source="{Binding Actions}">
+                        <mvux:FeedView IsTabStop="False" Source="{Binding Actions}"
+                                       ProgressTemplate="{StaticResource FeedProgressTemplate}"
+                                       ErrorTemplate="{StaticResource FeedErrorTemplate}">
                             <mvux:FeedView.ValueTemplate>
                                 <DataTemplate>
-                                    <ItemsRepeater ItemsSource="{Binding Data}">
+                                    <ItemsRepeater ItemsSource="{Binding Data}" TabFocusNavigation="Local">
                                         <ItemsRepeater.Layout>
-                                            <StackLayout Spacing="10" />
+                                            <StackLayout Spacing="{StaticResource SpaceM}" />
                                         </ItemsRepeater.Layout>
                                         <ItemsRepeater.ItemTemplate>
                                             <DataTemplate>
                                                 <Border Style="{StaticResource CardSurface}">
-                                                    <Grid ColumnSpacing="12" RowSpacing="8">
+                                                    <Grid ColumnSpacing="{StaticResource SpaceM}" RowSpacing="{StaticResource SpaceS}">
                                                         <Grid.ColumnDefinitions>
                                                             <ColumnDefinition Width="*" />
                                                             <ColumnDefinition Width="Auto" />
@@ -45,7 +72,9 @@
                                                             <RowDefinition Height="Auto" />
                                                         </Grid.RowDefinitions>
 
-                                                        <StackPanel Spacing="3">
+                                                        <!-- Origin, what to do, and the supervisor's next step with it:
+                                                             Dispatch an open action, Close a dispatched one. -->
+                                                        <StackPanel Spacing="{StaticResource SpaceXS}">
                                                             <TextBlock Text="{Binding Origin}"
                                                                        Style="{StaticResource EyebrowText}" />
                                                             <TextBlock Text="{Binding Summary}"
@@ -58,21 +87,32 @@
                                                                              Severity="{Binding Priority, Converter={StaticResource ToSeverity}}"
                                                                              Text="{Binding Priority}" />
 
-                                                        <StackPanel Grid.Row="1" Grid.ColumnSpan="2"
-                                                                    Orientation="Horizontal" Spacing="8">
-                                                            <Border Style="{StaticResource TileSurface}" Padding="10,5">
+                                                        <controls:WrapPanel Grid.Row="1"
+                                                                            VerticalAlignment="Center"
+                                                                            HorizontalSpacing="{StaticResource SpaceS}"
+                                                                            VerticalSpacing="{StaticResource SpaceS}">
+                                                            <controls:StatusChip
+                                                                Severity="{Binding Status, Converter={StaticResource ToSeverity}}"
+                                                                Text="{Binding Status}" />
+                                                            <Border Style="{StaticResource ValueChip}">
                                                                 <TextBlock Style="{StaticResource ChipValueText}"
                                                                            Text="{Binding Assignee}" />
                                                             </Border>
-                                                            <Border Style="{StaticResource TileSurface}" Padding="10,5">
-                                                                <TextBlock Style="{StaticResource ChipValueText}"
-                                                                           Text="{Binding Status}" />
-                                                            </Border>
-                                                            <Border Style="{StaticResource TileSurface}" Padding="10,5">
+                                                            <Border Style="{StaticResource ValueChip}">
                                                                 <TextBlock Style="{StaticResource ChipValueText}"
                                                                            Text="{Binding CreatedAt, Converter={StaticResource RelativeTime}}" />
                                                             </Border>
-                                                        </StackPanel>
+                                                        </controls:WrapPanel>
+
+                                                        <Button Grid.Row="1" Grid.Column="1"
+                                                                Style="{StaticResource OutlinedButtonStyle}"
+                                                                VerticalAlignment="Bottom"
+                                                                MinHeight="{StaticResource TouchTargetSize}"
+                                                                Content="{Binding Converter={StaticResource NextStep}}"
+                                                                Command="{utu:AncestorBinding AncestorType=mvux:FeedView, Path=DataContext.Advance}"
+                                                                CommandParameter="{Binding}"
+                                                                Visibility="{Binding CanAdvance, Converter={StaticResource BoolToVisibility}}"
+                                                                AutomationProperties.Name="{Binding Converter={StaticResource NextStep}, ConverterParameter=Name}" />
                                                     </Grid>
                                                 </Border>
                                             </DataTemplate>
@@ -84,7 +124,7 @@
                             <mvux:FeedView.NoneTemplate>
                                 <DataTemplate>
                                     <Border Style="{StaticResource CardSurface}">
-                                        <StackPanel Spacing="8">
+                                        <StackPanel Spacing="{StaticResource SpaceS}">
                                             <TextBlock Text="No corrective work raised"
                                                        Style="{StaticResource SectionHeaderText}" />
                                             <TextBlock Style="{StaticResource SupportingText}"
@@ -96,15 +136,20 @@
                         </mvux:FeedView>
                     </StackPanel>
 
-                    <StackPanel Spacing="10">
+                    <StackPanel Spacing="{StaticResource SpaceM}"
+                                Grid.Row="{utu:Responsive Narrow=1, Widest=0}"
+                                Grid.Column="{utu:Responsive Narrow=0, Widest=1}"
+                                Grid.ColumnSpan="{utu:Responsive Narrow=2, Widest=1}">
                         <TextBlock Text="Assets needing attention" Style="{StaticResource SectionHeaderText}" />
 
-                        <mvux:FeedView Source="{Binding AtRisk}">
+                        <mvux:FeedView IsTabStop="False" Source="{Binding AtRisk}"
+                                       ProgressTemplate="{StaticResource FeedProgressTemplate}"
+                                       ErrorTemplate="{StaticResource FeedErrorTemplate}">
                             <mvux:FeedView.ValueTemplate>
                                 <DataTemplate>
-                                    <ItemsRepeater ItemsSource="{Binding Data}">
+                                    <ItemsRepeater ItemsSource="{Binding Data}" TabFocusNavigation="Local">
                                         <ItemsRepeater.Layout>
-                                            <StackLayout Spacing="10" />
+                                            <StackLayout Spacing="{StaticResource SpaceM}" />
                                         </ItemsRepeater.Layout>
                                         <ItemsRepeater.ItemTemplate>
                                             <DataTemplate>
@@ -130,7 +175,7 @@
                             </mvux:FeedView.NoneTemplate>
                         </mvux:FeedView>
                     </StackPanel>
-                </StackPanel>
+                </Grid>
             </ScrollViewer>
         </Grid>
     </utu:SafeArea>

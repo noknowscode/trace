@@ -1,5 +1,3 @@
-using Trace.Domain.Enums;
-
 namespace Trace.Domain.Models;
 
 /// <summary>
@@ -31,10 +29,6 @@ public partial record Asset(
     public int PointCount => Points.Count;
 
     public int InspectedPointCount => Points.Count(p => p.Disposition != Disposition.None);
-
-    public string Location => $"{Area} · {Site}";
-
-    public string Designation => $"{Id} · {TypeLabel}";
 
     public InspectionPoint? FindPoint(string pointId) =>
         Points.FirstOrDefault(p => p.Id == pointId);

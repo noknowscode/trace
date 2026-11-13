@@ -1,0 +1,46 @@
+{
+  "$schema": "https://schemas.platform.uno/sample/v1",
+  "id": "trace",
+  "displayName": "TRACE",
+  "description": "Field-first maintenance and inspection app for technicians who inspect pumps, compressors and air handlers. The machine is the way in: a 3D view of the equipment with its inspection points pinned to it, where the technician records a reading against its expected range, calls Pass, Watch or Fail, adds a note or photos, and raises corrective work from a failure, which a supervisor dispatches and closes from Findings. Everything is saved on the device first and queued for sync, and every recorded inspection shows its sync state. Built with MVUX, Navigation Extensions, the Uno Toolkit's responsive layouts, Material with a dark default, and a SkiaSharp-drawn equipment view; camera, tag scanning, network and sync are deterministic simulations behind interfaces, so it runs on its own on desktop, web, Android and iOS.",
+  "platforms": [
+    "desktop",
+    "wasm",
+    "android",
+    "ios"
+  ],
+  "sourcePath": "Trace/Trace.csproj",
+  "iconUrl": "https://raw.githubusercontent.com/unoplatform/Uno.Samples/master/studio/trace/.studiolive/icon.png",
+  "screenshots": [
+    "https://raw.githubusercontent.com/unoplatform/Uno.Samples/master/studio/trace/.studiolive/screenshots/inspect-desktop.png",
+    "https://raw.githubusercontent.com/unoplatform/Uno.Samples/master/studio/trace/.studiolive/screenshots/today-desktop.png",
+    "https://raw.githubusercontent.com/unoplatform/Uno.Samples/master/studio/trace/.studiolive/screenshots/point-phone.png",
+    "https://raw.githubusercontent.com/unoplatform/Uno.Samples/master/studio/trace/.studiolive/screenshots/today-phone.png"
+  ],
+  "showcase": {
+    "summary": "Spatial equipment inspection for maintenance technicians: readings, photos and corrective work on a 3D machine, offline first.",
+    "type": "showcase",
+    "status": "preview",
+    "owner": [
+      "noknowscode"
+    ],
+    "industry": "Industrial maintenance, field operations",
+    "goals": [
+      "MVUX models over a local JSON store, with a durable outbox and the sync state of every inspection",
+      "Region-based Navigation Extensions, with the tapped asset passed to its workspace and Back returning to where it was opened",
+      "Responsive layouts with utu:Responsive across four width categories: a bottom bar or a rail, a sheet or a docked inspector",
+      "A CPU 3D equipment view drawn with SkiaSharp, with the inspection points pinned to the model",
+      "Material theming with Dark as the default and a remembered Light/Dark switch",
+      "Camera, tag scanning, network and sync behind interfaces with deterministic simulated implementations"
+    ],
+    "tags": [
+      "mvux",
+      "navigation",
+      "toolkit",
+      "material",
+      "skia",
+      "responsive",
+      "local-first"
+    ]
+  }
+}

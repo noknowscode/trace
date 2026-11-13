@@ -1,0 +1,1155 @@
+[
+ {
+  "shot": "dark-desk-today"
+ },
+ {
+  "size": [
+   390,
+   844
+  ]
+ },
+ {
+  "shot": "dark-phone-today"
+ },
+ {
+  "size": [
+   1366,
+   1024
+  ]
+ },
+ {
+  "shot": "dark-tab-today"
+ },
+ {
+  "size": [
+   1600,
+   1000
+  ]
+ },
+ {
+  "click": [
+   700,
+   280
+  ],
+  "until": true
+ },
+ {
+  "wait": 3000
+ },
+ {
+  "shot": "dark-desk-pump"
+ },
+ {
+  "click": [
+   310,
+   940
+  ],
+  "until": true
+ },
+ {
+  "wait": 2500
+ },
+ {
+  "click": [
+   1375,
+   705
+  ]
+ },
+ {
+  "wait": 600
+ },
+ {
+  "key": "End"
+ },
+ {
+  "key": "Backspace"
+ },
+ {
+  "key": "Backspace"
+ },
+ {
+  "key": "Backspace"
+ },
+ {
+  "type": "7.6"
+ },
+ {
+  "wait": 1200
+ },
+ {
+  "click": [
+   1495,
+   768
+  ]
+ },
+ {
+  "wait": 2500
+ },
+ {
+  "click": [
+   1373,
+   460
+  ]
+ },
+ {
+  "wait": 1500
+ },
+ {
+  "type": "Seal weeping at the gland, drive end vibration up."
+ },
+ {
+  "wait": 1500
+ },
+ {
+  "click": [
+   1501,
+   538
+  ]
+ },
+ {
+  "wait": 4000
+ },
+ {
+  "shot": "dark-desk-inspect"
+ },
+ {
+  "size": [
+   1366,
+   1024
+  ]
+ },
+ {
+  "shot": "dark-tab-inspect"
+ },
+ {
+  "size": [
+   390,
+   844
+  ]
+ },
+ {
+  "wheel": [
+   0,
+   180
+  ],
+  "at": [
+   195,
+   330
+  ]
+ },
+ {
+  "wait": 1500
+ },
+ {
+  "wheel": [
+   0,
+   -300
+  ],
+  "at": [
+   195,
+   330
+  ]
+ },
+ {
+  "wait": 3000
+ },
+ {
+  "click": [
+   337,
+   176
+  ],
+  "until": true
+ },
+ {
+  "wait": 2000
+ },
+ {
+  "click": [
+   80,
+   490
+  ],
+  "until": true
+ },
+ {
+  "wait": 2500
+ },
+ {
+  "click": [
+   195,
+   484
+  ]
+ },
+ {
+  "wait": 600
+ },
+ {
+  "key": "End"
+ },
+ {
+  "key": "Backspace"
+ },
+ {
+  "key": "Backspace"
+ },
+ {
+  "type": "73"
+ },
+ {
+  "wait": 1200
+ },
+ {
+  "click": [
+   84,
+   548
+  ]
+ },
+ {
+  "wait": 2500
+ },
+ {
+  "shot": "dark-phone-point"
+ },
+ {
+  "size": [
+   1600,
+   1000
+  ]
+ },
+ {
+  "click": [
+   127,
+   48
+  ],
+  "until": true
+ },
+ {
+  "wait": 2000
+ },
+ {
+  "click": [
+   1232,
+   143
+  ],
+  "until": true
+ },
+ {
+  "wait": 2500
+ },
+ {
+  "shot": "light-desk-today"
+ },
+ {
+  "size": [
+   390,
+   844
+  ]
+ },
+ {
+  "shot": "light-phone-today"
+ },
+ {
+  "size": [
+   1366,
+   1024
+  ]
+ },
+ {
+  "shot": "light-tab-today"
+ },
+ {
+  "size": [
+   1600,
+   1000
+  ]
+ },
+ {
+  "click": [
+   700,
+   280
+  ],
+  "until": true
+ },
+ {
+  "wait": 3000
+ },
+ {
+  "shot": "light-desk-pump"
+ },
+ {
+  "click": [
+   310,
+   940
+  ],
+  "until": true
+ },
+ {
+  "wait": 3000
+ },
+ {
+  "shot": "light-desk-inspect"
+ },
+ {
+  "size": [
+   1366,
+   1024
+  ]
+ },
+ {
+  "shot": "light-tab-inspect"
+ },
+ {
+  "size": [
+   390,
+   844
+  ]
+ },
+ {
+  "click": [
+   337,
+   176
+  ],
+  "until": true
+ },
+ {
+  "wait": 2000
+ },
+ {
+  "click": [
+   80,
+   490
+  ],
+  "until": true
+ },
+ {
+  "wait": 2500
+ },
+ {
+  "move": [
+   337,
+   176
+  ]
+ },
+ {
+  "wait": 300
+ },
+ {
+  "move": [
+   300,
+   230
+  ]
+ },
+ {
+  "wait": 300
+ },
+ {
+  "move": [
+   200,
+   300
+  ]
+ },
+ {
+  "wait": 800
+ },
+ {
+  "click": [
+   195,
+   527
+  ]
+ },
+ {
+  "wait": 800
+ },
+ {
+  "click": [
+   84,
+   590
+  ]
+ },
+ {
+  "wait": 1500
+ },
+ {
+  "move": [
+   200,
+   300
+  ]
+ },
+ {
+  "wait": 800
+ },
+ {
+  "wait": 2500
+ },
+ {
+  "click": [
+   337,
+   176
+  ],
+  "until": true
+ },
+ {
+  "wait": 2500
+ },
+ {
+  "move": [
+   200,
+   600
+  ]
+ },
+ {
+  "wait": 500
+ },
+ {
+  "click": [
+   137,
+   253
+  ],
+  "until": true
+ },
+ {
+  "wait": 2500
+ },
+ {
+  "shot": "light-phone-point"
+ },
+ {
+  "size": [
+   1600,
+   1000
+  ]
+ },
+ {
+  "click": [
+   1375,
+   929
+  ],
+  "until": true
+ },
+ {
+  "wait": 2500
+ },
+ {
+  "click": [
+   310,
+   940
+  ],
+  "until": true
+ },
+ {
+  "wait": 3000
+ },
+ {
+  "click": [
+   1375,
+   929
+  ],
+  "until": true
+ },
+ {
+  "wait": 3000
+ },
+ {
+  "click": [
+   1375,
+   929
+  ],
+  "until": true
+ },
+ {
+  "wait": 2500
+ },
+ {
+  "click": [
+   952,
+   628
+  ],
+  "until": true
+ },
+ {
+  "wait": 2500
+ },
+ {
+  "click": [
+   475,
+   940
+  ],
+  "until": true
+ },
+ {
+  "wait": 3000
+ },
+ {
+  "click": [
+   1375,
+   705
+  ]
+ },
+ {
+  "wait": 600
+ },
+ {
+  "key": "End"
+ },
+ {
+  "key": "Backspace"
+ },
+ {
+  "key": "Backspace"
+ },
+ {
+  "key": "Backspace"
+ },
+ {
+  "type": "1.8"
+ },
+ {
+  "wait": 1200
+ },
+ {
+  "click": [
+   1375,
+   768
+  ]
+ },
+ {
+  "wait": 2000
+ },
+ {
+  "click": [
+   1375,
+   929
+  ],
+  "until": true
+ },
+ {
+  "wait": 2500
+ },
+ {
+  "click": [
+   636,
+   940
+  ],
+  "until": true
+ },
+ {
+  "wait": 3000
+ },
+ {
+  "click": [
+   1375,
+   721
+  ]
+ },
+ {
+  "wait": 600
+ },
+ {
+  "key": "End"
+ },
+ {
+  "key": "Backspace"
+ },
+ {
+  "key": "Backspace"
+ },
+ {
+  "type": "66"
+ },
+ {
+  "wait": 1200
+ },
+ {
+  "click": [
+   1255,
+   784
+  ]
+ },
+ {
+  "wait": 2000
+ },
+ {
+  "click": [
+   1375,
+   929
+  ],
+  "until": true
+ },
+ {
+  "wait": 2500
+ },
+ {
+  "click": [
+   1530,
+   145
+  ],
+  "until": true
+ },
+ {
+  "wait": 2500
+ },
+ {
+  "click": [
+   40,
+   262
+  ],
+  "until": true
+ },
+ {
+  "wait": 3000
+ },
+ {
+  "shot": "light-desk-sync"
+ },
+ {
+  "size": [
+   390,
+   844
+  ]
+ },
+ {
+  "shot": "light-phone-sync"
+ },
+ {
+  "size": [
+   1600,
+   1000
+  ]
+ },
+ {
+  "click": [
+   40,
+   334
+  ],
+  "until": true
+ },
+ {
+  "wait": 3000
+ },
+ {
+  "shot": "light-desk-findings"
+ },
+ {
+  "size": [
+   390,
+   844
+  ]
+ },
+ {
+  "shot": "light-phone-findings"
+ },
+ {
+  "click": [
+   39,
+   800
+  ],
+  "until": true
+ },
+ {
+  "wait": 2500
+ },
+ {
+  "shot": "light-phone-today-after"
+ },
+ {
+  "size": [
+   1600,
+   1000
+  ]
+ },
+ {
+  "shot": "light-desk-today-after"
+ },
+ {
+  "move": [
+   40,
+   262
+  ]
+ },
+ {
+  "wait": 400
+ },
+ {
+  "move": [
+   60,
+   262
+  ]
+ },
+ {
+  "wait": 200
+ },
+ {
+  "move": [
+   120,
+   262
+  ]
+ },
+ {
+  "wait": 200
+ },
+ {
+  "move": [
+   600,
+   600
+  ]
+ },
+ {
+  "wait": 800
+ },
+ {
+  "drag": [
+   [
+    40,
+    262
+   ],
+   [
+    600,
+    600
+   ]
+  ],
+  "steps": 30
+ },
+ {
+  "wait": 1500
+ },
+ {
+  "shot": "light-desk-today-after"
+ },
+ {
+  "click": [
+   40,
+   262
+  ],
+  "until": true
+ },
+ {
+  "wait": 2500
+ },
+ {
+  "drag": [
+   [
+    40,
+    262
+   ],
+   [
+    600,
+    600
+   ]
+  ],
+  "steps": 30
+ },
+ {
+  "wait": 1500
+ },
+ {
+  "shot": "light-desk-sync"
+ },
+ {
+  "click": [
+   40,
+   334
+  ],
+  "until": true
+ },
+ {
+  "wait": 2500
+ },
+ {
+  "drag": [
+   [
+    40,
+    334
+   ],
+   [
+    600,
+    700
+   ]
+  ],
+  "steps": 30
+ },
+ {
+  "wait": 1500
+ },
+ {
+  "shot": "light-desk-findings"
+ },
+ {
+  "drag": [
+   [
+    40,
+    262
+   ],
+   [
+    600,
+    700
+   ]
+  ],
+  "steps": 30
+ },
+ {
+  "wait": 1500
+ },
+ {
+  "shot": "light-desk-findings"
+ },
+ {
+  "size": [
+   390,
+   844
+  ]
+ },
+ {
+  "click": [
+   272,
+   800
+  ],
+  "until": true
+ },
+ {
+  "wait": 2000
+ },
+ {
+  "size": [
+   1600,
+   1000
+  ]
+ },
+ {
+  "click": [
+   40,
+   48
+  ],
+  "until": true
+ },
+ {
+  "wait": 2000
+ },
+ {
+  "click": [
+   40,
+   282
+  ],
+  "until": true
+ },
+ {
+  "wait": 2500
+ },
+ {
+  "drag": [
+   [
+    40,
+    334
+   ],
+   [
+    600,
+    700
+   ]
+  ],
+  "steps": 30
+ },
+ {
+  "wait": 1500
+ },
+ {
+  "shot": "light-desk-sync"
+ },
+ {
+  "click": [
+   40,
+   48
+  ],
+  "until": true
+ },
+ {
+  "wait": 2000
+ },
+ {
+  "click": [
+   1234,
+   143
+  ],
+  "until": true
+ },
+ {
+  "wait": 3000
+ },
+ {
+  "drag": [
+   [
+    1234,
+    143
+   ],
+   [
+    800,
+    700
+   ]
+  ],
+  "steps": 30
+ },
+ {
+  "wait": 1500
+ },
+ {
+  "shot": "dark-desk-today-after"
+ },
+ {
+  "size": [
+   390,
+   844
+  ]
+ },
+ {
+  "shot": "dark-phone-today-after"
+ },
+ {
+  "size": [
+   1600,
+   1000
+  ]
+ },
+ {
+  "click": [
+   40,
+   282
+  ],
+  "until": true
+ },
+ {
+  "wait": 2500
+ },
+ {
+  "shot": "dark-desk-sync"
+ },
+ {
+  "size": [
+   390,
+   844
+  ]
+ },
+ {
+  "click": [
+   272,
+   800
+  ],
+  "until": true
+ },
+ {
+  "wait": 2500
+ },
+ {
+  "shot": "dark-phone-sync"
+ },
+ {
+  "click": [
+   350,
+   800
+  ],
+  "until": true
+ },
+ {
+  "wait": 2500
+ },
+ {
+  "shot": "dark-phone-findings"
+ },
+ {
+  "size": [
+   1600,
+   1000
+  ]
+ },
+ {
+  "click": [
+   40,
+   48
+  ],
+  "until": true
+ },
+ {
+  "wait": 2000
+ },
+ {
+  "click": [
+   40,
+   350
+  ],
+  "until": true
+ },
+ {
+  "wait": 2500
+ },
+ {
+  "shot": "dark-desk-findings"
+ },
+ {
+  "click": [
+   40,
+   135
+  ],
+  "until": true
+ },
+ {
+  "wait": 2500
+ },
+ {
+  "click": [
+   800,
+   240
+  ],
+  "until": true
+ },
+ {
+  "wait": 3500
+ },
+ {
+  "shot": "dark-desk-ahu"
+ },
+ {
+  "click": [
+   127,
+   48
+  ],
+  "until": true
+ },
+ {
+  "wait": 2500
+ },
+ {
+  "click": [
+   800,
+   380
+  ],
+  "until": true
+ },
+ {
+  "wait": 3500
+ },
+ {
+  "shot": "dark-desk-c07"
+ },
+ {
+  "click": [
+   127,
+   48
+  ],
+  "until": true
+ },
+ {
+  "wait": 2500
+ },
+ {
+  "click": [
+   800,
+   515
+  ],
+  "until": true
+ },
+ {
+  "wait": 3500
+ },
+ {
+  "click": [
+   481,
+   48
+  ],
+  "until": true
+ },
+ {
+  "wait": 3000
+ },
+ {
+  "click": [
+   40,
+   48
+  ],
+  "until": true
+ },
+ {
+  "wait": 2000
+ },
+ {
+  "size": [
+   390,
+   844
+  ]
+ },
+ {
+  "shot": "dark-phone-today-after"
+ },
+ {
+  "size": [
+   1600,
+   1000
+  ]
+ },
+ {
+  "drag": [
+   [
+    40,
+    120
+   ],
+   [
+    700,
+    800
+   ]
+  ],
+  "steps": 30
+ },
+ {
+  "wait": 1000
+ },
+ {
+  "click": [
+   1234,
+   143
+  ],
+  "until": true
+ },
+ {
+  "wait": 2500
+ },
+ {
+  "drag": [
+   [
+    1234,
+    143
+   ],
+   [
+    700,
+    800
+   ]
+  ],
+  "steps": 30
+ },
+ {
+  "click": [
+   700,
+   280
+  ],
+  "until": true
+ },
+ {
+  "wait": 3000
+ },
+ {
+  "click": [
+   481,
+   48
+  ],
+  "until": true
+ },
+ {
+  "wait": 3000
+ },
+ {
+  "size": [
+   1366,
+   1024
+  ]
+ },
+ {
+  "size": [
+   1600,
+   1000
+  ]
+ }
+]

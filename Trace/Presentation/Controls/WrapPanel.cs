@@ -43,6 +43,13 @@ public sealed partial class WrapPanel : Panel
         foreach (var child in Children)
         {
             child.Measure(childBudget);
+
+            // A collapsed chip takes no room and no gap either.
+            if (child.Visibility == Visibility.Collapsed)
+            {
+                continue;
+            }
+
             var desired = child.DesiredSize;
 
             var gap = lineWidth > 0 ? HorizontalSpacing : 0;
@@ -72,6 +79,12 @@ public sealed partial class WrapPanel : Panel
 
         foreach (var child in Children)
         {
+            if (child.Visibility == Visibility.Collapsed)
+            {
+                child.Arrange(default);
+                continue;
+            }
+
             var desired = child.DesiredSize;
             var gap = x > 0 ? HorizontalSpacing : 0;
 

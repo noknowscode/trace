@@ -1,4 +1,3 @@
-using Trace.Domain.Enums;
 using Trace.Presentation.Scene3D;
 
 namespace Trace.Tests;

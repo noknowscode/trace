@@ -1,15 +1,16 @@
 ﻿<UserControl x:Class="Trace.Presentation.Controls.PageHeader"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Name="Root">
+             x:Name="Root"
+             IsTabStop="False">
 
-    <Grid ColumnSpacing="16" Padding="0,0,0,4">
+    <Grid ColumnSpacing="{StaticResource SpaceL}" Padding="{StaticResource GapBottomXS}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
 
-        <StackPanel Spacing="2" VerticalAlignment="Center">
+        <StackPanel Spacing="{StaticResource SpaceXXS}" VerticalAlignment="Center">
             <TextBlock Text="{Binding Eyebrow, ElementName=Root}"
                        Style="{StaticResource EyebrowText}"
                        Visibility="{Binding HasEyebrow, ElementName=Root}" />
@@ -19,7 +20,7 @@
             <TextBlock Text="{Binding Supporting, ElementName=Root}"
                        Style="{StaticResource SupportingText}"
                        Visibility="{Binding HasSupporting, ElementName=Root}"
-                       Margin="0,2,0,0" />
+                       Margin="{StaticResource GapTopXXS}" />
         </StackPanel>
 
         <ContentPresenter Grid.Column="1"

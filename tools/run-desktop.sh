@@ -56,9 +56,13 @@ sleep 1
 
 export DISPLAY=":$DISPLAY_NUM"
 export TRACE_NO_HOTDESIGN=1
+# Skia's CPU backend: Mesa's llvmpipe OpenGL leaves parts of the window unpainted under Xvfb.
+export TRACE_X11_RENDERER=software
 
 LOG="$ROOT/artifacts/trace-run.log"
-dotnet "$ROOT/Trace/bin/Debug/net10.0-desktop/Trace.dll" >"$LOG" 2>&1 &
+# TRACE_ARGS passes the Debug verification hooks (App.Verification.cs), e.g. "--trace-fault=load".
+# shellcheck disable=SC2086
+dotnet "$ROOT/Trace/bin/Debug/net10.0-desktop/Trace.dll" ${TRACE_ARGS:-} >"$LOG" 2>&1 &
 APP_PID=$!
 
 # Uno's Skia host does not publish _NET_WM_PID, so find the window by its title.

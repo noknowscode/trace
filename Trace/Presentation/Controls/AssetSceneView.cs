@@ -1,14 +1,11 @@
-using Microsoft.UI.Input;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
 using SkiaSharp;
+#if WINDOWS
 using SkiaSharp.Views.Windows;
-using Trace.Domain.Enums;
+#endif
 using Trace.Presentation.Scene3D;
-using Uno.Extensions;
 using Uno.WinUI.Graphics2DSK;
 using Windows.Foundation;
-using Windows.Storage;
 
 namespace Trace.Presentation.Controls;
 
@@ -18,12 +15,14 @@ namespace Trace.Presentation.Controls;
 /// </summary>
 /// <remarks>
 /// The view is a host around one of two drawing surfaces, chosen once at construction.
-/// Where the app renders through Skia — the desktop head, and Android with the Skia
-/// renderer — <see cref="SKCanvasElement"/> draws straight onto the window's own canvas,
+/// Every Uno head (desktop, Android, iOS, WebAssembly) renders through Skia, so
+/// <see cref="SKCanvasElement"/> draws straight onto the window's own canvas,
 /// hardware-accelerated when the app is, with no intermediate bitmap. The WinAppSDK head
-/// does not render through Skia, so it falls back to <see cref="SKXamlCanvas"/>, which
-/// rasterises to a bitmap the XAML tree then displays. Both hand the same canvas to the
-/// same renderer; only the plumbing differs.
+/// does not render through Skia (Uno's SKCanvasElement there is an unsupported stub), so
+/// it falls back to SkiaSharp.Views.WinUI's <c>SKXamlCanvas</c>, which rasterises to a
+/// bitmap the XAML tree then displays. That fallback exists only in the WinAppSDK build:
+/// SkiaSharp.Views.WinUI is the only package that ships it. Both surfaces hand the same
+/// canvas to the same renderer; only the plumbing differs.
 ///
 /// The view also publishes where each inspection point projected to, so the XAML markers
 /// laid over it stay glued to their part as the model turns. Those markers are ordinary
@@ -49,9 +48,16 @@ public sealed partial class AssetSceneView : Grid, IAnchorProjector
         nameof(KeyLight), typeof(Brush), typeof(AssetSceneView),
         new PropertyMetadata(null, OnPaletteChanged));
 
+    public static readonly DependencyProperty FillLightProperty = DependencyProperty.Register(
+        nameof(FillLight), typeof(Brush), typeof(AssetSceneView),
+        new PropertyMetadata(null, OnPaletteChanged));
+
     public static readonly DependencyProperty ModelSourceProperty = DependencyProperty.Register(
         nameof(ModelSource), typeof(string), typeof(AssetSceneView),
         new PropertyMetadata(string.Empty, OnModelSourceChanged));
+
+    public static readonly DependencyProperty ResetViewCommandProperty = DependencyProperty.Register(
+        nameof(ResetViewCommand), typeof(ICommand), typeof(AssetSceneView), new PropertyMetadata(null));
 
     private readonly SceneRenderer _renderer = new();
     private readonly SceneCamera _camera = new();
@@ -69,9 +75,13 @@ public sealed partial class AssetSceneView : Grid, IAnchorProjector
         // pointer input to land on it.
         Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
 
+#if WINDOWS
         _surface = SKCanvasElement.IsSupportedOnCurrentPlatform()
             ? new WindowCanvasSurface(this)
             : new BitmapSurface(this);
+#else
+        _surface = new WindowCanvasSurface(this);
+#endif
         Children.Add((UIElement)_surface);
 
         // The renderer holds a viewport-sized native surface; it goes when the view does.
@@ -86,9 +96,14 @@ public sealed partial class AssetSceneView : Grid, IAnchorProjector
         PointerMoved += OnPointerMoved;
         PointerReleased += OnPointerReleased;
         PointerCaptureLost += (_, _) => _isDragging = false;
+#if !ANDROID && !IOS
+        // Mouse-wheel zoom; the wheel delta is not implemented on the touch-first heads (Uno0001).
         PointerWheelChanged += OnPointerWheelChanged;
+#endif
 
         ActualThemeChanged += (_, _) => Invalidate();
+
+        SetValue(ResetViewCommandProperty, new ViewCommand(ResetView));
 
         this.Log().LogInformation("Equipment view is drawing through {Surface}.", _surface.GetType().Name);
     }
@@ -123,6 +138,13 @@ public sealed partial class AssetSceneView : Grid, IAnchorProjector
         set => SetValue(KeyLightProperty, value);
     }
 
+    /// <summary>Colour of the bounce light that keeps the shadow side of the machine readable.</summary>
+    public Brush? FillLight
+    {
+        get => (Brush?)GetValue(FillLightProperty);
+        set => SetValue(FillLightProperty, value);
+    }
+
     /// <summary>
     /// An <c>ms-appx:///</c> URI of a glTF binary for this asset. Empty draws the parametric
     /// equipment for <see cref="Kind"/>, which is also what shows until the file has loaded
@@ -133,6 +155,12 @@ public sealed partial class AssetSceneView : Grid, IAnchorProjector
         get => (string)GetValue(ModelSourceProperty);
         set => SetValue(ModelSourceProperty, value);
     }
+
+    /// <summary>
+    /// <see cref="ResetView"/> as a command, for a button beside the view. The camera is the
+    /// view's own state, so the page binds this by element name rather than through its model.
+    /// </summary>
+    public ICommand ResetViewCommand => (ICommand)GetValue(ResetViewCommandProperty);
 
     public bool TryGetAnchor(string id, out AnchorProjection projection) =>
         _renderer.Anchors.TryGetValue(id, out projection);
@@ -209,23 +237,23 @@ public sealed partial class AssetSceneView : Grid, IAnchorProjector
     /// rest of the UI in both light and dark.
     /// </summary>
     /// <remarks>
-    /// The three brushes are set from a Style rather than read out of
+    /// The brushes are set from a Style (AssetSceneViewStyle) rather than read out of
     /// <see cref="Application"/>.Resources: the application dictionary is fixed to the
     /// application's own theme, so it would keep handing back dark colours after the
-    /// technician switched the root to light.
+    /// technician switched the root to light. Through the Style they are theme resources
+    /// that re-resolve on a switch, and each change repaints the view. An unset brush
+    /// contributes nothing rather than a colour of its own.
     /// </remarks>
     private ScenePalette ReadPalette() => new(
-        Background: Resolve(SceneBackground, new SKColor(0x10, 0x1A, 0x18)),
-        Ground: Resolve(GroundShadow, new SKColor(0, 0, 0)).WithAlpha(90),
-        KeyLight: Resolve(KeyLight, new SKColor(0xE8, 0xF3, 0xEE)),
-        // A cool neutral bounce rather than the brand colour: tinting the fill with Primary
-        // turned every machine mint green.
-        FillLight: new SKColor(0x7E, 0x8C, 0x99));
+        Background: Resolve(SceneBackground),
+        Ground: Resolve(GroundShadow),
+        KeyLight: Resolve(KeyLight),
+        FillLight: Resolve(FillLight));
 
-    private static SKColor Resolve(Brush? brush, SKColor fallback) =>
+    private static SKColor Resolve(Brush? brush) =>
         brush is SolidColorBrush solid
-            ? new SKColor(solid.Color.R, solid.Color.G, solid.Color.B, solid.Color.A)
-            : fallback;
+            ? ScenePalette.FromColor(solid.Color.A, solid.Color.R, solid.Color.G, solid.Color.B, solid.Opacity)
+            : SKColors.Transparent;
 
     private void OnPointerPressed(object sender, PointerRoutedEventArgs e)
     {
@@ -261,6 +289,7 @@ public sealed partial class AssetSceneView : Grid, IAnchorProjector
         e.Handled = true;
     }
 
+#if !ANDROID && !IOS
     private void OnPointerWheelChanged(object sender, PointerRoutedEventArgs e)
     {
         var delta = e.GetCurrentPoint(this).Properties.MouseWheelDelta;
@@ -268,10 +297,24 @@ public sealed partial class AssetSceneView : Grid, IAnchorProjector
         Invalidate();
         e.Handled = true;
     }
+#endif
 
     private interface ISceneSurface
     {
         void Invalidate();
+    }
+
+    private sealed class ViewCommand(Action execute) : ICommand
+    {
+        public event EventHandler? CanExecuteChanged
+        {
+            add { }
+            remove { }
+        }
+
+        public bool CanExecute(object? parameter) => true;
+
+        public void Execute(object? parameter) => execute();
     }
 
     /// <summary>
@@ -301,9 +344,10 @@ public sealed partial class AssetSceneView : Grid, IAnchorProjector
         }
     }
 
+#if WINDOWS
     /// <summary>
     /// Rasterises to a bitmap the XAML tree displays, for the head that does not render
-    /// through Skia. Its paint arguments are already in device pixels.
+    /// through Skia (WinAppSDK). Its paint arguments are already in device pixels.
     /// </summary>
     private sealed partial class BitmapSurface : SKXamlCanvas, ISceneSurface
     {
@@ -322,6 +366,7 @@ public sealed partial class AssetSceneView : Grid, IAnchorProjector
                 new SKRect(0, 0, e.Info.Width, e.Info.Height),
                 1f);
     }
+#endif
 }
 
 /// <summary>Something that can say where an inspection point landed on screen.</summary>

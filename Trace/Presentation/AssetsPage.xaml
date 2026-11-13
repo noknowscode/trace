@@ -8,8 +8,17 @@
       NavigationCacheMode="Required"
       Background="{ThemeResource BackgroundBrush}">
 
-    <utu:SafeArea Insets="VisibleBounds,SoftInput">
-        <Grid RowSpacing="16" Padding="{StaticResource PagePadding}">
+    <!--
+        No SoftInput inset: the search field sits at the top, above any on-screen keyboard, and
+        the list under it scrolls on its own. (With SoftInput the SafeArea control wraps the page
+        in a ScrollViewer that measures it at infinite height, which left the list's star row
+        unbounded and scrolled the search field away with the results.)
+    -->
+    <Grid utu:SafeArea.Insets="VisibleBounds">
+        <!-- One column at every width, as on Today: 16 px sides on a phone, 24 from Normal, centred at ContentMaxWidth from Widest. -->
+        <Grid RowSpacing="{StaticResource SpaceL}"
+              Padding="{utu:Responsive Narrow={StaticResource PagePadding}, Normal={StaticResource PagePaddingWide}}"
+              MaxWidth="{StaticResource ContentMaxWidth}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -26,13 +35,16 @@
                      MinHeight="{StaticResource TouchTargetSize}"
                      AutomationProperties.Name="Search assets" />
 
-            <mvux:FeedView Grid.Row="2" Source="{Binding Assets}">
+            <mvux:FeedView IsTabStop="False" Grid.Row="2"
+                           Source="{Binding Assets}"
+                           ProgressTemplate="{StaticResource FeedProgressTemplate}"
+                           ErrorTemplate="{StaticResource FeedErrorTemplate}">
                 <mvux:FeedView.ValueTemplate>
                     <DataTemplate>
                         <ScrollViewer>
-                            <ItemsRepeater ItemsSource="{Binding Data}">
+                            <ItemsRepeater ItemsSource="{Binding Data}" TabFocusNavigation="Local">
                                 <ItemsRepeater.Layout>
-                                    <StackLayout Spacing="12" />
+                                    <StackLayout Spacing="{StaticResource SpaceM}" />
                                 </ItemsRepeater.Layout>
                                 <ItemsRepeater.ItemTemplate>
                                     <DataTemplate>
@@ -49,16 +61,10 @@
                     </DataTemplate>
                 </mvux:FeedView.ValueTemplate>
 
-                <mvux:FeedView.ProgressTemplate>
-                    <DataTemplate>
-                        <ProgressRing IsActive="True" Width="32" Height="32" VerticalAlignment="Center" />
-                    </DataTemplate>
-                </mvux:FeedView.ProgressTemplate>
-
                 <mvux:FeedView.NoneTemplate>
                     <DataTemplate>
                         <Border Style="{StaticResource CardSurface}" VerticalAlignment="Top">
-                            <StackPanel Spacing="8">
+                            <StackPanel Spacing="{StaticResource SpaceS}">
                                 <TextBlock Text="No matching assets" Style="{StaticResource SectionHeaderText}" />
                                 <TextBlock Style="{StaticResource SupportingText}"
                                            Text="Clear the search, or scan the tag on the machine in front of you." />
@@ -68,5 +74,5 @@
                 </mvux:FeedView.NoneTemplate>
             </mvux:FeedView>
         </Grid>
-    </utu:SafeArea>
+    </Grid>
 </Page>

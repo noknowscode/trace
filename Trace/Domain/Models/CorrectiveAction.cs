@@ -1,5 +1,3 @@
-using Trace.Domain.Enums;
-
 namespace Trace.Domain.Models;
 
 /// <summary>
@@ -20,4 +18,12 @@ public partial record CorrectiveAction(
     DateTimeOffset CreatedAt)
 {
     public string Origin => $"{AssetId} · {PointLabel}";
+
+    /// <summary>Still work to do: raised or dispatched, not closed.</summary>
+    public bool IsOpenWork => Status != ActionStatus.Closed;
+
+    /// <summary>The status a supervisor moves it to next, or none once it is closed.</summary>
+    public ActionStatus? NextStatus => InspectionRules.NextStatus(Status);
+
+    public bool CanAdvance => NextStatus is not null;
 }

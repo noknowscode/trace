@@ -1,7 +1,5 @@
-using Trace.Domain.Models;
 using Trace.Infrastructure.Persistence;
 using Trace.Infrastructure.Seed;
-using Trace.Services;
 
 namespace Trace.Infrastructure.Repositories;
 
@@ -14,8 +12,8 @@ public sealed class CorrectiveActionRepository : ICorrectiveActionRepository
     public IAsyncEnumerable<IImmutableList<CorrectiveAction>> WatchAll(CancellationToken ct) =>
         StoreProjections.ProjectList(_store.Watch(ct), s => Newest(s.Actions, _ => true), ct);
 
-    public IAsyncEnumerable<IImmutableList<CorrectiveAction>> WatchForAsset(string assetId, CancellationToken ct) =>
-        StoreProjections.ProjectList(_store.Watch(ct), s => Newest(s.Actions, a => a.AssetId == assetId), ct);
+    public IAsyncEnumerable<IImmutableList<CorrectiveAction>> WatchOpenForAsset(string assetId, CancellationToken ct) =>
+        StoreProjections.ProjectList(_store.Watch(ct), s => Newest(s.Actions, a => a.AssetId == assetId && a.IsOpenWork), ct);
 
     public ValueTask<IImmutableList<string>> GetAssigneesAsync(CancellationToken ct) =>
         ValueTask.FromResult(SeedData.Assignees);
@@ -24,7 +22,8 @@ public sealed class CorrectiveActionRepository : ICorrectiveActionRepository
         IImmutableList<CorrectiveAction> actions,
         Func<CorrectiveAction, bool> predicate) =>
         actions.Where(predicate)
-            .OrderByDescending(a => a.Priority)
+            .OrderBy(a => a.IsOpenWork ? 0 : 1)
+            .ThenByDescending(a => a.Priority)
             .ThenByDescending(a => a.CreatedAt)
             .ToImmutableList();
 }

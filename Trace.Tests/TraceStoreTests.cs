@@ -1,4 +1,6 @@
+using Microsoft.Extensions.Logging.Abstractions;
 using Trace.Infrastructure.Repositories;
+using Trace.Presentation;
 
 namespace Trace.Tests;
 
@@ -35,7 +37,7 @@ public class TraceStoreTests
         seal.Unit.Should().Be("mm/s");
         seal.NormalMin.Should().Be(0);
         seal.NormalMax.Should().Be(2.8);
-        seal.LatestRangeStatus.Should().Be(RangeStatus.Above);
+        seal.Evaluate(seal.LatestReading!.Value).Should().Be(RangeStatus.Above);
 
         snapshot.Events.Count(e => e.AssetId == "P-204").Should().BeGreaterThanOrEqualTo(3);
         snapshot.Actions.Should().ContainSingle();
@@ -71,7 +73,7 @@ public class TraceStoreTests
 
         compressor.PointCount.Should().Be(4);
         compressor.InspectedPointCount.Should().Be(3);
-        compressor.FindPoint("C-07-drain")!.HasReading.Should().BeFalse();
+        compressor.FindPoint("C-07-drain")!.LatestReading.Should().BeNull();
     }
 
     [Test]
@@ -136,5 +138,108 @@ public class TraceStoreTests
         await reader;
 
         received.Should().StartWith([0, 1]);
+    }
+
+    [Test]
+    public async Task A_completion_cut_off_between_its_files_is_finished_on_the_next_launch()
+    {
+        await _harness.Store.GetAsync(default);
+
+        // The process dies after events.json is written and before sync-queue.json is.
+        var dying = _harness.StoreThatDiesWriting("sync-queue.json");
+        var workflow = _harness.WorkflowOver(dying);
+        var point = await _harness.PointAsync("P-204-seal");
+        var draft = await workflow.StartOrResumeDraftAsync(point, default);
+
+        var complete = async () => await workflow.CompleteAsync(
+            draft with { ReadingText = "1.6", Disposition = Disposition.Pass }, default);
+        await complete.Should().ThrowAsync<IOException>();
+
+        var eventId = $"ev-{draft.ClientToken}";
+        (await _harness.Files.ReadTextAsync("events.json", default)).Should().Contain(eventId);
+        (await _harness.Files.ReadTextAsync("sync-queue.json", default) ?? string.Empty).Should().NotContain(eventId,
+            "this is the half-written state: an inspection with no outbox entry");
+
+        var relaunched = await _harness.Reopen().GetAsync(default);
+
+        relaunched.Events.Should().ContainSingle(e => e.Id == eventId);
+        relaunched.Queue.Should().ContainSingle(o => o.EntityId == eventId);
+        relaunched.FindDraft("P-204-seal").Should().BeNull();
+        relaunched.FindAsset("P-204")!.FindPoint("P-204-seal")!.LatestReading.Should().Be(1.6);
+        (await _harness.Files.ReadTextAsync("commit.json", default)).Should().BeNull("the journal is retired once replayed");
+    }
+
+    [Test]
+    public async Task A_commit_whose_journal_never_landed_leaves_the_previous_state()
+    {
+        var before = await _harness.Store.GetAsync(default);
+
+        var dying = _harness.StoreThatDiesWriting("commit.json");
+        var workflow = _harness.WorkflowOver(dying);
+        var draft = await workflow.StartOrResumeDraftAsync(await _harness.PointAsync("P-204-seal"), default);
+
+        var complete = async () => await workflow.CompleteAsync(
+            draft with { ReadingText = "1.6", Disposition = Disposition.Pass }, default);
+        await complete.Should().ThrowAsync<IOException>();
+
+        var relaunched = await _harness.Reopen().GetAsync(default);
+        relaunched.Events.Select(e => e.Id).Should().BeEquivalentTo(before.Events.Select(e => e.Id));
+        relaunched.Queue.Should().BeEmpty();
+        relaunched.FindDraft("P-204-seal").Should().NotBeNull("the reading is still a draft, ready to complete again");
+    }
+
+    [Test]
+    public async Task A_damaged_outbox_is_set_aside_and_reported_rather_than_replaced()
+    {
+        var point = await _harness.PointAsync("P-204-seal");
+        var draft = await _harness.Workflow.StartOrResumeDraftAsync(point, default);
+        await _harness.Workflow.CompleteAsync(draft with { ReadingText = "1.6", Disposition = Disposition.Pass }, default);
+
+        const string damaged = "[{\"id\":\"op-";
+        await _harness.Files.WriteTextAsync("sync-queue.json", damaged, default);
+
+        var reopened = _harness.Reopen();
+        var snapshot = await reopened.GetAsync(default);
+
+        snapshot.Queue.Should().BeEmpty();
+        snapshot.Events.Should().Contain(e => e.ClientToken == draft.ClientToken, "the sections that could be read are kept");
+        var aside = snapshot.SetAside.Should().ContainSingle().Subject;
+        aside.Should().StartWith("sync-queue.json.unreadable-");
+        (await _harness.Files.ReadTextAsync(aside, default)).Should().Be(damaged, "the damaged file is kept for recovery");
+
+        // A later write starts a new outbox and leaves the set-aside copy alone.
+        var workflow = _harness.WorkflowOver(reopened);
+        var motor = await workflow.StartOrResumeDraftAsync(await _harness.PointAsync("P-204-motor"), default);
+        await workflow.CompleteAsync(motor with { ReadingText = "70", Disposition = Disposition.Pass }, default);
+        (await _harness.Files.ReadTextAsync(aside, default)).Should().Be(damaged);
+
+        // And the Sync screen does not claim everything reached the server.
+        var sync = new SyncModel(
+            new SyncQueue(reopened, _harness.Network, NullLogger<SyncQueue>.Instance), _harness.Network, new FeedRecovery());
+        (await sync.HasSetAside).Should().BeTrue();
+        (await sync.IsSettled).Should().BeFalse();
+        (await sync.SetAsideWarning).Should().Contain(aside);
+    }
+
+    [Test]
+    public async Task Evidence_written_by_the_app_is_referenced_relative_to_its_data_folder()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "trace-tests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            var files = new Trace.Infrastructure.Persistence.LocalFileStore(
+                () => ValueTask.FromResult(root), "ms-appdata:///local/trace/");
+
+            var uri = await files.WriteBytesAsync("evidence/P-204-seal/ev-1.png", [1, 2, 3], default);
+
+            // A file:// URI holds the absolute path: a browser cannot load it, and iOS moves the
+            // app's container on update.
+            uri.Should().Be("ms-appdata:///local/trace/evidence/P-204-seal/ev-1.png");
+            File.Exists(Path.Combine(root, "evidence", "P-204-seal", "ev-1.png")).Should().BeTrue();
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
     }
 }
