@@ -26,7 +26,7 @@ The camera, the tag scanner, the network and the sync transport are deterministi
 
 Uno.Sdk 7.0.5 (Uno Platform 7.0, pinned in `global.json`), .NET 10, MVUX, Navigation Extensions, the Uno Toolkit,
 Material with a colour override, and SkiaSharp for the equipment view. Heads: desktop (Windows, macOS, Linux),
-WebAssembly, Android, iOS and Windows App SDK.
+WebAssembly, Android and iOS.
 
 ## Try it
 
