@@ -39,6 +39,12 @@
       ThemeService;
       SkiaRenderer;
     </UnoFeatures>
+    <!--
+      Uno 6.7 test build: the Uno.Themes and Toolkit versions the Studio gallery samples (Uno.Samples/studio) pin on
+      Uno.Sdk 6.7.18, ahead of the SDK's implicit 7.1.1 themes.
+    -->
+    <UnoThemesVersion>8.0.0-dev.15</UnoThemesVersion>
+    <UnoToolkitVersion>9.1.3</UnoToolkitVersion>
   </PropertyGroup>
 
   <ItemGroup>
