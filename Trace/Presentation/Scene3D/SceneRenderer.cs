@@ -52,7 +52,7 @@ public sealed class SceneRenderer : IDisposable
     private SKPaint? _meshPaint;
     private SKPaint? _blitPaint;
     private SKPaint? _shadowPaint;
-    private SKPathBuilder? _shadowBuilder;
+    private SKPath? _shadowPath;
     private SKMaskFilter? _shadowBlur;
     private float _shadowSigma = -1f;
 
@@ -130,9 +130,9 @@ public sealed class SceneRenderer : IDisposable
         _meshPaint?.Dispose();
         _blitPaint?.Dispose();
         _shadowPaint?.Dispose();
-        _shadowBuilder?.Dispose();
+        _shadowPath?.Dispose();
         _meshPaint = _blitPaint = _shadowPaint = null;
-        _shadowBuilder = null;
+        _shadowPath = null;
     }
 
     // The small native objects are created on first use and again after a Dispose, so releasing
@@ -143,7 +143,7 @@ public sealed class SceneRenderer : IDisposable
 
     private SKPaint ShadowPaint => _shadowPaint ??= new SKPaint { IsAntialias = true };
 
-    private SKPathBuilder ShadowBuilder => _shadowBuilder ??= new SKPathBuilder();
+    private SKPath ShadowPath => _shadowPath ??= new SKPath();
 
     private SKSurface? EnsureSurface(int width, int height, GRRecordingContext? context)
     {
@@ -330,19 +330,18 @@ public sealed class SceneRenderer : IDisposable
             ellipse[i] = new SKPoint(projected.X, projected.Y);
         }
 
-        // One builder reused across frames; Detach hands over the path and leaves the
-        // builder empty for the next frame.
-        var builder = ShadowBuilder;
+        // One path reused across frames, cleared before each frame's outline.
+        var path = ShadowPath;
+        path.Reset();
         var paint = ShadowPaint;
 
-        builder.MoveTo(ellipse[0]);
+        path.MoveTo(ellipse[0]);
         for (var i = 1; i < ellipse.Length; i++)
         {
-            builder.LineTo(ellipse[i]);
+            path.LineTo(ellipse[i]);
         }
 
-        builder.Close();
-        using var path = builder.Detach();
+        path.Close();
 
         // The blur is the most expensive operation in the frame and its radius only changes
         // with the supersample factor, so the filter is rebuilt when that changes and not
