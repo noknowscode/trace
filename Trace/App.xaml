@@ -21,6 +21,8 @@
             <ut:ThemeColors OverrideSource="ms-appx:///Styles/ColorPaletteOverride.xaml" />
           </utum:MaterialToolkitTheme.Colors>
         </utum:MaterialToolkitTheme>
+        <!-- Uno 6.7 test build only: the tokens Uno 7's theme generates. -->
+        <ResourceDictionary Source="ms-appx:///Themes/Uno7Tokens.xaml" />
 
         <!-- TRACE's layout values the theme has no token for, then its shared styles. Merged after the theme so
              they can build on it. -->
